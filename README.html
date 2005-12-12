@@ -1,0 +1,271 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="Content-Style-Type" content="text/css">
+    <title>MailParser</title>
+    <link rel=stylesheet type="text/css" href="tommy.css">
+    <link rev=made href="mailto:tommy@tmtm.org">
+  </head>
+
+  <body>
+    <h1>MailParser</h1>
+    <p>
+      メールメッセージを処理するための Module です。
+    </p>
+
+<!--
+    <h2>ダウンロード</h2>
+    <ul>
+      <li><a href="mailparser-0.3.6.tar.gz">mailparser-0.3.6.tar.gz</a>
+      <li><a href="mailparser-0.3.5.tar.gz">mailparser-0.3.5.tar.gz</a>
+      <li><a href="mailparser-0.3.4.tar.gz">mailparser-0.3.4.tar.gz</a>
+      <li><a href="mailparser-0.3.3.tar.gz">mailparser-0.3.3.tar.gz</a>
+      <li><a href="mailparser-0.3.2.tar.gz">mailparser-0.3.2.tar.gz</a>
+      <li><a href="mailparser-0.3.1.tar.gz">mailparser-0.3.1.tar.gz</a>
+      <li><a href="mailparser-0.3.tar.gz">mailparser-0.3.tar.gz</a>
+      <li><a href="mailparser-0.2.1.tar.gz">mailparser-0.2.1.tar.gz</a>
+      <li><a href="mailparser-0.2.tar.gz">mailparser-0.2.tar.gz</a>
+      <li><a href="mailparser-0.1.tar.gz">mailparser-0.1.tar.gz</a>
+    </ul>
+-->
+
+    <h2>必要なもの</h2>
+    <ul>
+      <li><a href="http://www.ruby-lang.org">Ruby 1.8.3</a>
+    </ul>
+
+    <h2>ライセンス</h2>
+    <p>
+      このプログラムは <a href="http://www.ruby-lang.org/ja/LICENSE.txt">Ruby ライセンス</a>に従います。
+    </p>
+
+    <h2>機能</h2>
+    <ul>
+      <li>メールを構成する文字列を解析し、Hash, Array, String 等のオブジェクトとして返します。
+      <li>例外は発生しません。不正な構造のメッセージがあった場合は適当に処理します。
+      <li>返される文字列の文字コードは EUC-JP(デフォルト) または UTF-8 です。
+      <li>処理できる charset は ISO-2022-JP, EUC-JP, SHIFT_JIS, UTF-8, US-ASCII です。
+	それ以外の charset の場合はデコードせずにそのままの文字列を返します。
+    </ul>
+
+    <h2>使用例</h2>
+    <pre class="code">
+require "mailparser"
+File.open("/tmp/hoge.eml") do |f|
+  m = MailParser.parse_message f
+  m[:from]                 # Fromへッダのメールアドレスの配列
+  m[:to]                   # Toへッダのメールアドレスの配列
+  m[:subject]              # Subjectへッダの内容
+  m[:body]                 # メール本文
+  m[:parts]                # 添付ファイルに対応する Hash の配列
+  m[:parts][0][:filename]  # 一番目の添付ファイルのファイル名
+  m[:parts][0][:body]      # 一番目の添付ファイルの内容
+end
+</pre>
+
+    <h2>モジュールメソッド</h2>
+    <dl>
+      <dt>parse_message(io)
+      <dd>IOオブジェクト(またはそれに似たもの)からメッセージを読み込み、解析した結果を次の Hash オブジェクトで返します。
+	<table>
+	    <tr><th>キー<th>値
+	    <tr><td>:from<td>Fromへッダのメールアドレスの配列
+	    <tr><td>:to<td>Toへッダのメールアドレスの配列
+	    <tr><td>:cc<td>Ccへッダのメールアドレスの配列
+	    <tr><td>:date<td>Dateへッダを解析した結果のTimeオブジェクト(Dateへッダがない場合やパースできない場合は nil)
+	    <tr><td>:subject<td>Subjectへッダの文字列(デコード済)
+	    <tr><td>:type<td>Content-Typeへッダのメインタイプ
+	    <tr><td>:subtype<td>Content-Typeへッダのサブタイプ
+	    <tr><td>:charset<td>Content-Typeへッダのcharsetパラメータの値(小文字)
+	    <tr><td>:encoding<td>Content-Transfer-Encodingへッダの値(小文字)
+	    <tr><td>:multipart<td>メインタイプが multipart の場合 true
+	    <tr><td>:boundary<td>パート毎の区切り文字列(マルチパート時)
+	    <tr><td>:filename<td>ファイル名
+	    <tr><td>:header<td>"へッダ名(小文字)"=>"へッダ値(デコード済)"のハッシュ
+	    <tr><td>:rawheader<td>生のへッダ部
+	    <tr><td>:body<td>メール本文(デコード済)
+	    <tr><td>:parts<td>各パートの配列(マルチパート時)。各パートはこれと同じ形式の Hash オブジェクト
+	    <tr><td>:message<td>メインタイプが message の場合、本文部を解析した結果の Hash オブジェクト
+	</table>
+
+      <dt>output_charset = str
+      <dd>出力の文字コードを指定します。
+	指定できる値は nil または "euc-jp" または "utf-8" です。
+	デフォルトは "euc-jp" です。
+	nil を指定した時はコード変換を行ないません。
+
+      <dt>text_body_only = flag
+      <dd>true の場合、:type == "text" 時だけ :body を生成します。
+	デフォルトは false です。
+
+      <dt>extract_message_type = flag
+      <dd>false の場合、Content-Type が message/* の時に、それ以上展開しません。
+	デフォルトは true です。
+
+    </dl>
+    <p>
+      これ以降は parse_message が内部で使用しているメソッドですが、個々に使用することもできます。
+    <dl>
+      <dt>b64_decode(str)
+      <dd>Base64 エンコードされた文字列をデコードします。
+	<pre class="code">
+MailParser.b64_decode("aG9nZWhvZ2U=")
+  # => "hogehoge"
+</pre>
+
+      <dt>b64_hdecode(str)
+      <dd>Base64 エンコードされたへッダ文字列をデコードします。
+	b64_decode と同じです。
+	<pre class="code">
+MailParser.b64_hdecode("aG9nZWhvZ2U=")
+  # => "hogehoge"
+</pre>
+
+      <dt>qp_decode(str)
+      <dd>Quoted-Printable エンコードされた文字列をデコードします。
+	<pre class="code">
+ MailParser.qp_decode("=A4=DB=A4=B2_=A4=CF=A4=B2")'
+  # => "ほげ_はげ"
+</pre>
+
+      <dt>qp_hdecode(str)
+      <dd>Quoted-Printable エンコードされたへッダ文字列をデコードします。
+	「_」を空白にすること以外は qp_decode と同じです。
+	<pre class="code">
+MailParser.qp_hdecode("=A4=DB=A4=B2_=A4=CF=A4=B2")'
+  # => "ほげ はげ"
+</pre>
+
+      <dt>mdecode_token(str)
+      <dd>「=?chaset?encode?xxxxxx?=」の文字列をデコードします。結果の文字コードは EUC-JP です。
+	<pre class="code">
+MailParser.mdecode_token("=?iso-2022-jp?b?GyRCJFUkLCRVJCwbKEI=?=")
+  # => "ふがふが"
+</pre>
+
+      <dt>mime_header_decode(str)
+      <dd>へッダ文字列をデコードします。結果の文字コードは EUC-JP です。
+	<pre class="code">
+MailParser.mime_header_decode("foo =?iso-2022-jp?b?GyRCJFUkLCRVJCwbKEI=?= bar")
+  # => "foo ふがふが bar"
+</pre>
+      <dt>trunc_comment(str)
+      <dd>コメント部を取り除いた文字列を返します。
+	<pre class="code">
+MailParser.trunc_comment("aaa (bbb (ccc)) ddd")
+  # => "aaa  ddd"
+</pre>
+
+      <dt>split_address(str)
+      <dd>へッダ文字列を「,」で分割した配列を返します。
+	<pre class="code">
+MailParser.split_address('aaa@example.jp, hoge &lt;bbb@example.jp&gt;, "fuga,hage" &lt;ccc@example.com&gt;')
+  # => ["aaa@example.jp", "hoge &lt;bbb@example.jp&gt;", "\"fuga,hage\" &lt;ccc@example.com&gt;"]
+</pre>
+
+      <dt>get_mail_address(str)
+      <dd>メールアドレスの配列を返します。
+	<pre class="code">
+MailParser.get_mail_address('aaa@example.jp, hoge &lt;bbb@example.jp&gt;, "fuga,hage" &lt;ccc@example.com&gt;')
+  # => ["aaa@example.jp", "bbb@example.jp", "ccc@example.com"]
+</pre>
+
+      <dt>parse_content_type(str)
+      <dd>Content-Type へッダ文字列を解析し、次の Hash オブジェクトを返します。
+	メインタイプ,サブタイプ,パラメータ名は小文字に変換されます。
+	<table>
+	    <tr><th>キー<th>値
+	    <tr><td>:type<td>メインタイプ
+	    <tr><td>:subtype<td>サブタイプ
+	    <tr><td>:parameter<td>パラメータ名と値の Hash
+	</table>
+	<pre class="code">
+MailParser.parse_content_type("Text/Plain; CharSet=euc-jp")
+  # => {:type=>"text", :subtype=>"plain", :parameter=>{"charset"=>"euc-jp"}}
+</pre>
+
+      <dt>parse_content_disposition(str)
+      <dd>parse_content_type と同じ。
+    </dl>
+
+    <h2>履歴</h2>
+    <dl>
+      <dt>0.3.6 2005-10-14
+      <dd>
+	<ul>
+	  <li>phrase内に「&lt;」「&gt;」「(」「)」があった時にメールアドレスの取得に失敗するバグを修正。
+	  <li>「(」「)」「\(」「\)」が多く存在する行のパースに長時間かかるバグを修正。
+          <li>quoted-string内の「(〜)」を除去してしまうバグを修正。
+	</ul>
+
+      <dt>0.3.5 2005-06-08
+      <dd>
+	<ul>
+	  <li>本文がHTMLで添付ファイルがついている場合に、添付ファイルが認識されないバグを修正。
+	</ul>
+
+      <dt>0.3.4 2005-05-02
+      <dd>
+	<ul>
+	  <li>Date へッダの日付が UNIX 時刻の範囲外の時に落ちるバグを修正。
+	</ul>
+
+      <dt>0.3.3 2005-03-31
+      <dd>
+	<ul>
+	  <li>output_charset に nil を指定した時にコード変換しないようにした。
+	</ul>
+
+      <dt>0.3.2 2005-03-01
+      <dd>
+	<ul>
+	  <li>From,To,Ccへッダに奇数個の「"」があると無限ループになるバグを修正。
+	</ul>
+
+      <dt>0.3.1 2005-02-21
+      <dd>
+	<ul>
+	  <li>extract_message_type=() を追加。
+	</ul>
+
+      <dt>0.3 2005-01-28
+      <dd>
+	<ul>
+	  <li>最初の text/* を :body にするのをやめた。
+	  <li>:header を Hash に変更。
+	  <li>:rawheader 追加。
+	  <li>Uconv ではなく NKF を使用するようにした。
+	</ul>
+
+      <dt>0.2.1 2005-01-28
+      <dd>
+	<ul>
+	  <li>添付ファイルの Content-Type: が multipart/* の時に処理していなかったバグを修正。
+	  <li>Content-Type が message/* の時、:body が nil ではなく "" になっていたバグを修正。
+	  <li>最初の行が空白で始まっていると落ちるバグを修正。
+	</ul>
+
+      <dt>0.2 2005-01-06
+      <dd>
+	<ul>
+	  <li>UTF-8対応
+	  <li>output_charset=(), text_body_only=() を追加
+	  <li>Test::Unit を使用
+	</ul>
+
+      <dt>0.1 2004/11/02
+      <dd>
+	<ul>
+	  <li>公開
+	</ul>
+    </dl>
+    <hr>
+    <address><a href="mailto:tommy@tmtm.org">とみたまさひろ</a></address>
+    <p>
+<!-- Created: Tue Nov  2 20:34:41 JST 2004 -->
+<!-- hhmts start -->
+Last modified: Fri Oct 14 22:17:22 JST 2005
+<!-- hhmts end -->
+    </p>
+  </body>
+</html>
