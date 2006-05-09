@@ -1,5 +1,5 @@
 #!/usr/local/bin/ruby
-# $Id: mailparser-test.rb,v 1.11 2005/10/14 13:12:38 tommy Exp $
+# $Id: mailparser-test.rb,v 1.13 2006/03/29 23:29:26 tommy Exp $
 
 require "test/unit"
 require "./mailparser"
@@ -61,6 +61,49 @@ class TC_MailParser < Test::Unit::TestCase
     assert_equal("text", h[:type])
     assert_equal("html", h[:subtype])
     assert_equal("Euc-JP", h[:parameter]["charset"])
+  end
+  def test_parse_content_type_rfc2231()
+    h = parse_content_type("message/external-body; access-type=URL; URL*0=\"ftp://\"; URL*1=\"cs.utk.edu/pub/moore/bulk-mailer/bulk-mailer.tar\"")
+    assert_equal("message", h[:type])
+    assert_equal("external-body", h[:subtype])
+    assert_equal("URL", h[:parameter]["access-type"])
+    assert_equal("ftp://cs.utk.edu/pub/moore/bulk-mailer/bulk-mailer.tar", h[:parameter]["url"])
+  end
+  def test_parse_content_type_rfc2231_ext()
+    h = parse_content_type("application/x-stuff; title*=us-ascii'en-us'This%20is%20%2A%2A%2Afun%2A%2A%2A")
+    assert_equal("application", h[:type])
+    assert_equal("x-stuff", h[:subtype])
+    assert_equal("This is ***fun***", h[:parameter]["title"])
+  end
+  def test_parse_content_type_rfc2231_ext_multi()
+    h = parse_content_type("application/x-stuff; title*0*=us-ascii'en-us'This%20is%20even%20more%20; title*1*=%2A%2A%2Afun%2A%2A%2A%20; title*2*=\"isn't it!\"")
+    assert_equal("application", h[:type])
+    assert_equal("x-stuff", h[:subtype])
+    assert_equal("This is even more ***fun*** isn't it!", h[:parameter]["title"])
+  end
+  def test_parse_content_type_rfc2231_ext_nocharset()
+    h = parse_content_type("application/x-stuff; title*='en-us'This%20is%20%2A%2A%2Afun%2A%2A%2A")
+    assert_equal("application", h[:type])
+    assert_equal("x-stuff", h[:subtype])
+    assert_equal("This is ***fun***", h[:parameter]["title"])
+  end
+  def test_parse_content_type_rfc2231_ext_nolang()
+    h = parse_content_type("application/x-stuff; title*=us-ascii''This%20is%20%2A%2A%2Afun%2A%2A%2A")
+    assert_equal("application", h[:type])
+    assert_equal("x-stuff", h[:subtype])
+    assert_equal("This is ***fun***", h[:parameter]["title"])
+  end
+  def test_parse_content_type_rfc2231_ext_nocharset_nolang()
+    h = parse_content_type("application/x-stuff; title*=''This%20is%20%2A%2A%2Afun%2A%2A%2A")
+    assert_equal("application", h[:type])
+    assert_equal("x-stuff", h[:subtype])
+    assert_equal("This is ***fun***", h[:parameter]["title"])
+  end
+  def test_parse_content_type_rfc2231_ext_sjis()
+    h = parse_content_type("application/octet-stream; name*=shift_jis''%83%65%83%58%83%67")
+    assert_equal("application", h[:type])
+    assert_equal("octet-stream", h[:subtype])
+    assert_equal("¥Æ¥¹¥È", h[:parameter]["name"])
   end
   def test_mime_header_decode_plain()
     assert_equal("test", mime_header_decode("test"))
@@ -133,6 +176,9 @@ class TC_MailParser < Test::Unit::TestCase
   end
   def test_trunc_comment_invalid_parenthes4()
     assert_equal("abc(", trunc_comment("abc("))
+  end
+  def test_trunc_comment_last_backslash()
+    assert_equal("abc\\", trunc_comment("abc\\"))
   end
   def test_trunc_comment_sub()
     assert_equal("def", trunc_comment_sub("abc)def"))

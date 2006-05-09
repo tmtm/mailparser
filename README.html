@@ -16,6 +16,8 @@
 <!--
     <h2>ダウンロード</h2>
     <ul>
+      <li><a href="mailparser-0.3.8.tar.gz">mailparser-0.3.8.tar.gz</a>
+      <li><a href="mailparser-0.3.7.tar.gz">mailparser-0.3.7.tar.gz</a>
       <li><a href="mailparser-0.3.6.tar.gz">mailparser-0.3.6.tar.gz</a>
       <li><a href="mailparser-0.3.5.tar.gz">mailparser-0.3.5.tar.gz</a>
       <li><a href="mailparser-0.3.4.tar.gz">mailparser-0.3.4.tar.gz</a>
@@ -31,7 +33,7 @@
 
     <h2>必要なもの</h2>
     <ul>
-      <li><a href="http://www.ruby-lang.org">Ruby 1.8.3</a>
+      <li><a href="http://www.ruby-lang.org">Ruby 1.8.4</a>
     </ul>
 
     <h2>ライセンス</h2>
@@ -190,6 +192,18 @@ MailParser.parse_content_type("Text/Plain; CharSet=euc-jp")
 
     <h2>履歴</h2>
     <dl>
+      <dt>0.3.8 2006-03-30
+      <dd>
+	<ul>
+	  <li>RFC 2231 に対応。
+	</ul>
+
+      <dt>0.3.7 2006-03-11
+      <dd>
+	<ul>
+	  <li>From, To, Cc の行末が「\」の時に無限ループしていたバグを修正。
+	</ul>
+
       <dt>0.3.6 2005-10-14
       <dd>
 	<ul>
@@ -264,7 +278,7 @@ MailParser.parse_content_type("Text/Plain; CharSet=euc-jp")
     <p>
 <!-- Created: Tue Nov  2 20:34:41 JST 2004 -->
 <!-- hhmts start -->
-Last modified: Fri Oct 14 22:17:22 JST 2005
+Last modified: Thu Mar 30 08:34:00 JST 2006
 <!-- hhmts end -->
     </p>
   </body>

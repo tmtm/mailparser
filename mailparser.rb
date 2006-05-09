@@ -1,8 +1,11 @@
-# $Id: mailparser.rb,v 1.14 2005/10/14 13:12:38 tommy Exp $
+# $Id: mailparser.rb,v 1.17 2006/03/29 23:29:26 tommy Exp $
 #
-# Copyright (C) 2003-2005 TOMITA Masahiro
+# Copyright (C) 2003-2006 TOMITA Masahiro
 # tommy@tmtm.org
 #
+
+require "nkf"
+require "date"
 
 module MailParser
 
@@ -32,32 +35,26 @@ module MailParser
   module_function
 
   def euctoutf8(s)
-    require "nkf"
     NKF.nkf("-m0Ewx", s)
   end
 
   def sjistoutf8(s)
-    require "nkf"
     NKF.nkf("-m0Swx", s)
   end
 
   def jistoutf8(s)
-    require "nkf"
     NKF.nkf("-m0Jwx", s)
   end
 
   def sjistoeuc(s)
-    require "nkf"
     NKF.nkf("-m0Sex", s)
   end
 
   def jistoeuc(s)
-    require "nkf"
     NKF.nkf("-m0Jex", s)
   end
 
   def utf8toeuc(s)
-    require "nkf"
     NKF.nkf("-m0Wex", s)
   end
 
@@ -125,6 +122,9 @@ module MailParser
         end
         after = a
       end
+      if after == "\\" then
+        break
+      end
     end
     ret+after
   end
@@ -175,7 +175,6 @@ module MailParser
   end
 
   def get_date(s)
-    require "date"
     if s =~ /^[A-Z][A-Z][A-Z]\s*,\s*/i then
       s = $'
     end
@@ -191,10 +190,49 @@ module MailParser
       hash[:type] = $1.downcase
       hash[:subtype] = $2.downcase if $2
       params = $'	#'
-      while params =~ /;\s*([a-z0-9_-]+)\s*=\s*(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio do
-        pn, pv = $1, $2||$3
-        params = $'
-        hash[:parameter][pn.downcase] = pv
+      pending = {}
+      pending_ext = {}
+      while true do
+        if params =~ /;\s*([a-z0-9_-]+)(?:\*(\d+))?\s*=\s*(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
+          pn, ord, pv = $1, $2, $3||$4
+          params = $'
+          if ord then
+            pending[pn] = [] unless pending.key? pn
+            pending[pn] << [ord.to_i, pv]
+          else
+            hash[:parameter][pn.downcase] = pv
+          end
+        elsif params =~ /;\s*([a-z0-9_-]+)\*\s*=\s*([a-z0-9_-]+)?\'(?:[a-z0-9_-]+)?\'(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
+          pn, charset, pv = $1, $2, $3||$4
+          params = $'
+          pending_ext[pn] = [[0, pv, charset]]
+        elsif params =~ /;\s*([a-z0-9_-]+)\*0\*\s*=\s*([a-z0-9_-]+)?\'(?:[a-z0-9_-]+)?\'(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
+          pn, charset, pv = $1, $2, $3||$4
+          params = $'
+          pending_ext[pn] = [] unless pending_ext.key? pn
+          pending_ext[pn] = [[0, pv, charset]]
+        elsif params =~ /;\s*([a-z0-9_-]+)\*(\d+)\*\s*=\s*(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
+          pn, ord, pv = $1, $2, $3||$4
+          params = $'
+          pending_ext[pn] = [] unless pending_ext.key? pn
+          pending_ext[pn] << [ord.to_i, pv]
+        else
+          break
+        end
+      end
+      pending.each do |pn, pv|
+        hash[:parameter][pn.downcase] = pv.sort{|a,b| a[0]<=>b[0]}.map{|a|a[1]}.join
+      end
+      pending_ext.each do |pn, pv|
+        pv = pv.sort{|a,b| a[0]<=>b[0]}
+        charset = pv[0][2]
+        v = pv.map{|a|a[1].gsub(/%([0-9A-F][0-9A-F])/){$1.hex.chr}}.join
+        fc = MailParser::Charsets[charset.downcase] if charset
+        tc = @@output_charset && MailParser::Charsets[@@output_charset.downcase]
+        if fc and fc != "N" and fc != tc then
+          v = MailParser.send(MailParser::ConvertMethods[fc+tc], v)
+        end
+        hash[:parameter][pn.downcase] = v
       end
     end
     return hash
