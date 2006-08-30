@@ -18,9 +18,7 @@ all             : MAILBOX_LIST mailbox_list {val[1]}
 
 mailbox_list    : mailbox
                   {
-                    ml = RFC2822::MailboxList.new
-                    ml << val[0]
-                    ml
+                    RFC2822::MailboxList.new(val[0])
                   }
                 | mailbox_list ',' mailbox
                   {
@@ -30,9 +28,7 @@ mailbox_list    : mailbox
 
 address_list    : address
                   {
-                    al = RFC2822::AddressList.new
-                    al << val[0]
-                    al
+                    RFC2822::AddressList.new(val[0])
                   }
                 | address_list ',' address
                   {
@@ -162,9 +158,7 @@ quoted_string   : cfws_opt QUOTED_STRING cfws_opt
 
 msg_id_list     : msg_id
                   {
-                    mil = RFC2822::MsgIdList.new
-                    mil << val[0]
-                    mil
+                    RFC2822::MsgIdList.new(val[0])
                   }
                 | msg_id_list msg_id
                   {

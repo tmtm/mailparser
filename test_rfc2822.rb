@@ -13,7 +13,7 @@ ARGV.each do |fname|
     header.each do |h|
       begin
         RFC2822.parse(*h.split(/\s*:\s*/, 2))
-      rescue => e
+      rescue RFC2822::ParseError => e
         puts fname
         p e
         p h

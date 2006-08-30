@@ -42,6 +42,9 @@ module RFC2822
   end
 
   class MailboxList < Array
+    def initialize(val=nil)
+      self << val if val
+    end
   end
 
   class Mailbox
@@ -77,6 +80,9 @@ module RFC2822
   end
 
   class MsgIdList < Array
+    def initialize(val=nil)
+      self << val if val
+    end
   end
 
   class MsgId
@@ -87,6 +93,15 @@ module RFC2822
   end
 
   class AddressList < Array
+    def initialize(val=nil)
+      self << val if val
+    end
+  end
+
+  class PhraseList < Array
+    def initialize(val=nil)
+      self << val if val
+    end
   end
 
   module_function
