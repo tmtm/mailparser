@@ -12,9 +12,12 @@ class RFC2822::Scanner
     @header_type = header_type
     @comments = []
     @ss = StringScanner.new(str)
+    @ws_mode = false
+    @datetime_mode = false
   end
 
   attr_reader :comments
+  attr_accessor :ws_mode, :datetime_mode
 
   def scan(&block)
     case @header_type
@@ -41,12 +44,17 @@ class RFC2822::Scanner
 
   def scan_structured()
     until @ss.eos?
+      if @datetime_mode and s = @ss.scan(/\d\d:\d\d(:\d\d)?(?=\s)/)
+        yield :TIME_OF_DAY, s
+      end
       case
       when s = @ss.scan(/\s*\(/nmo)
         s << cfws(@ss)
-        yield :CFWS, s
+        yield :CFWS, s if @ws_mode
+        next
       when s = @ss.scan(/\s+/nmo)
-        yield :FWS, s
+        yield :FWS, s if @ws_mode
+        next
       when s = @ss.scan(/\"(\\[#{TEXT_RE}]|[#{QTEXT_RE}])*\"/no)
         yield :NO_FOLD_QUOTE, s
       when s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/nmo)
@@ -56,7 +64,7 @@ class RFC2822::Scanner
       when s = @ss.scan(/\[(\s*(\\[#{TEXT_RE}]|[#{DTEXT_RE}]))*\s*\]/nmo)
         yield :DOMAIN_LITERAL, s
       when s = @ss.scan(/[#{ATEXT_RE}]+/no)
-        if s =~ /\A\d+\z/ then
+        if @datetime_mode and s =~ /\A\d+\z/ then
           yield :DIGIT, s
         else
           yield :ATOM, s
@@ -95,11 +103,11 @@ class RFC2822::Scanner
         break if c.nil?
         ret << "(" << c << ")"
       else
-        raise ParseError, ss.rest
+        raise RFC2822::ParseError, ss.rest
       end
     end
     # 「)」がなかったら例外
-    raise ParseError, ss.rest
+    raise RFC2822::ParseError, ss.rest
   end
 
 end

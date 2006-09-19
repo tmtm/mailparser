@@ -1,8 +1,13 @@
+# $Id$
+
 require "rfc2822/parser"
 
 module RFC2822
 
   class ParseError < StandardError
+    def inspect()
+      "#<#{self.class}: #{message.inspect}>"
+    end
   end
 
   HEADER_TYPE = {
