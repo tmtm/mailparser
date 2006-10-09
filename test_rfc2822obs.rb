@@ -1,6 +1,6 @@
 # $Id$
 
-require "rfc2822"
+require "rfc2822obs"
 
 unless ARGV.empty?
   ARGV.each do |fname|
@@ -16,8 +16,8 @@ unless ARGV.empty?
       end
       header.each do |h|
         begin
-          RFC2822.parse(*h.split(/\s*:\s*/, 2))
-        rescue RFC2822::ParseError => e
+          RFC2822obs.parse(*h.split(/\s*:\s*/, 2))
+        rescue RFC2822obs::ParseError => e
           puts fname
           p e
           p h
@@ -30,9 +30,9 @@ end
 
 require "test/unit"
 
-class TC_RFC2822Parser < Test::Unit::TestCase
+class TC_RFC2822obsParser < Test::Unit::TestCase
   def setup()
-    @p = RFC2822::Parser.new()
+    @p = RFC2822obs::Parser.new()
   end
   def teardown()
   end
@@ -141,7 +141,7 @@ end
 
 class TC_AddrSpec < Test::Unit::TestCase
   def test_new()
-    a = RFC2822::AddrSpec.new("local", "domain") 
+    a = RFC2822obs::AddrSpec.new("local", "domain") 
     assert_equal("local", a.local_part)
     assert_equal("domain", a.domain)
     assert_equal("local@domain", a.to_s)
@@ -150,7 +150,7 @@ end
 
 class TC_Mailbox < Test::Unit::TestCase
   def test_new()
-    m = RFC2822::Mailbox.new("local@domain", ["phrase"])
+    m = RFC2822obs::Mailbox.new("local@domain", ["phrase"])
     assert_equal("local@domain", m.addr_spec)
     assert_equal(["phrase"], m.display_name)
     assert_equal(["phrase"], m.phrase)
@@ -158,7 +158,7 @@ class TC_Mailbox < Test::Unit::TestCase
   end
 
   def test_new_no_phrase()
-    m = RFC2822::Mailbox.new("local@domain")
+    m = RFC2822obs::Mailbox.new("local@domain")
     assert_equal("local@domain", m.addr_spec)
     assert_equal([], m.display_name)
     assert_equal([], m.phrase)
@@ -168,7 +168,7 @@ end
 
 class TC_DateTime < Test::Unit::TestCase
   def test_new_int()
-    d = RFC2822::DateTime.new(2006, 9, 25, 23, 56, 10, "+0900")
+    d = RFC2822obs::DateTime.new(2006, 9, 25, 23, 56, 10, "+0900")
     assert_equal(2006, d.year)
     assert_equal(9, d.month)
     assert_equal(25, d.day)
@@ -180,7 +180,7 @@ class TC_DateTime < Test::Unit::TestCase
   end
 
   def test_new_str()
-    d = RFC2822::DateTime.new("2006", "9", "25", "23", "56", "10", "+0900")
+    d = RFC2822obs::DateTime.new("2006", "9", "25", "23", "56", "10", "+0900")
     assert_equal(2006, d.year)
     assert_equal(9, d.month)
     assert_equal(25, d.day)
@@ -191,13 +191,21 @@ class TC_DateTime < Test::Unit::TestCase
     assert_equal(Time.utc(2006,9,25,14,56,10), d.time)
   end
 
-  def test_new_invalid_zone()
-    assert_raises(RFC2822::ParseError){RFC2822::DateTime.new("2006", "9", "25", "23", "56", "10", "GMT")}
+  def test_new_obsolete_zone()
+    d = RFC2822obs::DateTime.new("2006", "9", "25", "23", "56", "10", "GMT")
+    assert_equal(2006, d.year)
+    assert_equal(9, d.month)
+    assert_equal(25, d.day)
+    assert_equal(23, d.hour)
+    assert_equal(56, d.min)
+    assert_equal(10, d.sec)
+    assert_equal("+0000", d.zone)
+    assert_equal(Time.utc(2006,9,25,23,56,10), d.time)
   end
 
 end
 
-class TC_RFC2822 < Test::Unit::TestCase
+class TC_RFC2822obs < Test::Unit::TestCase
   def setup()
   end
   def teardown()

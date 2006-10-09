@@ -1,11 +1,11 @@
 require "strscan"
 
-class RFC2822::Scanner
-  TEXT_RE = '\x01-\x09\x0b\x0c\x0e-\x7f'
+class RFC2822obs::Scanner
+  TEXT_RE = '\x00-\x7f'
   QTEXT_RE = '\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f'
   ATEXT_RE = 'A-Za-z0-9\!\#\$\%\&\'\*\+\\-\/\=\?\^\_\`\{\|\}\~'
   CTEXT_RE = '\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x27\x2a-\x5b\x5d-\x7f'
-  UTEXT_RE = '\x01-\x7f'
+  UTEXT_RE = '\x00-\x7f'
   DTEXT_RE = '\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x5e-\x7e'
 
   def initialize(header_type, str)

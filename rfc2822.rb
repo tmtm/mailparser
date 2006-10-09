@@ -5,9 +5,6 @@ require "rfc2822/parser"
 module RFC2822
 
   class ParseError < StandardError
-    def inspect()
-      "#<#{self.class}: #{message.inspect}>"
-    end
   end
 
   HEADER_TYPE = {
@@ -46,24 +43,18 @@ module RFC2822
     end
   end
 
-  class MailboxList < Array
-    def initialize(val=nil)
-      self << val if val
-    end
-  end
-
   class Mailbox
-    def initialize(addr_spec, display_name)
+    def initialize(addr_spec, display_name=nil)
       @addr_spec = addr_spec
-      @display_name = display_name
+      @display_name = display_name || Phrase.new
     end
     attr_reader :addr_spec, :display_name
     alias :phrase :display_name
-    def to_s
-      if displayname then
-        "#{@display_name} <#{@addr_spec}>"
+    def to_s()
+      if display_name.empty? then
+        "<#{@addr_spec}>"
       else
-        @addrspec.to_s
+        "#{@display_name.join(" ")} <#{@addr_spec}>"
       end
     end
   end
@@ -75,6 +66,9 @@ module RFC2822
     end
     attr_reader :mailbox_list, :display_name
     alias :phrase :display_name
+    def to_s()
+      "#{@display_name}:#{@mailbox_list.join(",")};"
+    end
   end
 
   class ReturnPath
@@ -88,6 +82,9 @@ module RFC2822
     def initialize(val=nil)
       self << val if val
     end
+    def to_s()
+      self.map{|i| i.to_s}.join(" ")
+    end
   end
 
   class MsgId
@@ -95,6 +92,9 @@ module RFC2822
       @msg_id = msg_id
     end
     attr_reader :msg_id
+    def to_s()
+      "<#{@msg_id}>"
+    end
   end
 
   class AddressList < Array
@@ -108,6 +108,34 @@ module RFC2822
       self << val if val
     end
   end
+
+  class Phrase < Array
+    def initialize(val=nil)
+      self << val if val
+    end
+    def to_s()
+      self.join(" ")
+    end
+  end
+
+  class DateTime
+    def initialize(year, month, day, hour, min, sec, zone)
+      raise ParseError, "invalid zone" unless zone =~ /^[+-]\d\d\d\d$/
+      @year, @month, @day, @hour, @min, @sec, @zone =
+        year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, zone
+      z = zone[1,4].to_i
+      @zone_sec = z/100*3600 + z%100*60
+      @zone_sec = -@zone_sec if zone[0] == ?-
+    end
+
+    attr_reader :year, :month, :day, :hour, :min, :sec, :zone
+
+    def time()
+      t = Time.utc(@year, @month, @day, @hour, @min, @sec)
+      Time.at(t.to_i - @zone_sec)
+    end
+  end
+
 
   module_function
   def parse(name, value)

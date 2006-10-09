@@ -43,71 +43,126 @@
 
     <h2>機能</h2>
     <ul>
-      <li>メールを構成する文字列を解析し、Hash, Array, String 等のオブジェクトとして返します。
-      <li>例外は発生しません。不正な構造のメッセージがあった場合は適当に処理します。
-      <li>返される文字列の文字コードは EUC-JP(デフォルト) または UTF-8 です。
+      <li>メールを構成する文字列を解析します。
+      <li>メール構造による例外は発生しません。不正な構造のメッセージがあった場合は適当に処理します。
+      <li>返される文字列の文字コードは EUC-JP または UTF-8 に自動変換することができます。
       <li>処理できる charset は ISO-2022-JP, EUC-JP, SHIFT_JIS, UTF-8, US-ASCII です。
-	それ以外の charset の場合はデコードせずにそのままの文字列を返します。
+        それ以外の charset の場合はデコードせずにそのままの文字列を返します。
     </ul>
 
     <h2>使用例</h2>
     <pre class="code">
 require "mailparser"
 File.open("/tmp/hoge.eml") do |f|
-  m = MailParser.parse_message f
-  m[:from]                 # Fromへッダのメールアドレスの配列
-  m[:to]                   # Toへッダのメールアドレスの配列
-  m[:subject]              # Subjectへッダの内容
-  m[:body]                 # メール本文
-  m[:parts]                # 添付ファイルに対応する Hash の配列
-  m[:parts][0][:filename]  # 一番目の添付ファイルのファイル名
-  m[:parts][0][:body]      # 一番目の添付ファイルの内容
+  m = MailParser.new(f)
+  m.parse_message f
+  m.from                 # Fromへッダのメールアドレスの配列
+  m.to                   # Toへッダのメールアドレスの配列
+  m.subject              # Subjectへッダの内容
+  m.body                 # メール本文
+  m.parts                # 添付ファイルに対応する MailParserオブジェクトの配列
+  m.parts[0].filename    # 一番目の添付ファイルのファイル名
+  m.parts[0].body        # 一番目の添付ファイルの内容
 end
 </pre>
 
-    <h2>モジュールメソッド</h2>
+    <h2>MailParser クラス</h2>
+    <h3>クラスメソッド</h3>
     <dl>
-      <dt>parse_message(io)
-      <dd>IOオブジェクト(またはそれに似たもの)からメッセージを読み込み、解析した結果を次の Hash オブジェクトで返します。
-	<table>
-	    <tr><th>キー<th>値
-	    <tr><td>:from<td>Fromへッダのメールアドレスの配列
-	    <tr><td>:to<td>Toへッダのメールアドレスの配列
-	    <tr><td>:cc<td>Ccへッダのメールアドレスの配列
-	    <tr><td>:date<td>Dateへッダを解析した結果のTimeオブジェクト(Dateへッダがない場合やパースできない場合は nil)
-	    <tr><td>:subject<td>Subjectへッダの文字列(デコード済)
-	    <tr><td>:type<td>Content-Typeへッダのメインタイプ
-	    <tr><td>:subtype<td>Content-Typeへッダのサブタイプ
-	    <tr><td>:charset<td>Content-Typeへッダのcharsetパラメータの値(小文字)
-	    <tr><td>:encoding<td>Content-Transfer-Encodingへッダの値(小文字)
-	    <tr><td>:multipart<td>メインタイプが multipart の場合 true
-	    <tr><td>:boundary<td>パート毎の区切り文字列(マルチパート時)
-	    <tr><td>:filename<td>ファイル名
-	    <tr><td>:header<td>"へッダ名(小文字)"=>"へッダ値(デコード済)"のハッシュ
-	    <tr><td>:rawheader<td>生のへッダ部
-	    <tr><td>:body<td>メール本文(デコード済)
-	    <tr><td>:parts<td>各パートの配列(マルチパート時)。各パートはこれと同じ形式の Hash オブジェクト
-	    <tr><td>:message<td>メインタイプが message の場合、本文部を解析した結果の Hash オブジェクト
-	</table>
-
-      <dt>output_charset = str
-      <dd>出力の文字コードを指定します。
-	指定できる値は nil または "euc-jp" または "utf-8" です。
-	デフォルトは "euc-jp" です。
-	nil を指定した時はコード変換を行ないません。
-
-      <dt>text_body_only = flag
-      <dd>true の場合、:type == "text" 時だけ :body を生成します。
-	デフォルトは false です。
-
-      <dt>extract_message_type = flag
-      <dd>false の場合、Content-Type が message/* の時に、それ以上展開しません。
-	デフォルトは true です。
-
+      <dt>new(<var>source</var>, <var>options</var>={})
+      <dd>
+        <p>
+          <var>source</var> を解析対象文字列とします。
+          <var>source</var> は、IO や String のように each メソッドで１行ずつ文字列を処理できるクラスのオブジェクトです。
+          <var>options</var> はオプションを指定する Hash オブジェクトです。
+          次のオプションを指定することができます。
+        </p>
+        <table>
+            <tr><th>キー<th>値
+            <tr>
+              <td><code>:output_charset</code>
+              <td>文字コードを指定します。
+                有効な値は「<code>"euc-jp"</code>」「<code>"utf-8"</code>」「<code>nil</code>」です。
+                nil を指定した時はコード変換を行ないません。
+                デフォルトは nil です。
+            <tr>
+              <td><code>:body_is_first_text</code>
+              <td>true の場合、マルチパートメッセージでは body が最初のテキストパートの内容を返します。
+                false の場合、マルチパートメッセージでは body は nil を返します。
+            <tr>
+              <td><code>:read_immediately</code>
+              <td>new 時にデータをすべて読み込む(true)か、必要になった時にデータを読み込む(false)かを指定します。
+                デフォルトは false です。
+        </table>
     </dl>
-    <p>
-      これ以降は parse_message が内部で使用しているメソッドですが、個々に使用することもできます。
+
+    <h3>メソッド</h3>
     <dl>
+      <dt>from
+      <dd>From へッダに該当する MailParser::Mailbox オブジェクトの配列。
+
+      <dt>to
+      <dd>To へッダに該当する MailParser::Address オブジェクトの配列。
+
+      <dt>cc
+      <dd>Cc へッダに該当する MailParser::Address オブジェクトの配列。
+
+      <dt>sender
+      <dd>Sender ヘッダに該当する MailParser::Mailbox オブジェクト。
+
+      <dt>date
+      <dd>Date へッダを解析した結果の DateTime オブジェクト(Dateへッダがない場合や解析できない場合は nil)
+
+      <dt>subject
+      <dd>Subject へッダの文字列(デコード済)。
+        Subject ヘッダがなければ nil。
+
+      <dt>type
+      <dd>Content-Type へッダのメインタイプ名。小文字文字列。
+        Content-Type ヘッダがなければ nil。
+
+      <dt>subtype
+      <dd>Content-Type へッダのサブタイプ名。小文字文字列。
+        Content-Type ヘッダがなければ nil。
+
+      <dt>charset
+      <dd>Content-Type へッダの charset パラメータの値。小文字文字列。
+        Content-Type ヘッダがなければ nil。
+
+      <dt>encoding
+      <dd>Content-Transfer-Encoding へッダの値。小文字文字列。
+        Content-Transfer-Encoding ヘッダがなければ nil。
+
+      <dt>multipart?
+      <dd>type が "multipart" の場合 true。そうでなければ false。
+
+      <dt>boundary
+      <dd>パートの区切り文字列。multipart? が偽なら nil。
+
+      <dt>filename
+      <dd>パートのファイル名。ファイル名がなければ nil。
+
+      <dt>header
+      <dd>"へッダ名(小文字)"=>"へッダ値(デコード済文字列)" のハッシュ。
+
+      <dt>rawheader
+      <dd>生のへッダ部文字列。
+
+      <dt>body
+      <dd>メール本文(デコード済)。
+        type が "multipart", "message" の場合は、body_is_first_text の指定に従います。
+
+      <dt>parts
+      <dd>添付ファイルに相当する MailParser オブジェクトの配列。
+        type が "multipart" でなければ nil。
+
+      <dt>message
+      <dd>type が "message" の場合、本文部を解析した結果の MailParser オブジェクト。
+        type が "message" でなければ nil。
+
+
+
+
       <dt>b64_decode(str)
       <dd>Base64 エンコードされた文字列をデコードします。
 	<pre class="code">
@@ -126,7 +181,7 @@ MailParser.b64_hdecode("aG9nZWhvZ2U=")
       <dt>qp_decode(str)
       <dd>Quoted-Printable エンコードされた文字列をデコードします。
 	<pre class="code">
- MailParser.qp_decode("=A4=DB=A4=B2_=A4=CF=A4=B2")'
+MailParser.qp_decode("=A4=DB=A4=B2_=A4=CF=A4=B2")'
   # => "ほげ_はげ"
 </pre>
 
@@ -190,8 +245,36 @@ MailParser.parse_content_type("Text/Plain; CharSet=euc-jp")
       <dd>parse_content_type と同じ。
     </dl>
 
+    <h2>MailParser::Address クラス</h2>
+
+    <h2>MailParser::Mailbox クラス</h2>
+    <h3>インスタンスメソッド</h3>
+    <dl>
+      <dt>display_name / phrase
+      <dd>メールアドレスの表示名の文字列を返します。
+
+      <dt>addr_spec
+      <dd>メールアドレス(MailParser::AddrSpec)を返します。
+    </dl>
+
+    <h2>MailParser::AddrSpec クラス</h2>
+    <h3>インスタンスメソッド</h3>
+    <dl>
+      <dt>local_part
+      <dd>
+      <dt>domain
+      <dd>
+    </dl>
+
     <h2>履歴</h2>
     <dl>
+      <dt>0.4
+      <dd>
+        <ul>
+          <li>MailParser をモジュールからクラスに変更。
+	  <li>0.3.x との互換なし。
+        </ul>
+
       <dt>0.3.8 2006-03-30
       <dd>
 	<ul>
@@ -278,7 +361,7 @@ MailParser.parse_content_type("Text/Plain; CharSet=euc-jp")
     <p>
 <!-- Created: Tue Nov  2 20:34:41 JST 2004 -->
 <!-- hhmts start -->
-Last modified: Thu Mar 30 08:34:00 JST 2006
+Last modified: Wed Aug  2 09:48:13 JST 2006
 <!-- hhmts end -->
     </p>
   </body>
