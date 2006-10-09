@@ -1,3 +1,9 @@
+#
+# $Id$
+#
+# Copyright (C) 2006 TOMITA Masahiro
+# mailto:tommy@tmtm.org
+
 require "strscan"
 
 class RFC2822::Scanner

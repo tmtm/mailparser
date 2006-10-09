@@ -1,4 +1,8 @@
+#
 # $Id$
+#
+# Copyright (C) 2006 TOMITA Masahiro
+# mailto:tommy@tmtm.org
 
 require "rfc2822/parser"
 
@@ -135,7 +139,6 @@ module RFC2822
       Time.at(t.to_i - @zone_sec)
     end
   end
-
 
   module_function
   def parse(name, value)

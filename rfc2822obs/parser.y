@@ -10,7 +10,6 @@ class RFC2822obs::Parser
 
 rule
 
-
 all             : MAILBOX_LIST mailbox_list {val[1]}
                 | MAILBOX mailbox {val[1]}
                 | ADDRESS_LIST address_list {val[1]}
@@ -26,7 +25,7 @@ all             : MAILBOX_LIST mailbox_list {val[1]}
 
 mailbox_list    : mailbox_opt
                   {
-                   val[0] ? [val[0]] : []
+                    val[0] ? [val[0]] : []
                   }
                 | mailbox_list ',' mailbox_opt
                   {
@@ -39,7 +38,7 @@ mailbox_opt     : /* empty */
 
 address_list    : address_opt
                   {
-                   val[0] ? [val[0]] : []
+                    val[0] ? [val[0]] : []
                   }
                 | address_list ',' address_opt
                   {
@@ -191,11 +190,6 @@ atom_dot_list   : atom '.'
                     val.join
                   }
 
-#dot_atom        : dot_atom_text
-
-#dot_atom_text   : atom
-#                | dot_atom_text '.' atom
-
 quoted_string   : QUOTED_STRING
                 | NO_FOLD_QUOTE
 
@@ -227,14 +221,14 @@ id_right         : domain
 
 return_path     : '<' '>'
                   {
-#                    AddrSpec.new(nil)
+                    AddrSpec.new(nil)
                   }
-#                | '<' addr_spec '>'    /* -> angle_addr */
+#               | '<' addr_spec '>'    /* -> angle_addr */
                 | angle_addr
 
 received        : name_val_list ';' date_time
                   {
-#                    Received.new(val[0], val[2])
+                    Received.new(val[0], val[2])
                   }
 
 name_val_list   : /* empty */

@@ -27,6 +27,11 @@ class MailParser
     "resent-message-id" => RFC2822obs,
     "return-path"       => RFC2822obs,
     "received"          => RFC2822obs,
+    "content-type"      => RFC2045,
+    "content-description" => RFC2045,
+    "content-transfer-encoding" => RFC2045,
+    "content-id"        => RFC2045,
+    "mime-version"      => RFC2045,
   }
 
   class Header

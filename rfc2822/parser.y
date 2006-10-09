@@ -188,7 +188,7 @@ name_val_list   : /* empty */
 name_val_pair   : ATOM item_value
                   {
                     unless val[0] =~ /\A[a-zA-Z0-9](-?[a-zA-Z0-9])*\z/ then
-                      raise RFC2822::ParseError, val[0]
+                      raise ParseError, val[0]
                     end
                     [val[0], val[2]]
                   }
@@ -213,37 +213,37 @@ day_of_week     : /* empty */
                 | ATOM ','
                   {
                     unless ['mon','tue','wed','thu','fri','sat','sun'].include? val[0].downcase then
-                      raise RFC2822::ParseError, val[0]
+                      raise ParseError, val[0]
                     end
                   }
 
 time_of_day     : DIGIT ':' DIGIT
                   {
                     if val[0] !~ /\A\d\d\Z/ or val[0].to_i > 23 then
-                      raise RFC2822::ParseError, val[0]
+                      raise ParseError, val[0]
                     end
                     if val[2] !~ /\A\d\d\Z/ or val[2].to_i > 60 then
-                      raise RFC2822::ParseError, val[2]
+                      raise ParseError, val[2]
                     end
                     [val[0].to_i, val[2].to_i, 0]
                   }
                 | DIGIT ':' DIGIT ':' DIGIT
                   {
                     if val[0] !~ /\A\d\d\Z/ or val[0].to_i > 23 then
-                      raise RFC2822::ParseError, val[0]
+                      raise ParseError, val[0]
                     end
                     if val[2] !~ /\A\d\d\Z/ or val[2].to_i > 59 then
-                      raise RFC2822::ParseError, val[2]
+                      raise ParseError, val[2]
                     end
                     if val[4] !~ /\A\d\d\Z/ or val[4].to_i > 60 then
-                      raise RFC2822::ParseError, val[4]
+                      raise ParseError, val[4]
                     end
                     [val[0].to_i, val[2].to_i, val[4].to_i]
                   }
 
 zone            : ATOM
                   {
-                    raise RFC2822::ParseError, val[0] unless val[0] =~ /\A[+-]\d\d\d\d\Z/
+                    raise ParseError, val[0] unless val[0] =~ /\A[+-]\d\d\d\d\Z/
                     val[0]
                   }
 
