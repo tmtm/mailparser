@@ -195,10 +195,29 @@ class TC_DateTime < Test::Unit::TestCase
     assert_equal(Time.utc(2006,9,25,14,56,10), d.time)
   end
 
-  def test_new_invalid_zone()
-    assert_raises(RFC2822::ParseError){RFC2822::DateTime.new("2006", "9", "25", "23", "56", "10", "GMT")}
+  def test_new_obsolete_zone()
+    d = RFC2822::DateTime.new("2006", "9", "25", "23", "56", "10", "GMT")
+    assert_equal(2006, d.year)
+    assert_equal(9, d.month)
+    assert_equal(25, d.day)
+    assert_equal(23, d.hour)
+    assert_equal(56, d.min)
+    assert_equal(10, d.sec)
+    assert_equal("+0000", d.zone)
+    assert_equal(Time.utc(2006,9,25,23,56,10), d.time)
   end
 
+  def test_new_unknown_zone()
+    d = RFC2822::DateTime.new("2006", "9", "25", "23", "56", "10", "xxx")
+    assert_equal(2006, d.year)
+    assert_equal(9, d.month)
+    assert_equal(25, d.day)
+    assert_equal(23, d.hour)
+    assert_equal(56, d.min)
+    assert_equal(10, d.sec)
+    assert_equal("-0000", d.zone)
+    assert_equal(Time.utc(2006,9,25,23,56,10), d.time)
+  end
 end
 
 class TC_RFC2822 < Test::Unit::TestCase

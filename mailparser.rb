@@ -1,6 +1,6 @@
 # $Id$
 
-require "rfc2822obs"
+require "rfc2822"
 require "rfc2045"
 
 # メールをパースする。
@@ -12,32 +12,32 @@ require "rfc2045"
 #   m.part => [#<Mailparser>, ...]
 # 
 class MailParser
-  include RFC2822obs
+  include RFC2822
   include RFC2045
 
   HEADER_PARSER = {
-    "date"                      => RFC2822obs,
-    "from"                      => RFC2822obs,
-    "sender"                    => RFC2822obs,
-    "reply-to"                  => RFC2822obs,
-    "to"                        => RFC2822obs,
-    "cc"                        => RFC2822obs,
-    "bcc"                       => RFC2822obs,
-    "message-id"                => RFC2822obs,
-    "in-reply-to"               => RFC2822obs,
-    "references"                => RFC2822obs,
-    "subject"                   => RFC2822obs,
-    "comments"                  => RFC2822obs,
-    "keywords"                  => RFC2822obs,
-    "resent-date"               => RFC2822obs,
-    "resent-from"               => RFC2822obs,
-    "resent-sender"             => RFC2822obs,
-    "resent-to"                 => RFC2822obs,
-    "resent-cc"                 => RFC2822obs,
-    "resent-bcc"                => RFC2822obs,
-    "resent-message-id"         => RFC2822obs,
-    "return-path"               => RFC2822obs,
-    "received"                  => RFC2822obs,
+    "date"                      => RFC2822,
+    "from"                      => RFC2822,
+    "sender"                    => RFC2822,
+    "reply-to"                  => RFC2822,
+    "to"                        => RFC2822,
+    "cc"                        => RFC2822,
+    "bcc"                       => RFC2822,
+    "message-id"                => RFC2822,
+    "in-reply-to"               => RFC2822,
+    "references"                => RFC2822,
+    "subject"                   => RFC2822,
+    "comments"                  => RFC2822,
+    "keywords"                  => RFC2822,
+    "resent-date"               => RFC2822,
+    "resent-from"               => RFC2822,
+    "resent-sender"             => RFC2822,
+    "resent-to"                 => RFC2822,
+    "resent-cc"                 => RFC2822,
+    "resent-bcc"                => RFC2822,
+    "resent-message-id"         => RFC2822,
+    "return-path"               => RFC2822,
+    "received"                  => RFC2822,
     "content-type"              => RFC2045,
     "content-description"       => RFC2045,
     "content-transfer-encoding" => RFC2045,

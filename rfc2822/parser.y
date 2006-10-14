@@ -13,40 +13,41 @@ rule
 all             : MAILBOX_LIST mailbox_list {val[1]}
                 | MAILBOX mailbox {val[1]}
                 | ADDRESS_LIST address_list {val[1]}
-                | ADDRESS_LIST_BCC address_list_bcc {val[1]}
+                | ADDRESS_LIST_BCC address_list {val[1]}
                 | MSG_ID msg_id {val[1]}
                 | MSG_ID_LIST msg_id_list {val[1]}
                 | PHRASE_LIST phrase_list {val[1]}
+                | PHRASE_MSG_ID_LIST phrase_msg_id_list {val[1]}
                 | DATE_TIME date_time {val[1]}
                 | RETURN_PATH return_path {val[1]}
                 | RECEIVED received {val[1]}
                 | UNSTRUCTURED UNSTRUCTURED {val[1]}
 
-mailbox_list    : mailbox
+mailbox_list    : mailbox_opt
                   {
-                    [val[0]]
+                    val[0] ? [val[0]] : []
                   }
-                | mailbox_list ',' mailbox
+                | mailbox_list ',' mailbox_opt
                   {
-                    val[0] << val[2]
+                    val[0] << val[2] if val[2]
                     val[0]
                   }
 
-address_list    : address
+mailbox_opt     : /* empty */
+                | mailbox
+
+address_list    : address_opt
                   {
-                    [val[0]]
+                    val[0] ? [val[0]] : []
                   }
-                | address_list ',' address
+                | address_list ',' address_opt
                   {
-                    val[0] << val[2]
+                    val[0] << val[2] if val[2]
                     val[0]
                   }
 
-address_list_bcc: /* empty */
-                  {
-                    []
-                  }
-                | address_list
+address_opt     : /* empty */
+                | address
 
 address         : mailbox
                 | group
@@ -80,29 +81,44 @@ angle_addr      : '<' addr_spec '>'
                   {
                     val[1]
                   }
-
-group           : display_name ':' ';'
+                | '<' obs_route addr_spec '>'
                   {
-                    Group.new([], val[0])
+                    val[2]
                   }
-                | display_name ':' mailbox_list ';'
+
+obs_route       : obs_domain_list ':'
+
+obs_domain_list : '@' domain
+                | obs_domain_list obs_domain_list_delim '@' domain
+
+obs_domain_list_delim : /* empty */
+                      | obs_domain_list_delim ','
+
+#group           : display_name ':' ';'       /* mailbox_list may be empty */
+group           : display_name ':' mailbox_list ';'
                   {
                     Group.new(val[2], val[0])
                   }
 
 display_name    : phrase
 
-phrase_list     : phrase
+phrase_list     : phrase_opt
                   {
                     [val[0]]
                   }
-                | phrase_list ',' phrase
+                | phrase_list ',' phrase_opt
                   {
-                    val[0] << val[2]
+                    val[0] << val[2] if val[2]
                     val[0]
                   }
 
-phrase          : word
+phrase_opt      : /* empty */
+                | phrase
+
+phrase0         : local_part
+                | word_dot_list_dot
+
+phrase          : phrase0
                   {
                     Phrase.new(val[0])
                   }
@@ -116,11 +132,23 @@ addr_spec       : local_part '@' domain
                     AddrSpec.new(val[0], val[2])
                   }
 
-local_part      : dot_atom
-                | quoted_string
+local_part      : word
+                | word_dot_list word
+                  {
+                    val.join
+                  }
+                | atom_dot_list word
+                  {
+                    val.join
+                  }
 
-domain          : dot_atom
+domain          : atom
+                | atom_dot_list atom
+                  {
+                    val.join
+                  }
                 | domain_literal
+
 
 domain_literal  : DOMAIN_LITERAL
                 | NO_FOLD_LITERAL
@@ -131,10 +159,33 @@ word            : atom
 atom            : ATOM
                 | DIGIT
 
-dot_atom        : dot_atom_text
+word_dot_list   : quoted_string '.'
+                  {
+                    val.join
+                  }
+                | word_dot_list quoted_string '.'
+                  {
+                    val[0] << val[1]+val[2]
+                  }
+                | atom_dot_list quoted_string '.'
+                  {
+                    val[0] << val[1]+val[2]
+                  }
 
-dot_atom_text   : atom
-                | dot_atom_text '.' atom
+word_dot_list_dot : word_dot_list '.'
+                  {
+                    val.join
+                  }
+                | word_dot_list_dot '.'
+                  {
+                    val.join
+                  }
+
+atom_dot_list   : atom '.'
+                  {
+                    val.join
+                  }
+                | atom_dot_list atom '.'
                   {
                     val.join
                   }
@@ -156,20 +207,24 @@ msg_id          : '<' id_left '@' id_right '>'
                     MsgId.new(val[1,3].join)
                   }
 
-id_left         : dot_atom_text
-                | NO_FOLD_QUOTE
+phrase_msg_id_list : /* empty */
+                 | phrase_msg_id_list phrase0
+                 | phrase_msg_id_list msg_id
 
-id_right        : dot_atom_text
-                | NO_FOLD_LITERAL
+#id_left         : dot_atom_text  /* local_part include dot_atom_text */
+#                | NO_FOLD_QUOTE  /* local_part include NO_FOLD_QUOTE */
+id_left          : local_part
+
+#id_right        : dot_atom_text   /* domain include dot_atom_text */
+#                | NO_FOLD_LITERAL /* domain include NO_FOLD_LITERAL */
+id_right         : domain
 
 return_path     : '<' '>'
                   {
                     AddrSpec.new(nil)
                   }
-                | '<' addr_spec '>'
-                  {
-                    val[1]
-                  }
+#               | '<' addr_spec '>'    /* -> angle_addr */
+                | angle_addr
 
 received        : name_val_list ';' date_time
                   {
@@ -243,8 +298,11 @@ time_of_day     : DIGIT ':' DIGIT
 
 zone            : ATOM
                   {
-                    raise ParseError, val[0] unless val[0] =~ /\A[+-]\d\d\d\d\Z/
-                    val[0]
+                    if val[0] =~ /\A[+-]\d\d\d\d\Z/ then
+                      val[0]
+                    else
+                      ZONE[val[0].upcase] || "-0000"
+                    end
                   }
 
 end
