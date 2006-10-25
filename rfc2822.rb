@@ -187,7 +187,15 @@ module RFC2822
   module_function
   def parse(name, value)
     htype = HEADER_TYPE[name.downcase] || :UNSTRUCTURED
-    parser = Parser.new
-    parser.parse(htype, value)
+    if htype == :UNSTRUCTURED then
+      return value.chomp
+    end
+    if htype.is_a? Array then
+      parser = htype[0]::Parser.new
+      parser.parse(htype[1], value)
+    else
+      parser = Parser.new
+      parser.parse(htype, value)
+    end
   end
 end

@@ -8,7 +8,7 @@ clean:
 	cd rfc2045 && make clean
 	cd rfc2183 && make clean
 
-test:
-	ruby -w test_rfc2822.rb
-	ruby -w test_rfc2045.rb
-	ruby -w test_rfc2183.rb
+test: test_
+
+test_:
+	ruby -w test.rb
