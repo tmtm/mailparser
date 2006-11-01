@@ -7,7 +7,7 @@
 require "rfc2822"
 require "rfc2045/parser"
 
-module RFC2045
+class RFC2045
 
   class ParseError < StandardError
   end
@@ -36,8 +36,7 @@ module RFC2045
     attr_reader :mechanism
   end
 
-  module_function
-  def parse(name, value)
+  def self.parse(name, value)
     htype = HEADER_TYPE[name.downcase] || :UNSTRUCTURED
     if htype == :UNSTRUCTURED then
       return value.chomp

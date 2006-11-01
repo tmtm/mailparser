@@ -2,6 +2,7 @@
 
 require "rfc2822"
 require "rfc2045"
+require "rfc2183"
 
 # メールをパースする。
 # 
@@ -12,9 +13,6 @@ require "rfc2045"
 #   m.part => [#<Mailparser>, ...]
 # 
 class MailParser
-  include RFC2822
-  include RFC2045
-
   HEADER_PARSER = {
     "date"                      => RFC2822,
     "from"                      => RFC2822,
@@ -43,6 +41,7 @@ class MailParser
     "content-transfer-encoding" => RFC2045,
     "content-id"                => RFC2045,
     "mime-version"              => RFC2045,
+    "content-disposition"       => RFC2183,
   }
 
   # 単一のヘッダ

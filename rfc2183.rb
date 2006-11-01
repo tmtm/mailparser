@@ -6,7 +6,7 @@
 
 require "rfc2183/parser"
 
-module RFC2183
+class RFC2183
 
   class ParseError < StandardError
   end
@@ -23,8 +23,7 @@ module RFC2183
     attr_reader :type, :params
   end
 
-  module_function
-  def parse(name, value)
+  def self.parse(name, value)
     htype = HEADER_TYPE[name.downcase] || :UNSTRUCTURED
     if htype == :UNSTRUCTURED then
       return value.chomp

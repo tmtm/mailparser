@@ -4,7 +4,7 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-class RFC2822::Parser
+class Parser
 
   options no_result_var
 
@@ -307,6 +307,10 @@ zone            : ATOM
 
 end
 
+---- header
+
+class RFC2822
+
 ---- inner
 
 require "rfc2822/scanner"
@@ -314,7 +318,7 @@ require "rfc2822/scanner"
 def parse(header_type, value)
   @header_type = header_type
   @value = value
-  @scanner = RFC2822::Scanner.new(header_type, value)
+  @scanner = Scanner.new(header_type, value)
   ret = yyparse(self, :parse_sub)
   @comments = @scanner.comments
   ret
@@ -329,4 +333,8 @@ def on_error(t, val, vstack)
 #  p t, val, vstack
 #  p racc_token2str(t)
   raise ParseError, val
+end
+
+---- footer
+
 end

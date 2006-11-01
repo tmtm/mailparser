@@ -4,7 +4,7 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-class RFC2183::Parser
+class Parser
 
   options no_result_var
 
@@ -41,6 +41,10 @@ attribute       : TOKEN
 value           : TOKEN
                 | QUOTED_STRING
 
+---- header
+
+class RFC2183
+
 ---- inner
 
 require "rfc2183/scanner"
@@ -48,7 +52,7 @@ require "rfc2183/scanner"
 def parse(header_type, value)
   @header_type = header_type
   @value = value
-  @scanner = RFC2183::Scanner.new(header_type, value)
+  @scanner = Scanner.new(header_type, value)
   ret = yyparse(self, :parse_sub)
   @comments = @scanner.comments
   ret
@@ -63,4 +67,8 @@ def on_error(t, val, vstack)
 #  p t, val, vstack
 #  p racc_token2str(t)
   raise ParseError, val
+end
+
+---- footer
+
 end
