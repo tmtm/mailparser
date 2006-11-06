@@ -44,6 +44,9 @@ class MailParser
     "content-disposition"       => RFC2183,
   }
 
+  class ParseError < StandardError
+  end
+
   # 単一のヘッダ
   class HeaderItem
     # name:: ヘッダ名(String)
@@ -124,33 +127,16 @@ class MailParser
     # src からヘッダ部を読み込み Header オブジェクトに保持する
     # src:: each_line イテレータを持つオブジェクト(ex. IO, String)
     # boundary:: このパートの終わりを表す文字列の配列
-    def initialize(src, boundary=[])
+    def initialize(src, opt, boundary=[])
       @src = src
+      @opt = opt
       @boundary = boundary
       read_header
       read_body
       read_part
     end
 
-    def read_header()
-      @header = Header.new
-      headers = []
-      each_line_with_delimiter(@boundary) do |line|
-        break if line.chomp.empty?
-        if line =~ /^\s/ and headers.size > 0 then
-          headers[-1] << line
-        else
-          headers << line
-        end
-      end
-      headers.each do |h|
-        name, body = h.split(/\s*:\s*/, 2)
-        name.downcase!
-        @header.add(name, body)
-      end
-    end
-
-    attr_reader :header
+    attr_reader :header, :body, :part, :last_line
 
     # Content-Type の type を返す。
     # Content-Type がない場合は "text"
@@ -172,41 +158,88 @@ class MailParser
       end
     end
 
+    # Content-Type の charset 属性の値(小文字)を返す。
+    # charset 属性がない場合は "us-ascii"
+    def charset()
+      c = "us-ascii"
+      if @header.key? "content-type" then
+        c = @header["content-type"][0].params["charset"].downcase
+      end
+      return c
+    end
+
     # マルチパートメッセージかどうかを返す
     def multipart?()
       return type == "multipart"
     end
 
-    # 本文を返す。
-    def read_body()
-      return if type == "multipart"
-      @body = ""
-      each_line_with_delimiter(@boundary) do |line|
-        @body << line
+    # Content-Transfer-Encoding の mechanism を返す
+    # Content-Transfer-Encoding がない場合は "7bit"
+    def content_transfer_encoding()
+      if @header.key? "content-transfer-encoding" then
+        return @header["content-transfer-encoding"][0].mechanism
+      else
+        return "7bit"
       end
-      return @body
     end
 
-    attr_reader :body
+    
+    def filename()
+    end
 
-    # 各パートの Message オブジェクトの配列を返す。
+    private
+
+    # ヘッダ部をパースする
+    def read_header()
+      @header = Header.new
+      headers = []
+      each_line_with_delimiter(@boundary) do |line|
+        break if line.chomp.empty?
+        if line =~ /^\s/ and headers.size > 0 then
+          headers[-1] << line
+        else
+          headers << line
+        end
+      end
+      headers.each do |h|
+        name, body = h.split(/\s*:\s*/, 2)
+        name.downcase!
+        @header.add(name, body)
+      end
+    end
+
+    # 本文を読む
+    def read_body()
+      @body = ""
+      return if type == "multipart"
+      if @opt[:skip_body] or (@opt[:text_body_only] and type != "text")
+        each_line_with_delimiter(@boundary){}
+      else
+        each_line_with_delimiter(@boundary) do |line|
+          @body << line
+        end
+        case content_transfer_encoding
+        when "quoted-printable" then @body = RFC2045.qp_decode(@body)
+        when "base64" then @body = RFC2045.b64_decode(@body)
+        end
+      end
+    end
+
+    # 各パートの Message オブジェクトの配列を作成
     def read_part()
-      return if type != "multipart"
       @part = []
+      return if type != "multipart"
       b = @header["content-type"][0].params["boundary"]
       bd = @boundary + ["--#{b}--", "--#{b}"]
       each_line_with_delimiter(bd){}  # skip preamble
       ll = last_line
       while ll == bd[-1] do
-        m = Message.new(@src, bd)
+        m = Message.new(@src, @opt, bd)
         @part << m
         ll = m.last_line
       end
       each_line_with_delimiter(@boundary){} if @last_line == bd[-2] # skip epilogue
-      return @part
     end
-
-    attr_reader :part
 
     # 行毎にブロックを繰り返す
     # delim に含まれる行に一致した場合は中断
@@ -218,10 +251,12 @@ class MailParser
       end
       return
     end
-    attr_reader :last_line
   end
 
   # opt:: オプション(Hash)
+  #  :skip_body:: 本文をスキップする
+  #  :text_body_only:: text/* type 以外の本文をスキップする
+  #  :extract_message_type:: message/* type を展開する
   def initialize(opt={})
     @opt = opt
   end
@@ -229,6 +264,6 @@ class MailParser
   # Message オブジェクトを返す
   # src:: each_line イテレータを持つオブジェクト(ex. IO, String)
   def parse(src)
-    Message.new(src)
+    Message.new(src, @opt)
   end
 end

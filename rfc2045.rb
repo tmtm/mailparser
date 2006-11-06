@@ -49,4 +49,12 @@ class RFC2045
       parser.parse(htype, value)
     end
   end
+
+  def self.qp_decode(str)
+    return str.gsub(/=\s*$/,"=").unpack("M")[0]
+  end
+
+  def self.b64_decode(str)
+    return str.gsub(/[^A-Za-z0-9\+\/=]/,"").unpack("m")[0]
+  end
 end

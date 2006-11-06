@@ -96,5 +96,20 @@ class TC_RFC2045 < Test::Unit::TestCase
     assert_equal("1.0", v)
   end
 
+  def test_qp_decode()
+    assert_equal("IJKL", RFC2045.qp_decode("=49=4A=4B=4C"))
+    assert_equal("IJKL", RFC2045.qp_decode("=49=4a=4b=4c"))
+    assert_equal("abcdefg", RFC2045.qp_decode("abcd=\r\nefg"))
+    assert_equal("abcdefg", RFC2045.qp_decode("abcd=  \r\nefg"))
+    assert_equal("abcdefg", RFC2045.qp_decode("abcd=\nefg"))
+    assert_equal("abcdefg", RFC2045.qp_decode("abcd=  \nefg"))
+  end
+
+  def test_b64_decode()
+    assert_equal("abcdefg", RFC2045.b64_decode("YWJjZGVmZw=="))
+    assert_equal("01234567890123456789", RFC2045.b64_decode("MDEyMzQ1Njc4OTAxMjM0NTY3ODk="))
+    assert_equal("01234567890123456789", RFC2045.b64_decode("MDEyMzQ1Njc4\nOTAxMjM0NTY3ODk="))
+    assert_equal("01234567890123456789", RFC2045.b64_decode("MDEyMzQ1Nj\nc4OTAxMjM0NTY3ODk="))
+  end
 end
 

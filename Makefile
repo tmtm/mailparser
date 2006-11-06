@@ -11,4 +11,4 @@ clean:
 test: test_
 
 test_:
-	ruby -w test.rb
+	ruby -I . -w test.rb

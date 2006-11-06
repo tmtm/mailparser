@@ -92,7 +92,7 @@ class RFC2822
   class Mailbox
     def initialize(addr_spec, display_name=nil)
       @addr_spec = addr_spec
-      @display_name = display_name || Phrase.new
+      @display_name = display_name || ""
     end
     attr_reader :addr_spec, :display_name
     alias :phrase :display_name
@@ -100,7 +100,7 @@ class RFC2822
       if display_name.empty? then
         "<#{@addr_spec}>"
       else
-        "#{@display_name.join(" ")} <#{@addr_spec}>"
+        "#{@display_name} <#{@addr_spec}>"
       end
     end
   end
@@ -152,15 +152,6 @@ class RFC2822
   class PhraseList < Array
     def initialize(val=nil)
       self << val if val
-    end
-  end
-
-  class Phrase < Array
-    def initialize(val=nil)
-      self << val if val
-    end
-    def to_s()
-      self.join(" ")
     end
   end
 

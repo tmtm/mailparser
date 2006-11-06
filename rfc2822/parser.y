@@ -120,11 +120,11 @@ phrase0         : local_part
 
 phrase          : phrase0
                   {
-                    Phrase.new(val[0])
+                    val[0].to_s
                   }
                 | phrase word
                   {
-                    val[0] << val[1]
+                    val[0] << " #{val[1]}"
                   }
 
 addr_spec       : local_part '@' domain
