@@ -4,7 +4,7 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-require "rfc2822"
+require "mailparser/rfc2822"
 
 unless ARGV.empty?
   ARGV.each do |fname|
@@ -20,8 +20,8 @@ unless ARGV.empty?
       end
       header.each do |h|
         begin
-          RFC2822.parse(*h.split(/\s*:\s*/, 2))
-        rescue RFC2822::ParseError => e
+          MailParser::RFC2822.parse(*h.split(/\s*:\s*/, 2))
+        rescue MailParser::RFC2822::ParseError => e
           puts fname
           p e
           p h
@@ -36,7 +36,7 @@ require "test/unit"
 
 class TC_RFC2822Parser < Test::Unit::TestCase
   def setup()
-    @p = RFC2822::Parser.new()
+    @p = MailParser::RFC2822::Parser.new()
   end
   def teardown()
   end
@@ -44,16 +44,16 @@ class TC_RFC2822Parser < Test::Unit::TestCase
   def test_mailbox_list()
     m = @p.parse(:MAILBOX_LIST, "a@b.c")
     assert_equal(1, m.size)
-    assert_kind_of(RFC2822::Mailbox, m[0])
+    assert_kind_of(MailParser::RFC2822::Mailbox, m[0])
     assert_equal("<a@b.c>", m[0].to_s)
     m = @p.parse(:MAILBOX_LIST, "hoge <a@b.c>")
     assert_equal(1, m.size)
-    assert_kind_of(RFC2822::Mailbox, m[0])
+    assert_kind_of(MailParser::RFC2822::Mailbox, m[0])
     assert_equal("hoge <a@b.c>", m[0].to_s)
     m = @p.parse(:MAILBOX_LIST, "hoge <a@b.c>, d@e.f")
     assert_equal(2, m.size)
-    assert_kind_of(RFC2822::Mailbox, m[0])
-    assert_kind_of(RFC2822::Mailbox, m[1])
+    assert_kind_of(MailParser::RFC2822::Mailbox, m[0])
+    assert_kind_of(MailParser::RFC2822::Mailbox, m[1])
     assert_equal("hoge <a@b.c>", m[0].to_s)
     assert_equal("<d@e.f>", m[1].to_s)
   end
@@ -73,21 +73,21 @@ class TC_RFC2822Parser < Test::Unit::TestCase
   def test_address_list()
     a = @p.parse(:ADDRESS_LIST, "a@b.c")
     assert_equal(1, a.size)
-    assert_kind_of(RFC2822::Mailbox, a[0])
+    assert_kind_of(MailParser::RFC2822::Mailbox, a[0])
     assert_equal("<a@b.c>", a[0].to_s)
     a = @p.parse(:ADDRESS_LIST, "group:;, hoge <a@b.c>")
     assert_equal(2, a.size)
-    assert_kind_of(RFC2822::Group, a[0])
-    assert_kind_of(RFC2822::Mailbox, a[1])
+    assert_kind_of(MailParser::RFC2822::Group, a[0])
+    assert_kind_of(MailParser::RFC2822::Mailbox, a[1])
     assert_equal("group:;", a[0].to_s)
     assert_equal("hoge <a@b.c>", a[1].to_s)
     a = @p.parse(:ADDRESS_LIST, "group: a@b.c, hoge <d@e.f>;")
     assert_equal(1, a.size)
-    assert_kind_of(RFC2822::Group, a[0])
+    assert_kind_of(MailParser::RFC2822::Group, a[0])
     assert_kind_of(Array, a[0].mailbox_list)
     assert_equal(2, a[0].mailbox_list.size)
-    assert_kind_of(RFC2822::Mailbox, a[0].mailbox_list[0])
-    assert_kind_of(RFC2822::Mailbox, a[0].mailbox_list[1])
+    assert_kind_of(MailParser::RFC2822::Mailbox, a[0].mailbox_list[0])
+    assert_kind_of(MailParser::RFC2822::Mailbox, a[0].mailbox_list[1])
     assert_equal("group:<a@b.c>,hoge <d@e.f>;", a[0].to_s)
   end
 
@@ -96,40 +96,40 @@ class TC_RFC2822Parser < Test::Unit::TestCase
     assert_equal(0, a.size)
     a = @p.parse(:ADDRESS_LIST_BCC, "a@b.c")
     assert_equal(1, a.size)
-    assert_kind_of(RFC2822::Mailbox, a[0])
+    assert_kind_of(MailParser::RFC2822::Mailbox, a[0])
     assert_equal("<a@b.c>", a[0].to_s)
     a = @p.parse(:ADDRESS_LIST_BCC, "group:;, hoge <a@b.c>")
     assert_equal(2, a.size)
-    assert_kind_of(RFC2822::Group, a[0])
-    assert_kind_of(RFC2822::Mailbox, a[1])
+    assert_kind_of(MailParser::RFC2822::Group, a[0])
+    assert_kind_of(MailParser::RFC2822::Mailbox, a[1])
     assert_equal("group:;", a[0].to_s)
     assert_equal("hoge <a@b.c>", a[1].to_s)
     a = @p.parse(:ADDRESS_LIST_BCC, "group: a@b.c, hoge <d@e.f>;")
     assert_equal(1, a.size)
-    assert_kind_of(RFC2822::Group, a[0])
+    assert_kind_of(MailParser::RFC2822::Group, a[0])
     assert_kind_of(Array, a[0].mailbox_list)
     assert_equal(2, a[0].mailbox_list.size)
-    assert_kind_of(RFC2822::Mailbox, a[0].mailbox_list[0])
-    assert_kind_of(RFC2822::Mailbox, a[0].mailbox_list[1])
+    assert_kind_of(MailParser::RFC2822::Mailbox, a[0].mailbox_list[0])
+    assert_kind_of(MailParser::RFC2822::Mailbox, a[0].mailbox_list[1])
     assert_equal("group:<a@b.c>,hoge <d@e.f>;", a[0].to_s)
   end
 
   def test_msg_id()
     m = @p.parse(:MSG_ID, "<a@b.c>")
-    assert_kind_of(RFC2822::MsgId, m)
+    assert_kind_of(MailParser::RFC2822::MsgId, m)
     assert_equal("<a@b.c>", m.to_s)
   end
 
   def test_msg_id_list()
     m = @p.parse(:MSG_ID_LIST, "<a@b.c>")
     assert_equal(1, m.size)
-    assert_kind_of(RFC2822::MsgId, m[0])
+    assert_kind_of(MailParser::RFC2822::MsgId, m[0])
     assert_equal("<a@b.c>", m.to_s)
     m = @p.parse(:MSG_ID_LIST, "<a@b.c> <d@e.f>")
     assert_kind_of(Array, m)
     assert_equal(2, m.size)
-    assert_kind_of(RFC2822::MsgId, m[0])
-    assert_kind_of(RFC2822::MsgId, m[1])
+    assert_kind_of(MailParser::RFC2822::MsgId, m[0])
+    assert_kind_of(MailParser::RFC2822::MsgId, m[1])
     assert_equal("<a@b.c> <d@e.f>", m.to_s)
   end
 
@@ -170,7 +170,7 @@ end
 
 class TC_AddrSpec < Test::Unit::TestCase
   def test_new()
-    a = RFC2822::AddrSpec.new("local", "domain") 
+    a = MailParser::RFC2822::AddrSpec.new("local", "domain") 
     assert_equal("local", a.local_part)
     assert_equal("domain", a.domain)
     assert_equal("local@domain", a.to_s)
@@ -179,7 +179,7 @@ end
 
 class TC_Mailbox < Test::Unit::TestCase
   def test_new()
-    m = RFC2822::Mailbox.new("local@domain", "phrase")
+    m = MailParser::RFC2822::Mailbox.new("local@domain", "phrase")
     assert_equal("local@domain", m.addr_spec)
     assert_equal("phrase", m.display_name)
     assert_equal("phrase", m.phrase)
@@ -187,7 +187,7 @@ class TC_Mailbox < Test::Unit::TestCase
   end
 
   def test_new_no_phrase()
-    m = RFC2822::Mailbox.new("local@domain")
+    m = MailParser::RFC2822::Mailbox.new("local@domain")
     assert_equal("local@domain", m.addr_spec)
     assert_equal("", m.display_name)
     assert_equal("", m.phrase)
@@ -197,7 +197,7 @@ end
 
 class TC_DateTime < Test::Unit::TestCase
   def test_new_int()
-    d = RFC2822::DateTime.new(2006, 9, 25, 23, 56, 10, "+0900")
+    d = MailParser::RFC2822::DateTime.new(2006, 9, 25, 23, 56, 10, "+0900")
     assert_equal(2006, d.year)
     assert_equal(9, d.month)
     assert_equal(25, d.day)
@@ -209,7 +209,7 @@ class TC_DateTime < Test::Unit::TestCase
   end
 
   def test_new_str()
-    d = RFC2822::DateTime.new("2006", "9", "25", "23", "56", "10", "+0900")
+    d = MailParser::RFC2822::DateTime.new("2006", "9", "25", "23", "56", "10", "+0900")
     assert_equal(2006, d.year)
     assert_equal(9, d.month)
     assert_equal(25, d.day)
@@ -221,7 +221,7 @@ class TC_DateTime < Test::Unit::TestCase
   end
 
   def test_new_obsolete_zone()
-    d = RFC2822::DateTime.new("2006", "9", "25", "23", "56", "10", "GMT")
+    d = MailParser::RFC2822::DateTime.new("2006", "9", "25", "23", "56", "10", "GMT")
     assert_equal(2006, d.year)
     assert_equal(9, d.month)
     assert_equal(25, d.day)
@@ -233,7 +233,7 @@ class TC_DateTime < Test::Unit::TestCase
   end
 
   def test_new_unknown_zone()
-    d = RFC2822::DateTime.new("2006", "9", "25", "23", "56", "10", "xxx")
+    d = MailParser::RFC2822::DateTime.new("2006", "9", "25", "23", "56", "10", "xxx")
     assert_equal(2006, d.year)
     assert_equal(9, d.month)
     assert_equal(25, d.day)

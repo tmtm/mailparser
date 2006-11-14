@@ -4,17 +4,16 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-require "rfc2231"
+require "mailparser/rfc2231"
 require "test/unit"
 
 class TC_RFC2231 < Test::Unit::TestCase
-  include RFC2231
   def test_parse_param()
     params = {
       "hoge" => "fuga",
       "foo"  => "bar",
     }
-    h = parse_param(params)
+    h = MailParser::RFC2231.parse_param(params)
     assert_equal("fuga", h["hoge"])
     assert_equal(nil, h["hoge"].charset)
     assert_equal(nil, h["hoge"].language)
@@ -29,7 +28,7 @@ class TC_RFC2231 < Test::Unit::TestCase
       "hoge*1" => "bar",
       "foo"  => "bar",
     }
-    h = parse_param(params)
+    h = MailParser::RFC2231.parse_param(params)
     assert_equal("fugabar", h["hoge"])
     assert_equal(nil, h["hoge"].charset)
     assert_equal(nil, h["hoge"].language)
@@ -44,7 +43,7 @@ class TC_RFC2231 < Test::Unit::TestCase
       "hoge*1"  => "bar",
       "foo"  => "bar",
     }
-    h = parse_param(params)
+    h = MailParser::RFC2231.parse_param(params)
     assert_equal("fugabar", h["hoge"])
     assert_equal("", h["hoge"].charset)
     assert_equal("", h["hoge"].language)
@@ -59,7 +58,7 @@ class TC_RFC2231 < Test::Unit::TestCase
       "hoge*1"  => "bar",
       "foo"  => "bar",
     }
-    h = parse_param(params)
+    h = MailParser::RFC2231.parse_param(params)
     assert_equal("fugabar", h["hoge"])
     assert_equal("euc-jp", h["hoge"].charset)
     assert_equal("ja", h["hoge"].language)
@@ -74,7 +73,7 @@ class TC_RFC2231 < Test::Unit::TestCase
       "hoge*1"  => "%34%35%36",
       "foo"  => "bar",
     }
-    h = parse_param(params)
+    h = MailParser::RFC2231.parse_param(params)
     assert_equal("0123%34%35%36", h["hoge"])
     assert_equal("", h["hoge"].charset)
     assert_equal("", h["hoge"].language)
@@ -88,7 +87,7 @@ class TC_RFC2231 < Test::Unit::TestCase
       "hoge*" => "''fuga",
       "foo"  => "bar",
     }
-    h = parse_param(params)
+    h = MailParser::RFC2231.parse_param(params)
     assert_equal("fuga", h["hoge"])
     assert_equal("", h["hoge"].charset)
     assert_equal("", h["hoge"].language)
@@ -101,14 +100,14 @@ class TC_RFC2231 < Test::Unit::TestCase
     params = {
       "hoge*" => "fuga",
     }
-    assert_raises(RFC2231::ParseError){parse_param(params)}
+    assert_raises(MailParser::RFC2231::ParseError){MailParser::RFC2231.parse_param(params)}
   end
 
   def test_parse_param8()
     params = {
       "hoge*0*" => "fuga",
     }
-    assert_raises(RFC2231::ParseError){parse_param(params)}
+    assert_raises(MailParser::RFC2231::ParseError){MailParser::RFC2231.parse_param(params)}
   end
 
   def test_rfc_example()
@@ -116,7 +115,7 @@ class TC_RFC2231 < Test::Unit::TestCase
       "URL*0" => "ftp://",
       "URL*1" => "cs.utk.edu.pub/moore/bulk-mailer/buik-mailer.tar"
     }
-    h = parse_param(params)
+    h = MailParser::RFC2231.parse_param(params)
     assert_equal("ftp://cs.utk.edu.pub/moore/bulk-mailer/buik-mailer.tar", h["URL"])
     assert_equal(nil, h["URL"].charset)
     assert_equal(nil, h["URL"].language)
@@ -126,7 +125,7 @@ class TC_RFC2231 < Test::Unit::TestCase
     params = {
       "title*" => "us-ascii'en-us'This%20is%20%2A%2A%2Afun%2A%2A%2A"
     }
-    h = parse_param(params)
+    h = MailParser::RFC2231.parse_param(params)
     assert_equal("This is ***fun***", h["title"])
     assert_equal("us-ascii", h["title"].charset)
     assert_equal("en-us", h["title"].language)
@@ -138,7 +137,7 @@ class TC_RFC2231 < Test::Unit::TestCase
       "title*1*" => "%2A%2A%2Afun%2A%2A%2A%20",
       "title*2"  => "isn't it!"
     }
-    h = parse_param(params)
+    h = MailParser::RFC2231.parse_param(params)
     assert_equal("This is even more ***fun*** isn't it!", h["title"])
     assert_equal("us-ascii", h["title"].charset)
     assert_equal("en", h["title"].language)

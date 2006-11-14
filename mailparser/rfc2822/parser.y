@@ -307,9 +307,13 @@ zone            : ATOM
 
 end
 
+---- header
+
+class MailParser
+
 ---- inner
 
-require "rfc2822/scanner"
+require "mailparser/rfc2822/scanner"
 
 def parse(header_type, value)
   @header_type = header_type
@@ -329,4 +333,8 @@ def on_error(t, val, vstack)
 #  p t, val, vstack
 #  p racc_token2str(t)
   raise ParseError, val
+end
+
+---- footer
+
 end

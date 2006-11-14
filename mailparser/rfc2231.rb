@@ -4,7 +4,10 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-module RFC2231
+class MailParser
+end
+
+module MailParser::RFC2231
   class ParseError < StandardError
   end
 

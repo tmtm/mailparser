@@ -4,9 +4,9 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-require "rfc2822"
+require "mailparser/rfc2822"
 
-class RFC2045::Scanner < RFC2822::Scanner
+class MailParser::RFC2045::Scanner < MailParser::RFC2822::Scanner
   TOKEN_RE = '\x21\x23-\x27\x2a\x2b\x2d\x2e\x30-\x39\x41-\x5a\x5e-\x7f'
 
   def scan(&block)

@@ -6,7 +6,7 @@
 
 require "strscan"
 
-class RFC2822::Scanner
+class MailParser::RFC2822::Scanner
   TEXT_RE = '\x00-\x7f'
   QTEXT_RE = '\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f'
   ATEXT_RE = 'A-Za-z0-9\!\#\$\%\&\'\*\+\\-\/\=\?\^\_\`\{\|\}\~'

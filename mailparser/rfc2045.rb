@@ -4,10 +4,13 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-require "rfc2822"
-require "rfc2045/parser"
+class MailParser
+end
 
-module RFC2045
+require "mailparser/rfc2822"
+require "mailparser/rfc2045/parser"
+
+module MailParser::RFC2045
   class ParseError < StandardError
   end
 
@@ -15,7 +18,7 @@ module RFC2045
     "content-type"              => :CONTENT_TYPE,
     "content-description"       => :UNSTRUCTURED,
     "content-transfer-encoding" => :CONTENT_TRANSFER_ENCODING,
-    "content-id"                => [RFC2822, :MSG_ID],
+    "content-id"                => [MailParser::RFC2822, :MSG_ID],
     "mime-version"              => :MIME_VERSION,
   }
 

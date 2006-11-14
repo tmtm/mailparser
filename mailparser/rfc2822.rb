@@ -4,9 +4,12 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-require "rfc2822/parser"
+class MailParser
+end
 
-module RFC2822
+require "mailparser/rfc2822/parser"
+
+module MailParser::RFC2822
   class ParseError < StandardError
   end
 

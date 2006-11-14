@@ -4,9 +4,12 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-require "rfc2183/parser"
+class MailParser
+end
 
-module RFC2183
+require "mailparser/rfc2183/parser"
+
+module MailParser::RFC2183
   class ParseError < StandardError
   end
 

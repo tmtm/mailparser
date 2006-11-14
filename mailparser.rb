@@ -4,10 +4,10 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-require "rfc2045"
-require "rfc2183"
-require "rfc2231"
-require "rfc2822"
+require "mailparser/rfc2045"
+require "mailparser/rfc2183"
+require "mailparser/rfc2231"
+require "mailparser/rfc2822"
 
 # メールをパースする。
 # 
