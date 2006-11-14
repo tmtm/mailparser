@@ -4,7 +4,7 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-class Parser
+class RFC2045::Parser
 
   options no_result_var
 
@@ -61,10 +61,6 @@ attribute       : TOKEN
 value           : TOKEN
                 | QUOTED_STRING
 
----- header
-
-class RFC2045
-
 ---- inner
 
 require "rfc2045/scanner"
@@ -87,8 +83,4 @@ def on_error(t, val, vstack)
 #  p t, val, vstack
 #  p racc_token2str(t)
   raise ParseError, val
-end
-
----- footer
-
 end

@@ -1,8 +1,13 @@
+#
 # $Id$
+#
+# Copyright (C) 2006 TOMITA Masahiro
+# mailto:tommy@tmtm.org
 
-require "rfc2822"
 require "rfc2045"
 require "rfc2183"
+require "rfc2231"
+require "rfc2822"
 
 # メールをパースする。
 # 
@@ -13,6 +18,11 @@ require "rfc2183"
 #   m.part => [#<Mailparser>, ...]
 # 
 class MailParser
+  include RFC2045, RFC2183, RFC2822
+
+  class ParseError < StandardError
+  end
+
   HEADER_PARSER = {
     "date"                      => RFC2822,
     "from"                      => RFC2822,
@@ -44,7 +54,18 @@ class MailParser
     "content-disposition"       => RFC2183,
   }
 
-  class ParseError < StandardError
+  # opt:: オプション(Hash)
+  #  :skip_body:: 本文をスキップする
+  #  :text_body_only:: text/* type 以外の本文をスキップする
+  #  :extract_message_type:: message/* type を展開する
+  def initialize(opt={})
+    @opt = opt
+  end
+
+  # Message オブジェクトを返す
+  # src:: each_line イテレータを持つオブジェクト(ex. IO, String)
+  def parse(src)
+    Message.new(src, @opt)
   end
 
   # 単一のヘッダ
@@ -124,6 +145,8 @@ class MailParser
   end
 
   class Message
+    include RFC2231
+
     # src からヘッダ部を読み込み Header オブジェクトに保持する
     # src:: each_line イテレータを持つオブジェクト(ex. IO, String)
     # boundary:: このパートの終わりを表す文字列の配列
@@ -134,6 +157,11 @@ class MailParser
       read_header
       read_body
       read_part
+      if @header.key? "content-type" then
+        @header["content-type"].each do |h|
+          h.params.replace parse_param(h.params)
+        end
+      end
     end
 
     attr_reader :header, :body, :part, :last_line
@@ -183,8 +211,16 @@ class MailParser
       end
     end
 
-    
+    # ファイル名を返す。
+    # Content-Disposition の filename パラメータ
+    # または Content-Type の name パラメータ
     def filename()
+      if @header.key? "content-disposition" and @header["content-disposition"][0].params.key? "filename" then
+        return @header["content-disposition"][0].params["filename"]
+      end
+      if @header.key? "content-type" and @header["content-type"][0].params.key? "name" then
+        return @header["content-type"][0].params["name"]
+      end
     end
 
     private
@@ -251,19 +287,5 @@ class MailParser
       end
       return
     end
-  end
-
-  # opt:: オプション(Hash)
-  #  :skip_body:: 本文をスキップする
-  #  :text_body_only:: text/* type 以外の本文をスキップする
-  #  :extract_message_type:: message/* type を展開する
-  def initialize(opt={})
-    @opt = opt
-  end
-
-  # Message オブジェクトを返す
-  # src:: each_line イテレータを持つオブジェクト(ex. IO, String)
-  def parse(src)
-    Message.new(src, @opt)
   end
 end

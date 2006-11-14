@@ -6,8 +6,7 @@
 
 require "rfc2822/parser"
 
-class RFC2822
-
+module RFC2822
   class ParseError < StandardError
   end
 
@@ -175,7 +174,9 @@ class RFC2822
     end
   end
 
-  def self.parse(name, value)
+  module_function
+
+  def parse(name, value)
     htype = HEADER_TYPE[name.downcase] || :UNSTRUCTURED
     if htype == :UNSTRUCTURED then
       return value.chomp

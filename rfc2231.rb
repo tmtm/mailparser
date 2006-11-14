@@ -4,10 +4,8 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-require "mailparser"
-
 module RFC2231
-  class ParseError < MailParser::ParseError
+  class ParseError < StandardError
   end
 
   module_function
