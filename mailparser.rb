@@ -162,6 +162,7 @@ class MailParser
           h.params.replace parse_param(h.params)
         end
       end
+      @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
     end
 
     attr_reader :header, :body, :part, :last_line
@@ -169,31 +170,37 @@ class MailParser
     # Content-Type の type を返す。
     # Content-Type がない場合は "text"
     def type()
+      return @type if @type
       if @header.key? "content-type" then
-        return @header["content-type"][0].type
+        @type = @header["content-type"][0].type
       else
-        return "text"
+        @type = "text"
       end
+      return @type
     end
 
     # Content-Type の subtype を返す。
     # Content-Type がない場合は "plain"
     def subtype()
+      return @subtype if @subtype
       if @header.key? "content-type" then
-        return @header["content-type"][0].subtype
+        @subtype = @header["content-type"][0].subtype
       else
-        return "plain"
+        @subtype = "plain"
       end
+      return @subtype
     end
 
     # Content-Type の charset 属性の値(小文字)を返す。
     # charset 属性がない場合は "us-ascii"
     def charset()
-      c = "us-ascii"
+      return @charset if @charset
       if @header.key? "content-type" then
-        c = @header["content-type"][0].params["charset"].downcase
+        @charset = @header["content-type"][0].params["charset"].downcase
+      else
+        @charset = "us-ascii"
       end
-      return c
+      return @charset
     end
 
     # マルチパートメッセージかどうかを返す
@@ -204,23 +211,27 @@ class MailParser
     # Content-Transfer-Encoding の mechanism を返す
     # Content-Transfer-Encoding がない場合は "7bit"
     def content_transfer_encoding()
+      return @content_transfer_encoding if @content_transfer_encoding
       if @header.key? "content-transfer-encoding" then
-        return @header["content-transfer-encoding"][0].mechanism
+        @content_transfer_encoding = @header["content-transfer-encoding"][0].mechanism
       else
-        return "7bit"
+        @content_transfer_encoding = "7bit"
       end
+      return @content_transfer_encoding
     end
 
     # ファイル名を返す。
     # Content-Disposition の filename パラメータ
-    # または Content-Type の name パラメータ
+    # または Content-Type の name パラメータ。
+    # デフォルトは nil。
     def filename()
+      return @filename if @filename
       if @header.key? "content-disposition" and @header["content-disposition"][0].params.key? "filename" then
-        return @header["content-disposition"][0].params["filename"]
+        @filename = @header["content-disposition"][0].params["filename"]
+      elsif @header.key? "content-type" and @header["content-type"][0].params.key? "name" then
+        @filename = @header["content-type"][0].params["name"]
       end
-      if @header.key? "content-type" and @header["content-type"][0].params.key? "name" then
-        return @header["content-type"][0].params["name"]
-      end
+      return @filename
     end
 
     private
