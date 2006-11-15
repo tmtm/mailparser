@@ -9,6 +9,8 @@ require "mailparser/rfc2183"
 require "mailparser/rfc2231"
 require "mailparser/rfc2822"
 
+require "stringio"
+
 # メールをパースする。
 # 
 #   m = MailParser.new
@@ -154,6 +156,9 @@ class MailParser
       @src = src
       @opt = opt
       @boundary = boundary
+      @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
+      @rawheader = ""
+      @message = nil
       read_header
       read_body
       read_part
@@ -162,10 +167,9 @@ class MailParser
           h.params.replace parse_param(h.params)
         end
       end
-      @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
     end
 
-    attr_reader :header, :body, :part, :last_line
+    attr_reader :header, :body, :part, :last_line, :message, :rawheader
 
     # Content-Type の type を返す。
     # Content-Type がない場合は "text"
@@ -242,6 +246,7 @@ class MailParser
       headers = []
       each_line_with_delimiter(@boundary) do |line|
         break if line.chomp.empty?
+        @rawheader << line
         if line =~ /^\s/ and headers.size > 0 then
           headers[-1] << line
         else
@@ -269,6 +274,9 @@ class MailParser
         when "quoted-printable" then @body = RFC2045.qp_decode(@body)
         when "base64" then @body = RFC2045.b64_decode(@body)
         end
+      end
+      if type == "message" and not @body.empty? then
+        @message = Message.new(StringIO.new(@body), @opt)
       end
     end
 
