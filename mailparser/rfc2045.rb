@@ -59,6 +59,6 @@ module MailParser::RFC2045
   end
 
   def b64_decode(str)
-    return str.gsub(/[^A-Za-z0-9\+\/=]/,"").unpack("m")[0]
+    return str.gsub(/[^A-Z0-9\+\/=]/i,"").unpack("m")[0]
   end
 end

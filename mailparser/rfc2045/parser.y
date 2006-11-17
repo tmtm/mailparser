@@ -79,7 +79,7 @@ def parse(header_type, value)
 end
 
 def parse_sub(&block)
-  yield @header_type, @value
+  yield @header_type, nil
   @scanner.scan(&block)
 end
 
