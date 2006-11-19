@@ -84,16 +84,19 @@ class TC_RFC2045 < Test::Unit::TestCase
   def test_mime_version()
     v = MailParser::RFC2045.parse("mime-version", "1.0")
     assert_equal("1.0", v)
+    assert_equal([], v.comments)
   end
 
   def test_mime_version_with_comment()
     v = MailParser::RFC2045.parse("mime-version", "1.0 (hoge)")
     assert_equal("1.0", v)
+    assert_equal(["(hoge)"], v.comments)
   end
 
   def test_mime_version_with_comment2()
     v = MailParser::RFC2045.parse("mime-version", "1.(hoge)0")
     assert_equal("1.0", v)
+    assert_equal(["(hoge)"], v.comments)
   end
 
   def test_qp_decode()

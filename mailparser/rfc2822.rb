@@ -95,8 +95,10 @@ module MailParser::RFC2822
     def initialize(addr_spec, display_name=nil)
       @addr_spec = addr_spec
       @display_name = display_name || ""
+      @comments = []
     end
     attr_reader :addr_spec, :display_name
+    attr_accessor :comments
     alias :phrase :display_name
     def to_s()
       if display_name.empty? then

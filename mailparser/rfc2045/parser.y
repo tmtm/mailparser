@@ -74,7 +74,10 @@ def parse(header_type, value)
   @value = value
   @scanner = Scanner.new(header_type, value)
   ret = yyparse(self, :parse_sub)
-  @comments = @scanner.comments
+  class << ret
+    attr_accessor :comments
+  end
+  ret.comments = @scanner.comments
   ret
 end
 

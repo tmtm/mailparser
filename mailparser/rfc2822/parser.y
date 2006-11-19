@@ -23,12 +23,22 @@ all             : MAILBOX_LIST mailbox_list {val[1]}
                 | RECEIVED received {val[1]}
                 | UNSTRUCTURED UNSTRUCTURED {val[1]}
 
-mailbox_list    : mailbox_opt
+mailbox_list    : mailbox_list_
+                  {
+                    unless val[0].empty? then
+                      val[0].last.comments = @scanner.get_comment_by_id(@comma_list[-1], nil)
+                    end
+                    val[0]
+                  }
+
+mailbox_list_   : mailbox_opt
                   {
                     val[0] ? [val[0]] : []
                   }
-                | mailbox_list ',' mailbox_opt
+                | mailbox_list_ ',' mailbox_opt
                   {
+                    @comma_list << val[1].object_id
+                    val[0].last.comments = @scanner.get_comment_by_id(@comma_list[-2], @comma_list[-1])
                     val[0] << val[2] if val[2]
                     val[0]
                   }
@@ -36,12 +46,24 @@ mailbox_list    : mailbox_opt
 mailbox_opt     : /* empty */
                 | mailbox
 
-address_list    : address_opt
+address_list    : address_list_
+                  {
+                    if not val[0].empty? and val[0].last.kind_of? Mailbox then
+                      val[0].last.comments = @scanner.get_comment_by_id(@comma_list[-1], nil)
+                    end
+                    val[0]
+                  }
+
+address_list_   : address_opt
                   {
                     val[0] ? [val[0]] : []
                   }
-                | address_list ',' address_opt
+                | address_list_ ',' address_opt
                   {
+                    @comma_list << val[1].object_id
+                    if val[0].last.kind_of? Mailbox then
+                      val[0].last.comments = @scanner.get_comment_by_id(@comma_list[-2], @comma_list[-1])
+                    end
                     val[0] << val[2] if val[2]
                     val[0]
                   }
@@ -148,7 +170,6 @@ domain          : atom
                     val.join
                   }
                 | domain_literal
-
 
 domain_literal  : DOMAIN_LITERAL
                 | NO_FOLD_LITERAL
@@ -318,6 +339,8 @@ require "mailparser/rfc2822/scanner"
 def parse(header_type, value)
   @header_type = header_type
   @value = value
+  @last_id = nil
+  @comma_list = []
   @scanner = Scanner.new(header_type, value)
   ret = yyparse(self, :parse_sub)
   class << ret
