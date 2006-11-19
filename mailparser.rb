@@ -78,9 +78,9 @@ module MailParser
   end
 
   # 同じ名前を持つヘッダの集まり
-  class Header < Hash
+  class Header
     def initialize(*args)
-      super
+      @hash = {}
       @parsed = {}
       @raw = {}
     end
@@ -89,26 +89,44 @@ module MailParser
     # name:: ヘッダ名(String)
     # body:: ヘッダ値(String)
     def add(name, body)
-      self[name] = [] unless self.key? name
-      self[name] << HeaderItem.new(name, body)
+      @hash[name] = [] unless @hash.key? name
+      @hash[name] << HeaderItem.new(name, body)
     end
 
     # パースした結果オブジェクトの配列を返す
     # name:: ヘッダ名(String)
     def [](name)
-      return nil unless self.key? name
+      return nil unless @hash.key? name
       return @parsed[name] if @parsed.key? name
-      @parsed[name] = self[name].map{|h| h.parse}
+      @parsed[name] = @hash[name].map{|h| h.parse}
       return @parsed[name]
     end
 
     # 生ヘッダ値文字列の配列を返す
     # name:: ヘッダ名(String)
     def raw(name)
-      return nil unless self.key? name
+      return nil unless @hash.key? name
       return @raw[name] if @raw.key? name
-      @raw[name] = self[name].map{|h| h.raw}
+      @raw[name] = @hash[name].map{|h| h.raw}
       return @raw[name]
+    end
+
+    # ヘッダ名の配列を返す
+    def keys()
+      return @hash.keys
+    end
+
+    # ヘッダが存在するか？
+    def key?(name)
+      return @hash.key?(name)
+    end
+
+    # 各ヘッダについてブロックを繰り返す
+    # ブロック引数は、[ヘッダ名, [MailParser::HeaderItemオブジェクト,...]]
+    def each()
+      @hash.each do |k, v|
+        yield k, self[k]
+      end
     end
   end
 
@@ -123,7 +141,7 @@ module MailParser
     #  :text_body_only:: text/* type 以外の本文をスキップする
     #  :extract_message_type:: message/* type を展開する
     # boundary:: このパートの終わりを表す文字列の配列
-    def initialize(src, opt, boundary=[])
+    def initialize(src, opt={}, boundary=[])
       @src = src
       @opt = opt
       @boundary = boundary

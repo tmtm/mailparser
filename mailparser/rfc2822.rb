@@ -140,6 +140,13 @@ module MailParser::RFC2822
     end
   end
 
+  class Received
+    def initialize(name_val_list, date_time)
+      @name_val_list, @date_time = name_val_list, date_time
+    end
+    attr_reader :name_val_list, :date_time
+  end
+
   class AddressList < Array
     def initialize(val=nil)
       self << val if val
