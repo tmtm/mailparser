@@ -4,7 +4,7 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-class RFC2822::Parser
+class MailParser::RFC2822::Parser
 
   options no_result_var
 
@@ -328,10 +328,6 @@ zone            : ATOM
 
 end
 
----- header
-
-class MailParser
-
 ---- inner
 
 require "mailparser/rfc2822/scanner"
@@ -359,8 +355,4 @@ def on_error(t, val, vstack)
 #  p t, val, vstack
 #  p racc_token2str(t)
   raise MailParser::ParseError, val+@scanner.rest
-end
-
----- footer
-
 end

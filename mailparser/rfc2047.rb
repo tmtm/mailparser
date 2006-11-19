@@ -6,9 +6,6 @@
 
 require "strscan"
 
-class MailParser
-end
-
 module MailParser::RFC2047
   module_function
 

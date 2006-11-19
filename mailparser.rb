@@ -6,6 +6,7 @@
 
 require "mailparser/error"
 require "mailparser/rfc2045"
+require "mailparser/rfc2047"
 require "mailparser/rfc2183"
 require "mailparser/rfc2231"
 require "mailparser/rfc2822"
@@ -20,7 +21,7 @@ require "stringio"
 #   m.body => パースされた本文文字列
 #   m.part => [#<Mailparser>, ...]
 # 
-class MailParser
+module MailParser
   include RFC2045, RFC2183, RFC2822
 
   HEADER_PARSER = {
@@ -52,20 +53,6 @@ class MailParser
     "content-disposition"       => RFC2183,
   }
 
-  # opt:: オプション(Hash)
-  #  :skip_body:: 本文をスキップする
-  #  :text_body_only:: text/* type 以外の本文をスキップする
-  #  :extract_message_type:: message/* type を展開する
-  def initialize(opt={})
-    @opt = opt
-  end
-
-  # Message オブジェクトを返す
-  # src:: each_line イテレータを持つオブジェクト(ex. IO, String)
-  def parse(src)
-    Message.new(src, @opt)
-  end
-
   # 単一のヘッダ
   class HeaderItem
     # name:: ヘッダ名(String)
@@ -91,9 +78,9 @@ class MailParser
   end
 
   # 同じ名前を持つヘッダの集まり
-  class Header
-    def initialize()
-      @hash = Hash.new{|h,k| h[k] = []}
+  class Header < Hash
+    def initialize(*args)
+      super
       @parsed = {}
       @raw = {}
     end
@@ -102,51 +89,39 @@ class MailParser
     # name:: ヘッダ名(String)
     # body:: ヘッダ値(String)
     def add(name, body)
-      @hash[name] << HeaderItem.new(name, body)
+      self[name] = [] unless self.key? name
+      self[name] << HeaderItem.new(name, body)
     end
 
     # パースした結果オブジェクトの配列を返す
     # name:: ヘッダ名(String)
     def [](name)
-      return nil unless @hash.key? name
+      return nil unless self.key? name
       return @parsed[name] if @parsed.key? name
-      @parsed[name] = @hash[name].map{|h| h.parse}
+      @parsed[name] = self[name].map{|h| h.parse}
       return @parsed[name]
     end
 
     # 生ヘッダ値文字列の配列を返す
     # name:: ヘッダ名(String)
     def raw(name)
-      return nil unless @hash.key? name
+      return nil unless self.key? name
       return @raw[name] if @raw.key? name
-      @raw[name] = @hash[name].map{|h| h.raw}
+      @raw[name] = self[name].map{|h| h.raw}
       return @raw[name]
-    end
-
-    # ヘッダ名の配列を返す
-    def keys()
-      return @hash.keys
-    end
-
-    # ヘッダが存在するか？
-    def key?(name)
-      return @hash.key?(name)
-    end
-
-    # 各ヘッダについてブロックを繰り返す
-    # ブロック引数は、[ヘッダ名, [MailParser::Headerオブジェクト,...]]
-    def each()
-      @hash.each do |k, v|
-        yield k, v
-      end
     end
   end
 
+  # メール全体またはひとつのパートを表すクラス
   class Message
     include RFC2231
 
     # src からヘッダ部を読み込み Header オブジェクトに保持する
     # src:: each_line イテレータを持つオブジェクト(ex. IO, String)
+    # opt:: オプション(Hash)
+    #  :skip_body:: 本文をスキップする
+    #  :text_body_only:: text/* type 以外の本文をスキップする
+    #  :extract_message_type:: message/* type を展開する
     # boundary:: このパートの終わりを表す文字列の配列
     def initialize(src, opt, boundary=[])
       @src = src
