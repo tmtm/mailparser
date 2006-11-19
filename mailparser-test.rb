@@ -1,5 +1,5 @@
 #!/usr/local/bin/ruby
-# $Id: mailparser-test.rb,v 1.13 2006/03/29 23:29:26 tommy Exp $
+# $Id$
 
 require "test/unit"
 require "./mailparser"

@@ -43,14 +43,16 @@ class TC_RFC2047 < Test::Unit::TestCase
   def test_decode_q_ascii()
     s = MailParser::RFC2047.decode("=?us_ascii?q?hoge?=")
     assert_equal(1, s.size)
-    assert_equal("us_ascii", s[0].charset)
     assert_equal("hoge", s[0])
+    assert_equal("us_ascii", s[0].charset)
+    assert_equal("=?us_ascii?q?hoge?=", s[0].raw)
   end
 
   def test_decode_q_ascii_upcase()
     s = MailParser::RFC2047.decode("=?US_ASCII?Q?hoge?=")
     assert_equal(1, s.size)
-    assert_equal("us_ascii", s[0].charset)
     assert_equal("hoge", s[0])
+    assert_equal("us_ascii", s[0].charset)
+    assert_equal("=?US_ASCII?Q?hoge?=", s[0].raw)
   end
 end
