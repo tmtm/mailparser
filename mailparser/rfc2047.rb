@@ -6,6 +6,9 @@
 
 require "strscan"
 
+module MailParser
+end
+
 module MailParser::RFC2047
 
   class String < ::String

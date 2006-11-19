@@ -278,4 +278,13 @@ module MailParser
       return
     end
   end
+
+  module_function
+  def parse_message(msg)
+    unless defined? MailParser::Obsolete then
+      require "mailparser/obsolete"
+      MailParser.__send__("include", MailParser::Obsolete)
+    end
+    MailParser::Obsolete.parse_message(msg)
+  end
 end
