@@ -35,6 +35,8 @@ module MailParser
     "message-id"                => RFC2822,
     "in-reply-to"               => RFC2822,
     "references"                => RFC2822,
+#    "subject"                   => RFC2822,
+#    "comments"                  => RFC2822,
     "keywords"                  => RFC2822,
     "resent-date"               => RFC2822,
     "resent-from"               => RFC2822,
@@ -46,7 +48,7 @@ module MailParser
     "return-path"               => RFC2822,
     "received"                  => RFC2822,
     "content-type"              => RFC2045,
-    "content-description"       => RFC2045,
+#    "content-description"       => RFC2045,
     "content-transfer-encoding" => RFC2045,
     "content-id"                => RFC2045,
     "mime-version"              => RFC2045,
@@ -57,10 +59,14 @@ module MailParser
   class HeaderItem
     # name:: ヘッダ名(String)
     # raw:: ヘッダ値(String)
-    def initialize(name, raw)
+    # opt:: オプション(Hash)
+    #  :decode_mime_header:: MIMEヘッダをデコードする
+    #  :output_charset:: デコード出力文字コード(デフォルト: UTF-8)
+    def initialize(name, raw, opt={})
       @name = name
       @raw = raw
       @parsed = nil
+      @opt = opt
     end
 
     attr_reader :raw
@@ -69,9 +75,13 @@ module MailParser
     def parse()
       return @parsed if @parsed
       if HEADER_PARSER.key? @name then
-        @parsed = HEADER_PARSER[@name].parse(@name, @raw)
+        @parsed = HEADER_PARSER[@name].parse(@name, @raw, @opt)
       else
-        @parsed = @raw
+        if @opt[:decode_mime_header] then
+          @parsed = RFC2047.decode(@raw, @opt[:output_charset])
+        else
+          @parsed = @raw
+        end
       end
       return @parsed
     end
@@ -79,10 +89,11 @@ module MailParser
 
   # 同じ名前を持つヘッダの集まり
   class Header
-    def initialize(*args)
+    def initialize(opt={})
       @hash = {}
       @parsed = {}
       @raw = {}
+      @opt = opt
     end
 
     # name ヘッダに body を追加する
@@ -90,7 +101,7 @@ module MailParser
     # body:: ヘッダ値(String)
     def add(name, body)
       @hash[name] = [] unless @hash.key? name
-      @hash[name] << HeaderItem.new(name, body)
+      @hash[name] << HeaderItem.new(name, body, @opt)
     end
 
     # パースした結果オブジェクトの配列を返す
@@ -140,6 +151,8 @@ module MailParser
     #  :skip_body:: 本文をスキップする
     #  :text_body_only:: text/* type 以外の本文をスキップする
     #  :extract_message_type:: message/* type を展開する
+    #  :decode_mime_header:: MIMEヘッダをデコードする
+    #  :output_charset:: デコード出力文字コード(デフォルト: UTF-8)
     # boundary:: このパートの終わりを表す文字列の配列
     def initialize(src, opt={}, boundary=[])
       @src = src
@@ -153,6 +166,11 @@ module MailParser
       read_part
       if @header.key? "content-type" then
         @header["content-type"].each do |h|
+          h.params.replace parse_param(h.params)
+        end
+      end
+      if @header.key? "content-disposition" then
+        @header["content-disposition"].each do |h|
           h.params.replace parse_param(h.params)
         end
       end

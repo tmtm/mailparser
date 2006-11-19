@@ -11,7 +11,7 @@ require "mailparser/rfc2045/parser"
 module MailParser::RFC2045
   HEADER_TYPE = {
     "content-type"              => :CONTENT_TYPE,
-    "content-description"       => :UNSTRUCTURED,
+#    "content-description"       => :UNSTRUCTURED,
     "content-transfer-encoding" => :CONTENT_TRANSFER_ENCODING,
     "content-id"                => [MailParser::RFC2822, :MSG_ID],
     "mime-version"              => :MIME_VERSION,
@@ -35,9 +35,9 @@ module MailParser::RFC2045
 
   module_function
 
-  def parse(name, value)
-    htype = HEADER_TYPE[name.downcase] || :UNSTRUCTURED
-    if htype == :UNSTRUCTURED then
+  def parse(name, value, opt={})
+    htype = HEADER_TYPE[name.downcase]
+    unless htype then
       return value.chomp
     end
     if htype.is_a? Array then

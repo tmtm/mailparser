@@ -22,7 +22,7 @@ module MailParser::RFC2183
 
   module_function
 
-  def parse(name, value)
+  def parse(name, value, opt={})
     htype = HEADER_TYPE[name.downcase] || :UNSTRUCTURED
     if htype == :UNSTRUCTURED then
       return value.chomp

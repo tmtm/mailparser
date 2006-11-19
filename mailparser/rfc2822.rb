@@ -19,6 +19,8 @@ module MailParser::RFC2822
     "message-id"        => :MSG_ID,
     "in-reply-to"       => :PHRASE_MSG_ID_LIST,
     "references"        => :PHRASE_MSG_ID_LIST,
+#    "subject"           => :UNSTRUCTURED,
+#    "comments"          => :UNSTRUCTURED,
     "keywords"          => :PHRASE_LIST,
     "resent-date"       => :DATE_TIME,
     "resent-from"       => :MAILBOX_LIST,
@@ -181,9 +183,9 @@ module MailParser::RFC2822
 
   module_function
 
-  def parse(name, value)
-    htype = HEADER_TYPE[name.downcase] || :UNSTRUCTURED
-    if htype == :UNSTRUCTURED then
+  def parse(name, value, opt={})
+    htype = HEADER_TYPE[name.downcase]
+    unless htype then
       return value.chomp
     end
     if htype.is_a? Array then
