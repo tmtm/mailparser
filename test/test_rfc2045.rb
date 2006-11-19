@@ -21,7 +21,7 @@ unless ARGV.empty?
       header.each do |h|
         begin
           MailParser::RFC2045.parse(*h.split(/\s*:\s*/, 2))
-        rescue MailParser::RFC2045::ParseError => e
+        rescue MailParser::ParseError => e
           puts fname
           p e
           p h

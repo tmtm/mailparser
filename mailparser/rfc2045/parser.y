@@ -89,7 +89,7 @@ end
 def on_error(t, val, vstack)
 #  p t, val, vstack
 #  p racc_token2str(t)
-  raise ParseError, val
+  raise MailParser::ParseError, val+@scanner.rest
 end
 
 ---- footer

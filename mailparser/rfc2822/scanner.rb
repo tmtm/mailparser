@@ -17,67 +17,48 @@ class MailParser::RFC2822::Scanner
   def initialize(header_type, str)
     @header_type = header_type
     @comments = []
-    @buf = []
+    @token = []
     @ss = StringScanner.new(str)
   end
 
   attr_reader :comments
 
-  def scan(&block)
-    case @header_type
-    when :UNSTRUCTURED
-      scan_unstructured(&block)
-    else
-      scan_structured(&block)
-    end
-  end
-
-  def scan_unstructured()
-    if @ss.eos? then
-      yield :UNSTRUCTURED, ""
-      yield nil
-      return
-    end
-    until @ss.eos?
-      if s = @ss.scan(/(\s*|[#{UTEXT_RE}])*\s*/no) then
-        yield :UNSTRUCTURED, s
-      end
-    end 
-    yield nil
-  end
-
-  def scan_structured()
+  def scan()
     until @ss.eos?
       case
       when s = @ss.scan(/\s*\(/nmo)
-        @buf << cfws(@ss)
+        @token << cfws(@ss)
       when s = @ss.scan(/\s+/nmo)
-        @buf << s
+        @token << s
       when s = @ss.scan(/\"(\\[#{TEXT_RE}]|[#{QTEXT_RE}])*\"/no)
-        @buf << s
+        @token << s
         yield :NO_FOLD_QUOTE, s
       when s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/nmo)
-        @buf << s
+        @token << s
         yield :QUOTED_STRING, s
       when s = @ss.scan(/\[(\\[#{TEXT_RE}]|[#{DTEXT_RE}])*\]/no)
-        @buf << s
+        @token << s
         yield :NO_FOLD_LITERAL, s
       when s = @ss.scan(/\[(\s*(\\[#{TEXT_RE}]|[#{DTEXT_RE}]))*\s*\]/nmo)
-        @buf << s
+        @token << s
         yield :DOMAIN_LITERAL, s
       when s = @ss.scan(/[#{ATEXT_RE}]+/no)
-        @buf << s
+        @token << s
         if s =~ /\A\d+\z/ then
           yield :DIGIT, s
         else
           yield :ATOM, s
         end
       when s = @ss.scan(/./no)
-        @buf << s
+        @token << s
         yield s, s
       end
     end
     yield nil
+  end
+
+  def rest()
+    @ss.rest
   end
 
   # 「(」の直後からコメント部の終わりまでスキャン
@@ -108,22 +89,23 @@ class MailParser::RFC2822::Scanner
         break if c.nil?
         ret << "(" << c << ")"
       else
-        raise RFC2822::ParseError, ss.rest
+        raise MailParser::ParseError, ss.rest
       end
     end
     # 「)」がなかったら例外
-    raise RFC2822::ParseError, ss.rest
+    raise MailParser::ParseError, ss.rest
   end
 
+  # @token中の位置が s から e までの間のコメント文字列の配列を得る
   def get_comment(s, e)
-    a = @buf[s..e].select{|i| i =~ /^\s*\(/}.map{|i| i.strip}
+    a = @token[s..e].select{|i| i =~ /^\s*\(/}.map{|i| i.strip}
     return a
   end
 
-  # @buf中の object_id が s_id から e_id までの間のコメント文字列の配列を得る
+  # @token中の object_id が s_id から e_id までの間のコメント文字列の配列を得る
   def get_comment_by_id(s_id, e_id)
-    s = s_id.nil? ? 0 : @buf.map{|i|i.object_id}.index(s_id)
-    e = e_id.nil? ? -1 : @buf.map{|i|i.object_id}.index(e_id)
+    s = s_id.nil? ? 0 : @token.map{|i|i.object_id}.index(s_id)
+    e = e_id.nil? ? -1 : @token.map{|i|i.object_id}.index(e_id)
     return get_comment(s, e)
   end
 

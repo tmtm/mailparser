@@ -4,15 +4,10 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-class MailParser
-end
-
+require "mailparser/error"
 require "mailparser/rfc2183/parser"
 
 module MailParser::RFC2183
-  class ParseError < StandardError
-  end
-
   HEADER_TYPE = {
     "content-disposition"      => :CONTENT_DISPOSITION,
   }

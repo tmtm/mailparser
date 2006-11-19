@@ -4,13 +4,9 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-class MailParser
-end
+require "mailparser/error"
 
 module MailParser::RFC2231
-  class ParseError < StandardError
-  end
-
   module_function
   def parse_param(params)
     newparams = {}
@@ -23,7 +19,7 @@ module MailParser::RFC2231
         char, lang, v = value.split(/\'/, 3)
         char_lang[name] = [char, lang]
         if v.nil? then
-          raise ParseError, "#{key}=#{value}"
+          raise MailParser::ParseError, "#{key}=#{value}"
         end
         v = v.gsub(/%([0-9A-F][0-9A-F])/ni){$1.hex.chr}
         if ord then

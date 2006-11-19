@@ -264,7 +264,7 @@ name_val_list   : /* empty */
 name_val_pair   : ATOM item_value
                   {
                     unless val[0] =~ /\A[a-zA-Z0-9](-?[a-zA-Z0-9])*\z/ then
-                      raise ParseError, val[0]
+                      raise MailParser::ParseError, val[0]+@scanner.rest
                     end
                     [val[0], val[2]]
                   }
@@ -278,10 +278,10 @@ item_value      : angle_addr_list
 date_time       : day_of_week DIGIT ATOM DIGIT time_of_day zone
                   {
                     year, month, day, time, zone = val.values_at(3,2,1,4,5)
-                    raise ParseError, year unless year =~ /\A\d\d\d\d\Z/
+                    raise MailParser::ParseError, year unless year =~ /\A\d\d\d\d\Z/
                     m = [nil,"jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].index month.downcase
-                    raise ParseError, month if m.nil?
-                    raise ParseError, day unless day =~ /\A\d?\d\Z/
+                    raise MailParser::ParseError, month if m.nil?
+                    raise MailParser::ParseError, day unless day =~ /\A\d?\d\Z/
                     DateTime.new(year, m, day, time[0], time[1], time[2], zone)
                   }
 
@@ -289,30 +289,30 @@ day_of_week     : /* empty */
                 | ATOM ','
                   {
                     unless ['mon','tue','wed','thu','fri','sat','sun'].include? val[0].downcase then
-                      raise ParseError, val[0]
+                      raise MailParser::ParseError, val[0]
                     end
                   }
 
 time_of_day     : DIGIT ':' DIGIT
                   {
                     if val[0] !~ /\A\d\d\Z/ or val[0].to_i > 23 then
-                      raise ParseError, val[0]
+                      raise MailParser::ParseError, val[0]
                     end
                     if val[2] !~ /\A\d\d\Z/ or val[2].to_i > 60 then
-                      raise ParseError, val[2]
+                      raise MailParser::ParseError, val[2]
                     end
                     [val[0].to_i, val[2].to_i, 0]
                   }
                 | DIGIT ':' DIGIT ':' DIGIT
                   {
                     if val[0] !~ /\A\d\d\Z/ or val[0].to_i > 23 then
-                      raise ParseError, val[0]
+                      raise MailParser::ParseError, val[0]
                     end
                     if val[2] !~ /\A\d\d\Z/ or val[2].to_i > 59 then
-                      raise ParseError, val[2]
+                      raise MailParser::ParseError, val[2]
                     end
                     if val[4] !~ /\A\d\d\Z/ or val[4].to_i > 60 then
-                      raise ParseError, val[4]
+                      raise MailParser::ParseError, val[4]
                     end
                     [val[0].to_i, val[2].to_i, val[4].to_i]
                   }
@@ -358,7 +358,7 @@ end
 def on_error(t, val, vstack)
 #  p t, val, vstack
 #  p racc_token2str(t)
-  raise ParseError, val
+  raise MailParser::ParseError, val+@scanner.rest
 end
 
 ---- footer

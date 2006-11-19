@@ -4,16 +4,11 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-class MailParser
-end
-
+require "mailparser/error"
 require "mailparser/rfc2822"
 require "mailparser/rfc2045/parser"
 
 module MailParser::RFC2045
-  class ParseError < StandardError
-  end
-
   HEADER_TYPE = {
     "content-type"              => :CONTENT_TYPE,
     "content-description"       => :UNSTRUCTURED,

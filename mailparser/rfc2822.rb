@@ -4,15 +4,10 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
-class MailParser
-end
-
+require "mailparser/error"
 require "mailparser/rfc2822/parser"
 
 module MailParser::RFC2822
-  class ParseError < StandardError
-  end
-
   HEADER_TYPE = {
     "date"              => :DATE_TIME,
     "from"              => :MAILBOX_LIST,
@@ -24,8 +19,6 @@ module MailParser::RFC2822
     "message-id"        => :MSG_ID,
     "in-reply-to"       => :PHRASE_MSG_ID_LIST,
     "references"        => :PHRASE_MSG_ID_LIST,
-    "subject"           => :UNSTRUCTURED,
-    "comments"          => :UNSTRUCTURED,
     "keywords"          => :PHRASE_LIST,
     "resent-date"       => :DATE_TIME,
     "resent-from"       => :MAILBOX_LIST,

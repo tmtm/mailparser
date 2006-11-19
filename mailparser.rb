@@ -4,6 +4,7 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
+require "mailparser/error"
 require "mailparser/rfc2045"
 require "mailparser/rfc2183"
 require "mailparser/rfc2231"
@@ -22,9 +23,6 @@ require "stringio"
 class MailParser
   include RFC2045, RFC2183, RFC2822
 
-  class ParseError < StandardError
-  end
-
   HEADER_PARSER = {
     "date"                      => RFC2822,
     "from"                      => RFC2822,
@@ -36,8 +34,6 @@ class MailParser
     "message-id"                => RFC2822,
     "in-reply-to"               => RFC2822,
     "references"                => RFC2822,
-    "subject"                   => RFC2822,
-    "comments"                  => RFC2822,
     "keywords"                  => RFC2822,
     "resent-date"               => RFC2822,
     "resent-from"               => RFC2822,
