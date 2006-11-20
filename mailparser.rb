@@ -77,10 +77,11 @@ module MailParser
       if HEADER_PARSER.key? @name then
         @parsed = HEADER_PARSER[@name].parse(@name, @raw, @opt)
       else
+        r = @raw.gsub(/\s+/, " ")
         if @opt[:decode_mime_header] then
-          @parsed = RFC2047.decode(@raw, @opt[:output_charset])
+          @parsed = RFC2047.decode(r, @opt[:output_charset])
         else
-          @parsed = @raw
+          @parsed = r
         end
       end
       return @parsed
@@ -249,7 +250,7 @@ module MailParser
 
     # ヘッダ部をパースする
     def read_header()
-      @header = Header.new
+      @header = Header.new(@opt)
       headers = []
       each_line_with_delimiter(@boundary) do |line|
         break if line.chomp.empty?

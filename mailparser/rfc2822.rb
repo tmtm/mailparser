@@ -189,11 +189,9 @@ module MailParser::RFC2822
       return value.chomp
     end
     if htype.is_a? Array then
-      parser = htype[0]::Parser.new
-      parser.parse(htype[1], value)
+      htype[0]::Parser.new(opt).parse(htype[1], value)
     else
-      parser = Parser.new
-      parser.parse(htype, value)
+      Parser.new(opt).parse(htype, value)
     end
   end
 end

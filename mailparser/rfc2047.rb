@@ -6,6 +6,7 @@
 
 require "strscan"
 require "iconv"
+require "nkf"
 
 module MailParser
 end
@@ -21,15 +22,15 @@ module MailParser::RFC2047
     attr_reader :charset
     attr_reader :raw
 
-    Charset = {
+    CHARSET = {
       "sjis"      => "cp932",
       "x-sjis"    => "cp932",
       "shift_jis" => "cp932",
       "shift-jis" => "cp932",
     }
     def conv_charset(charset)
-      from = Charset[@charset] || @charset
-      to = Charset[charset.downcase] || charset.downcase
+      from = CHARSET[@charset] || @charset
+      to = CHARSET[charset.downcase] || charset.downcase
       s = self
       if from == "iso-2022-jp" then
         s = NKF.nkf("-m0Jxs", self)

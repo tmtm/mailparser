@@ -26,7 +26,7 @@ all             : MAILBOX_LIST mailbox_list {val[1]}
 mailbox_list    : mailbox_list_
                   {
                     unless val[0].empty? then
-                      val[0].last.comments = @scanner.get_comment_by_id(@comma_list[-1], nil)
+                      val[0].last.comments = decode2(@scanner.get_comment_by_id(@comma_list[-1], nil))
                     end
                     val[0]
                   }
@@ -38,7 +38,7 @@ mailbox_list_   : mailbox_opt
                 | mailbox_list_ ',' mailbox_opt
                   {
                     @comma_list << val[1].object_id
-                    val[0].last.comments = @scanner.get_comment_by_id(@comma_list[-2], @comma_list[-1])
+                    val[0].last.comments = decode2(@scanner.get_comment_by_id(@comma_list[-2], @comma_list[-1]))
                     val[0] << val[2] if val[2]
                     val[0]
                   }
@@ -49,7 +49,7 @@ mailbox_opt     : /* empty */
 address_list    : address_list_
                   {
                     if not val[0].empty? and val[0].last.kind_of? Mailbox then
-                      val[0].last.comments = @scanner.get_comment_by_id(@comma_list[-1], nil)
+                      val[0].last.comments = decode2(@scanner.get_comment_by_id(@comma_list[-1], nil))
                     end
                     val[0]
                   }
@@ -62,7 +62,7 @@ address_list_   : address_opt
                   {
                     @comma_list << val[1].object_id
                     if val[0].last.kind_of? Mailbox then
-                      val[0].last.comments = @scanner.get_comment_by_id(@comma_list[-2], @comma_list[-1])
+                      val[0].last.comments = decode2(@scanner.get_comment_by_id(@comma_list[-2], @comma_list[-1]))
                     end
                     val[0] << val[2] if val[2]
                     val[0]
@@ -123,6 +123,9 @@ group           : display_name ':' mailbox_list ';'
                   }
 
 display_name    : phrase
+                  {
+                    decode(val[0])
+                  }
 
 phrase_list     : phrase_opt
                   {
@@ -136,6 +139,9 @@ phrase_list     : phrase_opt
 
 phrase_opt      : /* empty */
                 | phrase
+                  {
+                    decode(val[0])
+                  }
 
 phrase0         : local_part
                 | word_dot_list_dot
@@ -332,6 +338,11 @@ end
 
 require "mailparser/rfc2822/scanner"
 
+def initialize(opt={})
+  @opt = opt
+  super()
+end
+
 def parse(header_type, value)
   @header_type = header_type
   @value = value
@@ -342,7 +353,7 @@ def parse(header_type, value)
   class << ret
     attr_accessor :comments
   end
-  ret.comments = @scanner.comments
+  ret.comments = decode2(@scanner.comments)
   ret
 end
 
@@ -355,4 +366,13 @@ def on_error(t, val, vstack)
 #  p t, val, vstack
 #  p racc_token2str(t)
   raise MailParser::ParseError, val+@scanner.rest
+end
+
+def decode(s)
+  return s unless @opt[:decode_mime_header]
+  RFC2047.decode(s, @opt[:output_charset])
+end
+
+def decode2(ary)
+  ary.map{|i| decode(i)}
 end
