@@ -10,6 +10,7 @@ require "mailparser/rfc2047"
 require "mailparser/rfc2183"
 require "mailparser/rfc2231"
 require "mailparser/rfc2822"
+require "mailparser/loose"
 
 require "stringio"
 
@@ -60,8 +61,9 @@ module MailParser
     # name:: ヘッダ名(String)
     # raw:: ヘッダ値(String)
     # opt:: オプション(Hash)
-    #  :decode_mime_header:: MIMEヘッダをデコードする
-    #  :output_charset:: デコード出力文字コード(デフォルト: UTF-8)
+    #  :decode_mime_header::   MIMEヘッダをデコードする
+    #  :output_charset::       デコード出力文字コード(デフォルト: UTF-8)
+    #  :strict::               RFC違反時に ParseError 例外を発生する
     def initialize(name, raw, opt={})
       @name = name
       @raw = raw
@@ -75,7 +77,12 @@ module MailParser
     def parse()
       return @parsed if @parsed
       if HEADER_PARSER.key? @name then
-        @parsed = HEADER_PARSER[@name].parse(@name, @raw, @opt)
+        begin
+          @parsed = HEADER_PARSER[@name].parse(@name, @raw, @opt)
+        rescue ParseError
+          raise if @opt[:strict]
+          @parsed = Loose.parse(@name, @raw, @opt)
+        end
       else
         r = @raw.gsub(/\s+/, " ")
         if @opt[:decode_mime_header] then
@@ -149,11 +156,12 @@ module MailParser
     # src からヘッダ部を読み込み Header オブジェクトに保持する
     # src:: each_line イテレータを持つオブジェクト(ex. IO, String)
     # opt:: オプション(Hash)
-    #  :skip_body:: 本文をスキップする
-    #  :text_body_only:: text/* type 以外の本文をスキップする
+    #  :skip_body::            本文をスキップする
+    #  :text_body_only::       text/* type 以外の本文をスキップする
     #  :extract_message_type:: message/* type を展開する
-    #  :decode_mime_header:: MIMEヘッダをデコードする
-    #  :output_charset:: デコード出力文字コード(デフォルト: UTF-8)
+    #  :decode_mime_header::   MIMEヘッダをデコードする
+    #  :output_charset::       デコード出力文字コード(デフォルト: UTF-8)
+    #  :strict::               RFC違反時に ParseError 例外を発生する
     # boundary:: このパートの終わりを表す文字列の配列
     def initialize(src, opt={}, boundary=[])
       @src = src
@@ -283,7 +291,7 @@ module MailParser
         when "base64" then @body = RFC2045.b64_decode(@body)
         end
       end
-      if type == "message" and not @body.empty? then
+      if @opt[:extract_message_type] and type == "message" and not @body.empty? then
         @message = Message.new(StringIO.new(@body), @opt)
       end
     end
@@ -314,14 +322,5 @@ module MailParser
       end
       return
     end
-  end
-
-  module_function
-  def parse_message(msg)
-    unless defined? MailParser::Obsolete then
-      require "mailparser/obsolete"
-      MailParser.__send__("include", MailParser::Obsolete)
-    end
-    MailParser::Obsolete.parse_message(msg)
   end
 end

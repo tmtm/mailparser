@@ -66,6 +66,10 @@ class TC_RFC2045 < Test::Unit::TestCase
     assert_equal("euc-jp", c.params["charset"])
   end
 
+  def test_content_type_invalid()
+    assert_raises(MailParser::ParseError){MailParser::RFC2045.parse("content-type", "text/plain; name=\"hosts\"hoge")}
+  end
+
   def test_content_description()
     c = MailParser::RFC2045.parse("content-description", "(hoge fuga>")
     assert_equal("(hoge fuga>", c)

@@ -248,7 +248,7 @@ id_right         : domain
 
 return_path     : '<' '>'
                   {
-                    AddrSpec.new(nil)
+                    nil
                   }
 #               | '<' addr_spec '>'    /* -> angle_addr */
                 | angle_addr
@@ -260,11 +260,11 @@ received        : name_val_list ';' date_time
 
 name_val_list   : /* empty */
                   {
-                    []
+                    {}
                   }
                 | name_val_list name_val_pair
                   {
-                    val[0] << val[1]
+                    val[0][val[1][0]] = val[1][1]
                   }
 
 name_val_pair   : ATOM item_value
@@ -272,7 +272,7 @@ name_val_pair   : ATOM item_value
                     unless val[0] =~ /\A[a-zA-Z0-9](-?[a-zA-Z0-9])*\z/ then
                       raise MailParser::ParseError, val[0]+@scanner.rest
                     end
-                    [val[0], val[2]]
+                    [val[0], val[2].to_s]
                   }
 
 item_value      : angle_addr_list
