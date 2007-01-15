@@ -3,12 +3,12 @@
 
 require "test/unit"
 require "mailparser/obsolete"
-include MailParser::Obsolete
+include MailParser
 
 class TC_MailParser_Obsolete < Test::Unit::TestCase
   def setup()
-    MailParser::Obsolete.output_charset = "euc-jp"
-    MailParser::Obsolete.text_body_only = false
+    MailParser.output_charset = "euc-jp"
+    MailParser.text_body_only = false
   end
   def test_get_mail_address()
     assert_equal(["foo@example.jp"], get_mail_address("foo@example.jp"))
@@ -136,15 +136,15 @@ class TC_MailParser_Obsolete < Test::Unit::TestCase
     assert_equal("¥Æ¥¹¥È", mime_header_decode("=?euc-jp?q?=A5=C6=A5=B9=A5=C8?="))
   end
   def test_mime_header_decode_e2u()
-    MailParser::Obsolete.output_charset = "utf-8"
+    MailParser.output_charset = "utf-8"
     assert_equal("\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88", mime_header_decode("=?euc-jp?q?=A5=C6=A5=B9=A5=C8?="))
   end
   def test_mime_header_decode_s2u()
-    MailParser::Obsolete.output_charset = "utf-8"
+    MailParser.output_charset = "utf-8"
     assert_equal("\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88", mime_header_decode("=?shift_jis?q?=83=65=83=58=83=67?="))
   end
   def test_mime_header_decode_noconv()
-    MailParser::Obsolete.output_charset = nil
+    MailParser.output_charset = nil
     assert_equal("\x83\x65\x83\x58\x83\x67", mime_header_decode("=?shift_jis?q?=83=65=83=58=83=67?="))
   end
   def test_trunc_comment()
@@ -284,7 +284,7 @@ EOS
   end
   def test_parse_message_with_attachment_text_only()
     require "stringio"
-    MailParser::Obsolete.text_body_only = true
+    MailParser.text_body_only = true
     h = parse_message StringIO.new(<<EOS)
 Content-Type: multipart/mixed; boundary="hogehogehoge"
 

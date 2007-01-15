@@ -8,9 +8,6 @@ require "nkf"
 require "date"
 
 module MailParser
-end
-
-module MailParser::Obsolete
 
   @@output_charset = "euc-jp"
   @@text_body_only = false
@@ -95,16 +92,16 @@ module MailParser::Obsolete
       s
     else
       charset, encoding, text = $1, $2, $3
-      fc = MailParser::Obsolete::Charsets[charset.downcase]
+      fc = MailParser::Charsets[charset.downcase]
       if fc == nil then return s end
       if encoding.downcase == 'q' then
         s2 = qp_hdecode(text)
       else
         s2 = b64_hdecode(text)
       end
-      tc = @@output_charset && MailParser::Obsolete::Charsets[@@output_charset.downcase]
+      tc = @@output_charset && MailParser::Charsets[@@output_charset.downcase]
       if fc == "N" or tc.nil? or fc == tc then return s2 end
-      MailParser::Obsolete.send(MailParser::Obsolete::ConvertMethods[fc+tc], s2)
+      MailParser.send(MailParser::ConvertMethods[fc+tc], s2)
     end
   end
 
@@ -181,7 +178,7 @@ module MailParser::Obsolete
     if s =~ /^[A-Z][A-Z][A-Z]\s*,\s*/i then
       s = $'
     end
-    d = DateTime._strptime(s, "%d %b %Y %X")
+    d = ::DateTime._strptime(s, "%d %b %Y %X")
     return unless d
     Time.mktime(d[:year], d[:mon], d[:mday], d[:hour], d[:min], d[:sec]) rescue nil
   end
@@ -230,10 +227,10 @@ module MailParser::Obsolete
         pv = pv.sort{|a,b| a[0]<=>b[0]}
         charset = pv[0][2]
         v = pv.map{|a|a[1].gsub(/%([0-9A-F][0-9A-F])/){$1.hex.chr}}.join
-        fc = MailParser::Obsolete::Charsets[charset.downcase] if charset
-        tc = @@output_charset && MailParser::Obsolete::Charsets[@@output_charset.downcase]
+        fc = MailParser::Charsets[charset.downcase] if charset
+        tc = @@output_charset && MailParser::Charsets[@@output_charset.downcase]
         if fc and fc != "N" and fc != tc then
-          v = MailParser.send(MailParser::Obsolete::ConvertMethods[fc+tc], v)
+          v = MailParser.send(MailParser::ConvertMethods[fc+tc], v)
         end
         hash[:parameter][pn.downcase] = v
       end
@@ -405,10 +402,10 @@ EOS
       body = qp_decode body
     end
     if charset == nil then return body end
-    fc = MailParser::Obsolete::Charsets[charset.downcase]
+    fc = MailParser::Charsets[charset.downcase]
     if fc == nil then return body end
-    tc = @@output_charset && MailParser::Obsolete::Charsets[@@output_charset.downcase]
+    tc = @@output_charset && MailParser::Charsets[@@output_charset.downcase]
     if fc == "N" or tc.nil? or fc == tc then return body end
-    MailParser::Obsolete.send(MailParser::Obsolete::ConvertMethods[fc+tc], body)
+    MailParser.send(MailParser::ConvertMethods[fc+tc], body)
   end
 end

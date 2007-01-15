@@ -84,7 +84,7 @@ module MailParser
           @parsed = Loose.parse(@name, @raw, @opt)
         end
       else
-        r = @raw.gsub(/\s+/, " ")
+        r = @raw.chomp.gsub(/\s+/, " ")
         if @opt[:decode_mime_header] then
           @parsed = RFC2047.decode(r, @opt[:output_charset])
         else
@@ -167,6 +167,7 @@ module MailParser
       @src = src
       @opt = opt
       @boundary = boundary
+      @from = @to = @cc = @subject = nil
       @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
       @rawheader = ""
       @message = nil
@@ -186,6 +187,54 @@ module MailParser
     end
 
     attr_reader :header, :body, :part, :last_line, :message, :rawheader
+
+    # From ヘッダがあれば Mailbox を返す。
+    # なければ nil
+    def from()
+      return @from if @from
+      if @header.key? "from" then
+        @from = @header["from"][0][0]
+      else
+        @from = nil
+      end
+      return @from
+    end
+
+    # To ヘッダがあれば Mailbox の配列を返す
+    # なければ空配列
+    def to()
+      return @to if @to
+      if @header.key? "to" then
+        @to = @header["to"].flatten
+      else
+        @to = []
+      end
+      return @to
+    end
+
+    # Cc ヘッダがあれば Mailbox の配列を返す
+    # なければ空配列
+    def cc()
+      return @cc if @cc
+      if @header.key? "cc" then
+        @cc = @header["cc"].flatten
+      else
+        @cc = []
+      end
+      return @cc
+    end
+
+    # Subject ヘッダがあれば文字列を返す
+    # なければ空文字
+    def subject()
+      return @subject if @subject
+      if @header.key? "subject" then
+        @subject = @header["subject"].join(" ")
+      else
+        @subject = ""
+      end
+      return @subject
+    end
 
     # Content-Type の type を返す。
     # Content-Type がない場合は "text"
