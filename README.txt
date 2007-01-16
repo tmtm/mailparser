@@ -16,7 +16,18 @@ Ruby ライセンス http://www.ruby-lang.org/ja/LICENSE.txt と同等。
  * メール構造による例外は発生しない(例外を発生させることも可能)。
    不正な構造のメッセージがあった場合は適当に処理する
 
+== インストール ==
+
+インストールには racc が必要です。
+
+{{{
+$ make
+$ make test
+# make install
+}}}
+
 == 使用例 ==
+
 {{{
 require "mailparser"
 File.open("/tmp/hoge.eml") do |f|

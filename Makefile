@@ -1,12 +1,12 @@
-all:
-	cd mailparser/rfc2822 && make
-	cd mailparser/rfc2045 && make
-	cd mailparser/rfc2183 && make
+DEST = mailparser/rfc2822/parser.rb mailparser/rfc2045/parser.rb mailparser/rfc2183/parser.rb
+
+%.rb: %.y
+	racc -v -o $@ $<
+
+all: $(DEST)
 
 clean:
-	cd mailparser/rfc2822 && make clean
-	cd mailparser/rfc2045 && make clean
-	cd mailparser/rfc2183 && make clean
+	rm -f $(DEST)
 
 test: test_
 
