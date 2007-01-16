@@ -110,7 +110,7 @@ module MailParser
       while i < a[0].length do
         if a[0][i] =~ /\A[a-z0-9]+\z/ino then
           v = a[0][i+1]
-          name_val[a[0][i]] = v
+          name_val[a[0][i].to_s] = v
           i += 1
         else
           v << a[0][i]
