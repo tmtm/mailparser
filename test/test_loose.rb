@@ -1,6 +1,4 @@
-#
 # $Id$
-#
 # Copyright (C) 2007 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
@@ -13,6 +11,85 @@ class TC_Loose < Test::Unit::TestCase
   def setup()
   end
   def teardown()
+  end
+
+  def test_parse_date()
+    d = parse_date("Wed, 10 Jan 2007 12:53:55 +0900")
+    assert_equal(2007, d.year)
+    assert_equal(1, d.month)
+    assert_equal(10, d.day)
+    assert_equal(12, d.hour)
+    assert_equal(53, d.min)
+    assert_equal(55, d.sec)
+    assert_equal("+0900", d.zone)
+  end
+
+  def test_parse_phrase_list()
+    p = parse_phrase_list("abc def, ghi jkl")
+    assert_equal(2, p.size)
+    assert_equal("abc def", p[0])
+    assert_equal("ghi jkl", p[1])
+  end
+
+  def test_parse_phrase_list_mime()
+    p = parse_phrase_list("abc =?us-ascii?q?def?=, ghi jkl", :decode_mime_header=>true)
+    assert_equal(2, p.size)
+    assert_equal("abc def", p[0])
+    assert_equal("ghi jkl", p[1])
+  end
+
+  def test_parse_received()
+    r = parse_received("from host.example.com by my.server for <user@domain.name>; Wed, 10 Jan 2007 12:09:55 +0900")
+    assert_equal(2007, r.date_time.year)
+    assert_equal(1, r.date_time.month)
+    assert_equal(10, r.date_time.day)
+    assert_equal(12, r.date_time.hour)
+    assert_equal(9, r.date_time.min)
+    assert_equal(55, r.date_time.sec)
+    assert_equal("+0900", r.date_time.zone)
+    assert_equal("host.example.com", r.name_val["from"])
+    assert_equal("my.server", r.name_val["by"])
+    assert_equal("<user@domain.name>", r.name_val["for"])
+  end
+
+  def test_parse_content_type()
+    ct = parse_content_type("text/plain; charset=iso-2022-jp")
+    assert_equal("text", ct.type)
+    assert_equal("plain", ct.subtype)
+    assert_equal({"charset"=>"iso-2022-jp"}, ct.params)
+  end
+
+  def test_parse_content_type_miss()
+    ct = parse_content_type("text")
+    assert_equal("text", ct.type)
+    assert_equal("plain", ct.subtype)
+    assert_equal({}, ct.params)
+  end
+
+  def test_parse_content_type_name()
+    ct = parse_content_type("text/plain; name=hoge.txt")
+    assert_equal("text", ct.type)
+    assert_equal("plain", ct.subtype)
+    assert_equal({"name"=>"hoge.txt"}, ct.params)
+  end
+
+  def test_parse_content_type_name_quoted()
+    ct = parse_content_type("text/plain; name=\"hoge.txt\"")
+    assert_equal("text", ct.type)
+    assert_equal("plain", ct.subtype)
+    assert_equal({"name"=>"hoge.txt"}, ct.params)
+  end
+
+  def test_parse_content_disposition()
+    c = parse_content_disposition("attachment; filename=hoge.txt")
+    assert_equal("attachment", c.type)
+    assert_equal({"filename"=>"hoge.txt"}, c.params)
+  end
+
+  def test_parse_content_disposition_quoted()
+    c = parse_content_disposition("attachment; filename=\"hoge.txt\"")
+    assert_equal("attachment", c.type)
+    assert_equal({"filename"=>"hoge.txt"}, c.params)
   end
 
   def test_split_by()
@@ -38,47 +115,8 @@ class TC_Loose < Test::Unit::TestCase
     assert_equal("example.com", ml[0].addr_spec.domain)
   end
 
-  def test_parse_date()
-    d = parse_date("Wed, 10 Jan 2007 12:53:55 +0900")
-    assert_equal(2007, d.year)
-    assert_equal(1, d.month)
-    assert_equal(10, d.day)
-    assert_equal(12, d.hour)
-    assert_equal(53, d.min)
-    assert_equal(55, d.sec)
-    assert_equal("+0900", d.zone)
-  end
-
-  def test_parse_content_type()
-    ct = parse_content_type("text/plain; charset=iso-2022-jp", nil)
-    assert_equal("text", ct.type)
-    assert_equal("plain", ct.subtype)
-    assert_equal({"charset"=>"iso-2022-jp"}, ct.params)
-  end
-
-  def test_parse_content_type2()
-    ct = parse_content_type("text", nil)
-    assert_equal("text", ct.type)
-    assert_equal("", ct.subtype)
-    assert_equal({}, ct.params)
-  end
-
-  def test_parse_msg_id_list_old_in_reply_to()
-    assert_equal("<local-part@domain.name>", parse_msg_id_list("hoge@hoge.hoge message <local-part@domain.name>", nil).to_s)
-  end
-
-  def test_parse_received()
-    r = parse_received("from host.example.com by my.server for <user@domain.name>; Wed, 10 Jan 2007 12:09:55 +0900", nil)
-    assert_equal(2007, r.date_time.year)
-    assert_equal(1, r.date_time.month)
-    assert_equal(10, r.date_time.day)
-    assert_equal(12, r.date_time.hour)
-    assert_equal(9, r.date_time.min)
-    assert_equal(55, r.date_time.sec)
-    assert_equal("+0900", r.date_time.zone)
-    assert_equal("host.example.com", r.name_val_list["from"])
-    assert_equal("my.server", r.name_val_list["by"])
-    assert_equal("<user@domain.name>", r.name_val_list["for"])
+  def test_msg_id_list_old_in_reply_to()
+    assert_equal("<local-part@domain.name>", msg_id_list("hoge@hoge.hoge message <local-part@domain.name>").to_s)
   end
 
 end

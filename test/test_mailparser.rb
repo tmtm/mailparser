@@ -292,4 +292,124 @@ EOS
     assert_equal("This is a pen.", m.subject)
   end
 
+  def test_content_type()
+    msg = StringIO.new(<<EOS)
+Content-Type: text/plain; charset=us-ascii
+
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("text", m.type)
+    assert_equal("plain", m.subtype)
+    assert_equal("us-ascii", m.charset)
+  end
+
+  def test_content_type_miss()
+    msg = StringIO.new(<<EOS)
+Content-Type: text
+
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("text", m.type)
+    assert_equal("plain", m.subtype)
+    assert_equal("us-ascii", m.charset)
+  end
+
+  def test_content_type_none()
+    msg = StringIO.new(<<EOS)
+
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("text", m.type)
+    assert_equal("plain", m.subtype)
+    assert_equal("us-ascii", m.charset)
+  end
+
+  def test_body()
+    msg = StringIO.new(<<EOS)
+From: TOMITA Masahiro <tommy@tmtm.org>
+Content-Type: text/plain; charset=us-ascii
+
+Test message.
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("Test message.\n", m.body)
+  end
+
+  def test_body_iso2022jp()
+    msg = StringIO.new(<<EOS)
+From: TOMITA Masahiro <tommy@tmtm.org>
+Content-Type: text/plain; charset=iso-2022-jp
+
+\e\$B\$\"\$\$\$\&\$\(\$\*\e(B
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("\e\$B\$\"\$\$\$\&\$\(\$\*\e(B\n", m.body)
+  end
+
+  def test_body_iso2022jp_charset()
+    msg = StringIO.new(<<EOS)
+From: TOMITA Masahiro <tommy@tmtm.org>
+Content-Type: text/plain; charset=iso-2022-jp
+
+\e\$B\$\"\$\$\$\&\$\(\$\*\e(B
+EOS
+    m = MailParser::Message.new(msg, :output_charset=>"utf8")
+    assert_equal("あいうえお\n", m.body)
+  end
+
+  def test_filename()
+    msg = StringIO.new(<<EOS)
+Content-Type: text/plain; name="filename.txt"
+
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("filename.txt", m.filename)
+  end
+
+  def test_filename2()
+    msg = StringIO.new(<<EOS)
+Content-Disposition: attachment; filename="filename.txt"
+
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("filename.txt", m.filename)
+  end
+
+  def test_filename3()
+    msg = StringIO.new(<<EOS)
+Content-Type: text/plain; name="ctype.txt"
+Content-Disposition: attachment; filename="cdisp.txt"
+
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("cdisp.txt", m.filename)
+  end
+
+  def test_filename_rfc2231()
+    msg = StringIO.new(<<EOS)
+Content-Disposition: attachment; filename*=us-ascii'en'filename.txt
+
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("filename.txt", m.filename)
+  end
+
+  def test_filename_mime()
+    msg = StringIO.new(<<EOS)
+Content-Disposition: attachment; filename="=?us-ascii?q?filename.txt?="
+
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("=?us-ascii?q?filename.txt?=", m.filename)
+  end
+
+  def test_filename_mime_decode()
+    msg = StringIO.new(<<EOS)
+Content-Disposition: attachment; filename="=?us-ascii?q?filename.txt?="
+
+EOS
+    m = MailParser::Message.new(msg, :decode_mime_filename=>true)
+    assert_equal("filename.txt", m.filename)
+  end
+
 end

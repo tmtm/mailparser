@@ -44,7 +44,7 @@ module MailParser
     # hname:: ヘッダ名(String)
     # hbody:: ヘッダ本文(String)
     # opt:: オプション(Hash)
-    def parse(hname, hbody, opt)
+    def parse(hname, hbody, opt={})
       if HEADER_PARSER.key? hname then
         return method(HEADER_PARSER[hname]).call(hbody, opt)
       else
@@ -68,37 +68,41 @@ module MailParser
     end
 
     # From,To,Cc 等のヘッダをパースして RFC2822::Mailbox の配列を返す
-    def parse_mailbox_list(str, opt)
+    def parse_mailbox_list(str, opt={})
       mailbox_list(str)
     end
 
     # Sender,Resent-Sender ヘッダをパースして RFC2822::Mailbox を返す
-    def parse_mailbox(str, opt)
+    def parse_mailbox(str, opt={})
       mailbox_list(str)[0]
     end
 
     # Message-Id,Resent-Message-Id ヘッダをパースして RFC2822::MsgId を返す
-    def parse_msg_id(str, opt)
+    def parse_msg_id(str, opt={})
       msg_id_list(str)[0]
     end
 
     # In-Reply-To,References 等のヘッダを RFC2822::MsgIdList を返す
-    def parse_msg_id_list(str, opt)
+    def parse_msg_id_list(str, opt={})
       msg_id_list(str)
     end
 
     # Keywords ヘッダをパースして文字列の配列を返す
-    def parse_phrase_list(str, opt)
-      split_by(Tokenizer.token(str), ",").map{|i| i.to_s}
+    def parse_phrase_list(str, opt={})
+      s = split_by(Tokenizer.token(str), ",")
+      if opt[:decode_mime_header] then
+        s.each{|i| i.map!{|j|MailParser::RFC2047.decode(j, opt[:output_charset])}}
+      end
+      s.map{|i| i.join(" ")}
     end
 
     # Return-Path ヘッダをパースして RFC2822:ReturnPath を返す
-    def parse_return_path(str, opt)
+    def parse_return_path(str, opt={})
       mailbox_list(str)[0]
     end
 
     # Received ヘッダをパースして RFC2822::Received を返す
-    def parse_received(str, opt)
+    def parse_received(str, opt={})
       a = split_by(Tokenizer.token_received(str), ";")
       date = parse_date(a[-1].join(" "))
       name_val = {}
@@ -118,7 +122,7 @@ module MailParser
     end
 
     # Content-Type ヘッダをパースして RFC2045::ContentType を返す
-    def parse_content_type(str, opt)
+    def parse_content_type(str, opt={})
       token = split_by(Tokenizer.token(str), ";")
       type, subtype = token[0].to_s.split("/", 2)
       params = {}
@@ -126,21 +130,23 @@ module MailParser
         pn, pv = param.to_s.split(/=/, 2)
         params[pn.to_s] = pv.to_s.gsub(/\A"|"\z/,"")
       end
-      RFC2045::ContentType.new(type.to_s, subtype.to_s, params)
+      type = "text" if type.nil? or type.empty?
+      subtype = "plain" if subtype.nil? or subtype.empty?
+      RFC2045::ContentType.new(type, subtype, params)
     end
 
     # Content-Transfer-Encoding ヘッダをパースして RFC2045::ContentTransferEncoding を返す
-    def parse_content_transfer_encoding(str, opt)
+    def parse_content_transfer_encoding(str, opt={})
       RFC2045::ContentTransferEncoding.new(Tokenizer.token(str)[0])
     end
 
     # Mime-Version ヘッダをパースして文字列を返す
-    def parse_mime_version(str, opt)
+    def parse_mime_version(str, opt={})
       Tokenizer.token(str).join
     end
 
     # Content-Disposition ヘッダをパースして RFC2183::ContentDisposition を返す
-    def parse_content_distribution(str, opt)
+    def parse_content_disposition(str, opt={})
       token = split_by(Tokenizer.token(str), ";")
       type = token[0].to_s
       params = {}
@@ -148,7 +154,7 @@ module MailParser
         pn, pv = param.to_s.split(/=/, 2)
         params[pn.to_s] = pv.to_s.gsub(/\A"|"\z/,"")
       end
-      RFC2045::ContentType.new(type, params)
+      RFC2183::ContentDisposition.new(type, params)
     end
 
     # array を delim で分割した配列(要素は配列)を返す

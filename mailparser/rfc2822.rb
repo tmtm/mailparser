@@ -95,6 +95,12 @@ module MailParser::RFC2822
     attr_reader :addr_spec, :display_name
     attr_accessor :comments
     alias :phrase :display_name
+    def local_part()
+      @addr_spec.local_part
+    end
+    def domain()
+      @addr_spec.domain
+    end
     def to_s()
       if display_name.empty? then
         "<#{@addr_spec}>"
@@ -143,22 +149,10 @@ module MailParser::RFC2822
   end
 
   class Received
-    def initialize(name_val_list, date_time)
-      @name_val_list, @date_time = name_val_list, date_time
+    def initialize(name_val, date_time)
+      @name_val, @date_time = name_val, date_time
     end
-    attr_reader :name_val_list, :date_time
-  end
-
-  class AddressList < Array
-    def initialize(val=nil)
-      self << val if val
-    end
-  end
-
-  class PhraseList < Array
-    def initialize(val=nil)
-      self << val if val
-    end
+    attr_reader :name_val, :date_time
   end
 
   class DateTime

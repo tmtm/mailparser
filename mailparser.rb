@@ -11,6 +11,7 @@ require "mailparser/rfc2183"
 require "mailparser/rfc2231"
 require "mailparser/rfc2822"
 require "mailparser/loose"
+require "mailparser/conv_charset"
 
 require "stringio"
 
@@ -160,7 +161,8 @@ module MailParser
     #  :text_body_only::       text/* type 以外の本文をスキップする
     #  :extract_message_type:: message/* type を展開する
     #  :decode_mime_header::   MIMEヘッダをデコードする
-    #  :output_charset::       デコード出力文字コード(デフォルト: UTF-8)
+    #  :decode_mime_filename:: ファイル名を MIME デコードする
+    #  :output_charset::       デコード出力文字コード(デフォルト: 変換しない)
     #  :strict::               RFC違反時に ParseError 例外を発生する
     # boundary:: このパートの終わりを表す文字列の配列
     def initialize(src, opt={}, boundary=[])
@@ -265,7 +267,8 @@ module MailParser
     def charset()
       return @charset if @charset
       if @header.key? "content-type" then
-        @charset = @header["content-type"][0].params["charset"].downcase
+        c = @header["content-type"][0].params["charset"]
+        @charset = c ? c.downcase : "us-ascii"
       else
         @charset = "us-ascii"
       end
@@ -300,6 +303,7 @@ module MailParser
       elsif @header.key? "content-type" and @header["content-type"][0].params.key? "name" then
         @filename = @header["content-type"][0].params["name"]
       end
+      @filename = RFC2047.decode(@filename, @opt[:output_charset]) if @opt[:decode_mime_filename]
       return @filename
     end
 
@@ -338,6 +342,9 @@ module MailParser
         case content_transfer_encoding
         when "quoted-printable" then @body = RFC2045.qp_decode(@body)
         when "base64" then @body = RFC2045.b64_decode(@body)
+        end
+        if @opt[:output_charset] then
+          @body = MailParser::ConvCharset.conv_charset(charset, @opt[:output_charset], @body) rescue @body
         end
       end
       if @opt[:extract_message_type] and type == "message" and not @body.empty? then
