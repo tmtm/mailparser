@@ -1,7 +1,5 @@
-#
 # $Id$
-#
-# Copyright (C) 2006 TOMITA Masahiro
+# Copyright (C) 2007 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "time"
@@ -69,12 +67,12 @@ module MailParser
 
     # From,To,Cc 等のヘッダをパースして RFC2822::Mailbox の配列を返す
     def parse_mailbox_list(str, opt={})
-      mailbox_list(str)
+      mailbox_list(str, opt)
     end
 
     # Sender,Resent-Sender ヘッダをパースして RFC2822::Mailbox を返す
     def parse_mailbox(str, opt={})
-      mailbox_list(str)[0]
+      mailbox_list(str, opt)[0]
     end
 
     # Message-Id,Resent-Message-Id ヘッダをパースして RFC2822::MsgId を返す
@@ -90,15 +88,16 @@ module MailParser
     # Keywords ヘッダをパースして文字列の配列を返す
     def parse_phrase_list(str, opt={})
       s = split_by(Tokenizer.token(str), ",")
+      s.map!{|i| i.join(" ")}
       if opt[:decode_mime_header] then
-        s.each{|i| i.map!{|j|MailParser::RFC2047.decode(j, opt[:output_charset])}}
+        s.map!{|i| RFC2047.decode(i, opt[:output_charset])}
       end
-      s.map{|i| i.join(" ")}
+      s
     end
 
     # Return-Path ヘッダをパースして RFC2822:ReturnPath を返す
     def parse_return_path(str, opt={})
-      mailbox_list(str)[0]
+      mailbox_list(str, opt)[0]
     end
 
     # Received ヘッダをパースして RFC2822::Received を返す
@@ -174,11 +173,14 @@ module MailParser
     end
 
     # Mailbox のリストを返す
-    def mailbox_list(str)
+    def mailbox_list(str, opt)
       ret = []
       split_by(Tokenizer.token(str), ",").each do |m|
         if a1 = m.index("<") and a2 = m.rindex(">") and a2 > a1 then
           display_name = m[0..a1-1].join(" ")
+          if opt[:decode_mime_header] then
+            display_name = RFC2047.decode(display_name, opt[:output_charset])
+          end
           mailaddr = m[a1+1..a2-1].to_s
           local_part, domain = mailaddr.split(/@/, 2)
           ret << RFC2822::Mailbox.new(RFC2822::AddrSpec.new(local_part, domain), display_name)

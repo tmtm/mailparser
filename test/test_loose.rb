@@ -97,7 +97,7 @@ class TC_Loose < Test::Unit::TestCase
   end
 
   def test_mailbox_list()
-    ml = mailbox_list("hoge <hoge@example.com>, fuga@example.net")
+    ml = mailbox_list("hoge <hoge@example.com>, fuga@example.net", {})
     assert_equal(2, ml.size)
     assert_equal("hoge", ml[0].phrase)
     assert_equal("hoge", ml[0].addr_spec.local_part)
@@ -108,7 +108,7 @@ class TC_Loose < Test::Unit::TestCase
   end
 
   def test_mailbox_list2()
-    ml = mailbox_list("hoge hoge (comment) <hoge.hoge@example.com>")
+    ml = mailbox_list("hoge hoge (comment) <hoge.hoge@example.com>", {})
     assert_equal(1, ml.size)
     assert_equal("hoge hoge", ml[0].phrase)
     assert_equal("hoge.hoge", ml[0].addr_spec.local_part)
