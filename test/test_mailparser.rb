@@ -394,6 +394,15 @@ EOS
     assert_equal("filename.txt", m.filename)
   end
 
+  def test_filename_rfc2231_charset()
+    msg = StringIO.new(<<EOS)
+Content-Disposition: attachment; filename*=iso-2022-jp''%1B$B$%22$$$&$%28$%2A%1B%28B.txt
+
+EOS
+    m = MailParser::Message.new(msg, :output_charset=>"utf-8")
+    assert_equal("あいうえお.txt", m.filename)
+  end
+
   def test_filename_mime()
     msg = StringIO.new(<<EOS)
 Content-Disposition: attachment; filename="=?us-ascii?q?filename.txt?="
@@ -410,6 +419,15 @@ Content-Disposition: attachment; filename="=?us-ascii?q?filename.txt?="
 EOS
     m = MailParser::Message.new(msg, :decode_mime_filename=>true)
     assert_equal("filename.txt", m.filename)
+  end
+
+  def test_filename_mime_charset()
+    msg = StringIO.new(<<EOS)
+Content-Disposition: attachment; filename="=?iso-2022-jp?q?=1B$B$=22$$$&$=28$=2A=1B=28B.txt?="
+
+EOS
+    m = MailParser::Message.new(msg, :decode_mime_filename=>true, :output_charset=>"utf-8")
+    assert_equal("あいうえお.txt", m.filename)
   end
 
 end
