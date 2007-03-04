@@ -292,6 +292,24 @@ EOS
     assert_equal("This is a pen.", m.subject)
   end
 
+  def test_subject_mime_decode_charset()
+    msg = StringIO.new(<<EOS)
+Subject: =?iso-2022-jp?b?GyRCJCIkJCQmJCgkKhsoQg==?=
+
+EOS
+    m = MailParser::Message.new(msg, :decode_mime_header=>true, :output_charset=>"utf-8")
+    assert_equal("あいうえお", m.subject)
+  end
+
+  def test_subject_mime_decode_unknown_charset()
+    msg = StringIO.new(<<EOS)
+Subject: =?xxx?b?GyRCJCIkJCQmJCgkKhsoQg==?=
+
+EOS
+    m = MailParser::Message.new(msg, :decode_mime_header=>true, :output_charset=>"utf-8")
+    assert_equal("=?xxx?b?GyRCJCIkJCQmJCgkKhsoQg==?=", m.subject)
+  end
+
   def test_content_type()
     msg = StringIO.new(<<EOS)
 Content-Type: text/plain; charset=us-ascii
@@ -403,6 +421,15 @@ EOS
     assert_equal("あいうえお.txt", m.filename)
   end
 
+  def test_filename_rfc2231_unknown_charset()
+    msg = StringIO.new(<<EOS)
+Content-Disposition: attachment; filename*=xxxx''%1B$B$%22$$$&$%28$%2A%1B%28B.txt
+
+EOS
+    m = MailParser::Message.new(msg, :output_charset=>"utf-8")
+    assert_equal("\e$B$\"$$$&$($*\e(B.txt", m.filename)
+  end
+
   def test_filename_mime()
     msg = StringIO.new(<<EOS)
 Content-Disposition: attachment; filename="=?us-ascii?q?filename.txt?="
@@ -428,6 +455,25 @@ Content-Disposition: attachment; filename="=?iso-2022-jp?q?=1B$B$=22$$$&$=28$=2A
 EOS
     m = MailParser::Message.new(msg, :decode_mime_filename=>true, :output_charset=>"utf-8")
     assert_equal("あいうえお.txt", m.filename)
+  end
+
+  def test_filename_mime_unknown_charset()
+    msg = StringIO.new(<<EOS)
+Content-Disposition: attachment; filename="=?xxx?q?=1B$B$=22$$$&$=28$=2A=1B=28B.txt?="
+
+EOS
+    m = MailParser::Message.new(msg, :decode_mime_filename=>true, :output_charset=>"utf-8")
+    assert_equal("=?xxx?q?=1B$B$=22$$$&$=28$=2A=1B=28B.txt?=", m.filename)
+  end
+
+  def test_filename_invalid_crlf()
+    msg = StringIO.new(<<EOS)
+Content-Disposition: attachment; filename="aaaa
+    bbb"
+
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("aaaa bbb", m.filename)
   end
 
 end

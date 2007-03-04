@@ -26,8 +26,8 @@ parameter_list  : /* empty */
                 | parameter_list ';' parameter
                   {
                     pn, pv = val[2]
-                    pv = $1 if pv =~ /\A\"(.*)\"\Z/
-                    val[0][pn] = pv
+                    pv = $1 if pv =~ /\A\"(.*)\"\Z/m
+                    val[0][pn] = pv.gsub(/\s*\n\s*/, " ")
                     val[0]
                   }
 

@@ -92,6 +92,10 @@ module MailParser
           @parsed = r
         end
       end
+      class <<@parsed
+        attr_accessor :raw
+      end
+      @parsed.raw = @raw
       return @parsed
     end
   end
@@ -142,7 +146,7 @@ module MailParser
     end
 
     # 各ヘッダについてブロックを繰り返す
-    # ブロック引数は、[ヘッダ名, [MailParser::HeaderItemオブジェクト,...]]
+    # ブロック引数は、[ヘッダ名, パース結果オブジェクト,...]]
     def each()
       @hash.each do |k, v|
         yield k, self[k]
@@ -180,7 +184,7 @@ module MailParser
         @header["content-type"].each do |h|
           new = parse_param(h.params)
           new.each do |k,v|
-            v.replace(ConvCharset.conv_charset(v.charset, @opt[:output_charset], v)) if v.charset and @opt[:output_charset]
+            v.replace(ConvCharset.conv_charset(v.charset, @opt[:output_charset], v)) if v.charset and @opt[:output_charset] rescue nil
           end
           h.params.replace new
         end
@@ -189,7 +193,7 @@ module MailParser
         @header["content-disposition"].each do |h|
           new = parse_param(h.params)
           new.each do |k,v|
-            v.replace(ConvCharset.conv_charset(v.charset, @opt[:output_charset], v)) if v.charset and @opt[:output_charset]
+            v.replace(ConvCharset.conv_charset(v.charset, @opt[:output_charset], v)) if v.charset and @opt[:output_charset] rescue nil
           end
           h.params.replace new
         end

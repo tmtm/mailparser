@@ -25,7 +25,7 @@ Ruby ライセンス http://www.ruby-lang.org/ja/LICENSE.txt と同等。
 
 == インストール ==
 
-インストールには racc が必要です。
+インストールには racc が必要。
 
 {{{
 $ make
@@ -38,7 +38,7 @@ $ make test
 {{{
 require "mailparser"
 File.open("/tmp/hoge.eml") do |f|
-  m = MailParser::Message.new(f, :mime_header_decode=>true)
+  m = MailParser::Message.new(f, :decode_mime_header=>true)
   m.from                # => From ヘッダ (MailParser::RFC2822::Mailbox)
   m.to                  # => To ヘッダ (MailParser::RFC2822::Mailbox の配列)
   m.subject             # => Subject 文字列 (String)
@@ -50,7 +50,7 @@ File.open("/tmp/hoge.eml") do |f|
 end
 }}}
 
-== MailParser::Message クラス ==
+== MailParser::Message ==
 
 === MailParser::Message.new(io, [opt]) ===
  
@@ -175,8 +175,9 @@ m.filename # => "ファイル名"
 
 === MailParser::Message#header ===
 
-ヘッダを表すハッシュを返す。
-ハッシュのキーは小文字のヘッダ名文字列で、値はヘッダオブジェクトの配列(複数存在する場合があるので配列)。
+ヘッダを表す MailParser::Header オブジェクトを返す。
+MailParser::Header はハッシュのように使用できる。
+キーは小文字のヘッダ名文字列で、値はヘッダオブジェクトの配列(複数存在する場合があるので配列)。
 {{{
 m = MailParser::Message.new(StringIO.new(<<EOS))
 From: TOMITA Masahiro <tommy@tmtm.org>
@@ -280,6 +281,30 @@ EOS
 m.rawheader  # => "From: TOMITA Masahiro <tommy@tmtm.org>\nTo: foo@example.com\nSubject: subject\n"
 }}}
 
+== MailParser::Header ==
+
+同じ名前を持つヘッダを表すクラス。
+
+=== MailParser::Header#add(name, body) ==
+name ヘッダの値として body を追加する。
+
+=== MailParser::Header#[](name) ==
+name ヘッダの値をパースした結果オブジェクトの配列を返す。
+パース結果オブジェクトは raw メソッドを持ち、パース前文字列を取り出すことができる。
+
+=== MailParser::Header#raw(name) ==
+name ヘッダの値のパース前の文字列の配列を返す。
+
+=== MailParser::Header#keys ==
+ヘッダ名文字列の一覧を返す。
+
+=== MailParser::Header#key?(name) ==
+name ヘッダがあれば真。
+
+=== MailParser::Header#each {|n,v| } ==
+各ヘッダについてブロックを繰り返す。
+ブロック引数は、１番目がヘッダ名文字列、２番目がパース結果オブジェクトの配列。
+
 == MailParser::DateTime ==
 
 Date ヘッダを表すクラス。
@@ -311,6 +336,10 @@ Date ヘッダを表すクラス。
 === MailParser::DateTime#zone ===
 
 タイムゾーンを表す文字列。「+9999」または「-9999」の形式。
+
+=== MailParser::DateTime#time ===
+
+Time オブジェクトを返す。範囲外の日付の場合は :strict が false でも ArgumentError 例外が発生するので注意。
 
 == MailParser::Mailbox ==
 
