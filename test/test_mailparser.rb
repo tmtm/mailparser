@@ -476,4 +476,88 @@ EOS
     assert_equal("aaaa bbb", m.filename)
   end
 
+  def test_extract_message_type()
+    msg = StringIO.new(<<EOS)
+From: from1@example.com
+Content-Type: multipart/mixed; boundary="xxxx"
+
+--xxxx
+Content-Type: text/plain
+
+body1
+--xxxx
+Content-Type: message/rfc822
+
+From: from2@example.com
+Content-Type: text/plain
+
+body2
+--xxxx--
+EOS
+    m = MailParser::Message.new(msg, :extract_message_type=>true)
+    assert_equal("<from1@example.com>", m.from.to_s)
+    assert_equal(2, m.part.size)
+    assert_equal("text", m.part[0].type)
+    assert_equal("body1\n", m.part[0].body)
+    assert_equal("message", m.part[1].type)
+    assert_equal("<from2@example.com>", m.part[1].message.from.to_s)
+    assert_equal("body2\n", m.part[1].message.body)
+  end
+
+  def test_extract_message_type_skip_body()
+    msg = StringIO.new(<<EOS)
+From: from1@example.com
+Content-Type: multipart/mixed; boundary="xxxx"
+
+--xxxx
+Content-Type: text/plain
+
+body1
+--xxxx
+Content-Type: message/rfc822
+
+From: from2@example.com
+Content-Type: text/plain
+
+body2
+--xxxx--
+EOS
+    m = MailParser::Message.new(msg, :extract_message_type=>true, :skip_body=>true)
+    assert_equal("<from1@example.com>", m.from.to_s)
+    assert_equal(2, m.part.size)
+    assert_equal("text", m.part[0].type)
+    assert_equal("", m.part[0].body)
+    assert_equal("message", m.part[1].type)
+    assert_equal("<from2@example.com>", m.part[1].message.from.to_s)
+    assert_equal("", m.part[1].message.body)
+  end
+
+  def test_extract_message_type_text_body_only()
+    msg = StringIO.new(<<EOS)
+From: from1@example.com
+Content-Type: multipart/mixed; boundary="xxxx"
+
+--xxxx
+Content-Type: text/plain
+
+body1
+--xxxx
+Content-Type: message/rfc822
+
+From: from2@example.com
+Content-Type: text/plain
+
+body2
+--xxxx--
+EOS
+    m = MailParser::Message.new(msg, :extract_message_type=>true, :text_body_only=>true)
+    assert_equal("<from1@example.com>", m.from.to_s)
+    assert_equal(2, m.part.size)
+    assert_equal("text", m.part[0].type)
+    assert_equal("body1\n", m.part[0].body)
+    assert_equal("message", m.part[1].type)
+    assert_equal("<from2@example.com>", m.part[1].message.from.to_s)
+    assert_equal("body2\n", m.part[1].message.body)
+  end
+
 end

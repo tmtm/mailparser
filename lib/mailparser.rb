@@ -345,19 +345,21 @@ module MailParser
     def read_body()
       @body = ""
       return if type == "multipart"
-      if @opt[:skip_body] or (@opt[:text_body_only] and type != "text")
-        each_line_with_delimiter(@boundary){}
-      else
-        each_line_with_delimiter(@boundary) do |line|
-          @body << line
+      unless @opt[:extract_message_type] and type == "message" then
+        if @opt[:skip_body] or (@opt[:text_body_only] and type != "text")
+          each_line_with_delimiter(@boundary){}       # 本文skip
+          return
         end
-        case content_transfer_encoding
-        when "quoted-printable" then @body = RFC2045.qp_decode(@body)
-        when "base64" then @body = RFC2045.b64_decode(@body)
-        end
-        if @opt[:output_charset] then
-          @body = MailParser::ConvCharset.conv_charset(charset, @opt[:output_charset], @body) rescue @body
-        end
+      end
+      each_line_with_delimiter(@boundary) do |line|
+        @body << line
+      end
+      case content_transfer_encoding
+      when "quoted-printable" then @body = RFC2045.qp_decode(@body)
+      when "base64" then @body = RFC2045.b64_decode(@body)
+      end
+      if @opt[:output_charset] then
+        @body = MailParser::ConvCharset.conv_charset(charset, @opt[:output_charset], @body) rescue @body
       end
       if @opt[:extract_message_type] and type == "message" and not @body.empty? then
         @message = Message.new(StringIO.new(@body), @opt)
