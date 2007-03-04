@@ -285,23 +285,23 @@ m.rawheader  # => "From: TOMITA Masahiro <tommy@tmtm.org>\nTo: foo@example.com\n
 
 同じ名前を持つヘッダを表すクラス。
 
-=== MailParser::Header#add(name, body) ==
+=== MailParser::Header#add(name, body) ===
 name ヘッダの値として body を追加する。
 
-=== MailParser::Header#[](name) ==
+=== MailParser::Header#[](name) ===
 name ヘッダの値をパースした結果オブジェクトの配列を返す。
 パース結果オブジェクトは raw メソッドを持ち、パース前文字列を取り出すことができる。
 
-=== MailParser::Header#raw(name) ==
+=== MailParser::Header#raw(name) ===
 name ヘッダの値のパース前の文字列の配列を返す。
 
-=== MailParser::Header#keys ==
+=== MailParser::Header#keys ===
 ヘッダ名文字列の一覧を返す。
 
-=== MailParser::Header#key?(name) ==
+=== MailParser::Header#key?(name) ===
 name ヘッダがあれば真。
 
-=== MailParser::Header#each {|n,v| } ==
+=== MailParser::Header#each {|n,v| } ===
 各ヘッダについてブロックを繰り返す。
 ブロック引数は、１番目がヘッダ名文字列、２番目がパース結果オブジェクトの配列。
 
