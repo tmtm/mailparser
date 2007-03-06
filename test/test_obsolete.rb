@@ -214,10 +214,12 @@ class TC_MailParser_Obsolete < Test::Unit::TestCase
     assert_equal(Time.mktime(2005,1,4,23,10,20), get_date("Tue, 4 Jan 2005 23:10:20 +0900"))
   end
   def test_get_date_far_future()
-    assert_equal(nil, get_date("Tue, 4 Jan 2090 23:10:20 +0900"))
+    d = get_date("Tue, 4 Jan 2090 23:10:20 +0900")
+    assert(d == nil || d == Time.mktime(2090,1,4,23,10,20))
   end
   def test_get_date_deep_past()
-    assert_equal(nil, get_date("Tue, 4 Jan 1800 23:10:20 +0900"))
+    d = get_date("Tue, 4 Jan 1800 23:10:20 +0900")
+    assert(d == nil || d == Time.mktime(1800,1,4,23,10,20))
   end
   def test_get_date_invalid()
     assert_equal(nil, get_date("XXX, 99 Jan 205 23:10:20 +0900"))

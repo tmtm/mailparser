@@ -14,14 +14,20 @@ class TC_Loose < Test::Unit::TestCase
   end
 
   def test_parse_date()
-    d = parse_date("Wed, 10 Jan 2007 12:53:55 +0900")
-    assert_equal(2007, d.year)
-    assert_equal(1, d.month)
-    assert_equal(10, d.day)
-    assert_equal(12, d.hour)
-    assert_equal(53, d.min)
-    assert_equal(55, d.sec)
-    assert_equal("+0900", d.zone)
+    tzbak = ENV["TZ"]
+    begin
+      ENV["TZ"] = "GMT"
+      d = parse_date("Wed, 10 Jan 2007 12:53:55 +0900")
+      assert_equal(2007, d.year)
+      assert_equal(1, d.month)
+      assert_equal(10, d.day)
+      assert_equal(3, d.hour)
+      assert_equal(53, d.min)
+      assert_equal(55, d.sec)
+      assert_equal("+0000", d.zone)
+    ensure
+      ENV["TZ"] = tzbak
+    end
   end
 
   def test_parse_phrase_list()
@@ -39,17 +45,23 @@ class TC_Loose < Test::Unit::TestCase
   end
 
   def test_parse_received()
-    r = parse_received("from host.example.com by my.server for <user@domain.name>; Wed, 10 Jan 2007 12:09:55 +0900")
-    assert_equal(2007, r.date_time.year)
-    assert_equal(1, r.date_time.month)
-    assert_equal(10, r.date_time.day)
-    assert_equal(12, r.date_time.hour)
-    assert_equal(9, r.date_time.min)
-    assert_equal(55, r.date_time.sec)
-    assert_equal("+0900", r.date_time.zone)
-    assert_equal("host.example.com", r.name_val["from"])
-    assert_equal("my.server", r.name_val["by"])
-    assert_equal("<user@domain.name>", r.name_val["for"])
+    tzbak = ENV["TZ"]
+    begin
+      ENV["TZ"] = "GMT"
+      r = parse_received("from host.example.com by my.server for <user@domain.name>; Wed, 10 Jan 2007 12:09:55 +0900")
+      assert_equal(2007, r.date_time.year)
+      assert_equal(1, r.date_time.month)
+      assert_equal(10, r.date_time.day)
+      assert_equal(3, r.date_time.hour)
+      assert_equal(9, r.date_time.min)
+      assert_equal(55, r.date_time.sec)
+      assert_equal("+0000", r.date_time.zone)
+      assert_equal("host.example.com", r.name_val["from"])
+      assert_equal("my.server", r.name_val["by"])
+      assert_equal("<user@domain.name>", r.name_val["for"])
+    ensure
+      ENV["TZ"] = tzbak
+    end
   end
 
   def test_parse_content_type()
