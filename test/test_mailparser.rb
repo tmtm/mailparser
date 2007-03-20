@@ -560,4 +560,92 @@ EOS
     assert_equal("body2\n", m.part[1].message.body)
   end
 
+  def test_extract_multipart_alternative_attach()
+    msg = StringIO.new(<<EOS)
+From: from1@example.com
+Content-Type: multipart/mixed; boundary="xxxx"
+
+--xxxx
+Content-Type: multipart/alternative;
+	boundary="yyyy"
+
+--yyyy
+Content-Type: text/plain; charset=iso-2022-jp
+
+hoge
+--yyyy
+Content-Type: text/html; charset=iso-2022-jp
+
+fuga html
+--yyyy--
+
+--xxxx
+Content-Type: application/octet-stream; name="attach.txt"
+Content-Disposition: attachment; filename="attach.txt"
+
+attached file
+--xxxx--
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal(2, m.part.size)
+    assert_equal(2, m.part[0].part.size)
+    assert_equal("hoge\n", m.part[0].part[0].body)
+    assert_equal("fuga html\n", m.part[0].part[1].body)
+    assert_equal("attached file\n", m.part[1].body)
+  end
+
+  def test_extract_no_boundary()
+    msg = StringIO.new(<<EOS)
+From: from@example.com
+Content-Type: multipart/mixed; boundary="xxx"
+
+hoge
+hoge
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("", m.body)
+    assert_equal([], m.part)
+  end
+
+  def test_extract_no_end_boundary()
+    msg = StringIO.new(<<EOS)
+From: from@example.com
+Content-Type: multipart/mixed; boundary="xxx"
+
+--xxx
+Content-Type: text/plain
+
+hoge
+hoge
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal(1, m.part.size)
+    assert_equal("hoge\nhoge\n", m.part[0].body)
+  end
+
+  def test_extract_no_end_boundary_nest()
+    msg = StringIO.new(<<EOS)
+From: from@example.com
+Content-Type: multipart/mixed; boundary="xxx"
+
+--xxx
+Content-Type: multipart/mixed; boundary="yyy"
+
+--yyy
+Content-Type: text/plain
+
+hoge
+hoge
+--xxx
+Content-Type: text/plain
+
+fuga
+--xxx--
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal(2, m.part.size)
+    assert_equal(1, m.part[0].part.size)
+    assert_equal("hoge\nhoge\n", m.part[0].part[0].body)
+    assert_equal("fuga\n", m.part[1].body)
+  end
 end

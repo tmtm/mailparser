@@ -373,11 +373,10 @@ module MailParser
       b = @header["content-type"][0].params["boundary"]
       bd = @boundary + ["--#{b}--", "--#{b}"]
       each_line_with_delimiter(bd){}  # skip preamble
-      ll = last_line
-      while ll == bd[-1] do
+      while @last_line == bd[-1] do
         m = Message.new(@src, @opt, bd)
         @part << m
-        ll = m.last_line
+        @last_line = m.last_line
       end
       each_line_with_delimiter(@boundary){} if @last_line == bd[-2] # skip epilogue
     end
