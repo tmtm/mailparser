@@ -648,4 +648,13 @@ EOS
     assert_equal("hoge\nhoge\n", m.part[0].part[0].body)
     assert_equal("fuga\n", m.part[1].body)
   end
+
+  def test_parse_no_header_delimiter()
+    msg = StringIO.new <<EOS
+Subject: hoge
+hogehoge
+EOS
+    m = MailParser::Message.new msg
+    m.header.each{}
+  end
 end

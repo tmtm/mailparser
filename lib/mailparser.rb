@@ -16,13 +16,13 @@ require "mailparser/conv_charset"
 require "stringio"
 
 # メールをパースする。
-# 
+#
 #   m = MailParser.new
 #   m.parse(src)
 #   m.header => #<MailParser::Header>
 #   m.body => パースされた本文文字列
 #   m.part => [#<Mailparser>, ...]
-# 
+#
 module MailParser
   include RFC2045, RFC2183, RFC2822
 
@@ -171,6 +171,7 @@ module MailParser
     # boundary:: このパートの終わりを表す文字列の配列
     def initialize(src, opt={}, boundary=[])
       @src = src
+      @line_buffered = false
       @opt = opt
       @boundary = boundary
       @from = @to = @cc = @subject = nil
@@ -200,7 +201,7 @@ module MailParser
       end
     end
 
-    attr_reader :header, :body, :part, :last_line, :message, :rawheader
+    attr_reader :header, :body, :part, :last_line, :message, :rawheader, :rawbody
 
     # From ヘッダがあれば Mailbox を返す。
     # なければ nil
@@ -327,12 +328,17 @@ module MailParser
       headers = []
       each_line_with_delimiter(@boundary) do |line|
         break if line.chomp.empty?
-        @rawheader << line
-        if line =~ /^\s/ and headers.size > 0 then
-          headers[-1] << line
+        cont = line =~ /^\s/
+        if (cont and headers.empty?) or (!cont and !line.include? ":") then
+          ungetline
+          break
+        end
+        if line =~ /^\s/ then
+          headers.last << line
         else
           headers << line
         end
+        @rawheader << line
       end
       headers.each do |h|
         name, body = h.split(/\s*:\s*/, 2)
@@ -344,6 +350,7 @@ module MailParser
     # 本文を読む
     def read_body()
       @body = ""
+      @rawbody = ""
       return if type == "multipart"
       unless @opt[:extract_message_type] and type == "message" then
         if @opt[:skip_body] or (@opt[:text_body_only] and type != "text")
@@ -354,6 +361,7 @@ module MailParser
       each_line_with_delimiter(@boundary) do |line|
         @body << line
       end
+      @rawbody = @body
       case content_transfer_encoding
       when "quoted-printable" then @body = RFC2045.qp_decode(@body)
       when "base64" then @body = RFC2045.b64_decode(@body)
@@ -384,12 +392,21 @@ module MailParser
     # 行毎にブロックを繰り返す
     # delim に含まれる行に一致した場合は中断
     def each_line_with_delimiter(delim=[])
+      if @line_buffered then
+        @line_buffered = false
+        yield @last_line
+      end
       @src.each_line do |line|
         @last_line = line.chomp
         return if delim.include? @last_line
         yield line
       end
       return
+    end
+
+    # １行分 each_line_with_delimiter をなかったことに
+    def ungetline()
+      @line_bufferd = true
     end
   end
 end
