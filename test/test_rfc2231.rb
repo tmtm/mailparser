@@ -103,11 +103,27 @@ class TC_RFC2231 < Test::Unit::TestCase
     assert_raises(MailParser::ParseError){MailParser::RFC2231.parse_param(params)}
   end
 
+  def test_parse_param7_1()
+    params = {
+      "hoge*" => "fuga",
+    }
+    h = MailParser::RFC2231.parse_param(params, false)
+    assert_equal("fuga", h["hoge"])
+  end
+
   def test_parse_param8()
     params = {
       "hoge*0*" => "fuga",
     }
     assert_raises(MailParser::ParseError){MailParser::RFC2231.parse_param(params)}
+  end
+
+  def test_parse_param8_1()
+    params = {
+      "hoge*0*" => "fuga",
+    }
+    h = MailParser::RFC2231.parse_param(params, false)
+    assert_equal("fuga", h["hoge"])
   end
 
   def test_rfc_example()

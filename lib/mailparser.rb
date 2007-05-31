@@ -183,7 +183,7 @@ module MailParser
       read_part
       if @header.key? "content-type" then
         @header["content-type"].each do |h|
-          new = parse_param(h.params)
+          new = parse_param(h.params, @opt[:strict])
           new.each do |k,v|
             v.replace(ConvCharset.conv_charset(v.charset, @opt[:output_charset], v)) if v.charset and @opt[:output_charset] rescue nil
           end
@@ -192,7 +192,7 @@ module MailParser
       end
       if @header.key? "content-disposition" then
         @header["content-disposition"].each do |h|
-          new = parse_param(h.params)
+          new = parse_param(h.params, @opt[:strict])
           new.each do |k,v|
             v.replace(ConvCharset.conv_charset(v.charset, @opt[:output_charset], v)) if v.charset and @opt[:output_charset] rescue nil
           end
