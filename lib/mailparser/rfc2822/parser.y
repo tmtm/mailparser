@@ -235,8 +235,14 @@ msg_id          : '<' id_left '@' id_right '>'
                   }
 
 phrase_msg_id_list : /* empty */
+                  {
+                    MsgIdList.new()
+                  }
                  | phrase_msg_id_list phrase0
                  | phrase_msg_id_list msg_id
+                  {
+                    val[0] << val[1]
+                  }
 
 #id_left         : dot_atom_text  /* local_part include dot_atom_text */
 #                | NO_FOLD_QUOTE  /* local_part include NO_FOLD_QUOTE */

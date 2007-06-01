@@ -128,9 +128,17 @@ class TC_Loose < Test::Unit::TestCase
   end
 
   def test_msg_id_list_old_in_reply_to()
-    assert_equal("<local-part@domain.name>", msg_id_list("hoge@hoge.hoge message <local-part@domain.name>").to_s)
+    m = msg_id_list "hoge@hoge.hoge message <local-part@domain.name>"
+    assert_equal 1, m.size
+    assert_equal "local-part@domain.name", m[0].msg_id
   end
 
+  def test_msg_id_list_multiple()
+    m = msg_id_list "<aa@bb.cc> <dd@ee.ff>"
+    assert_equal 2, m.size
+    assert_equal "aa@bb.cc", m[0].msg_id
+    assert_equal "dd@ee.ff", m[1].msg_id
+  end
 end
 
 class TC_Loose_Tokenizer < Test::Unit::TestCase

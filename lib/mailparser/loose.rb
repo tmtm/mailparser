@@ -195,13 +195,26 @@ module MailParser
     # MsgId のリストを返す
     def msg_id_list(str)
       ret = []
-      split_by(Tokenizer.token(str), ",").each do |m|
-        if a1 = m.index("<") and a2 = m.rindex(">") and a2 > a1 then
-          msgid = m[a1+1..a2-1].to_s
-          ret << RFC2822::MsgId.new(msgid)
+      flag = false
+      msgid = nil
+      Tokenizer.token(str).each do |m|
+        case m
+        when "<"
+          unless flag
+            flag = true
+            msgid = ""
+          end
+        when ">"
+          if flag
+            flag = false
+            ret << RFC2822::MsgId.new(msgid)
+          end
         else
-          ret << RFC2822::MsgId.new(m.to_s)
+          msgid << m if flag
         end
+      end
+      if ret.empty?
+        ret << str
       end
       return ret
     end

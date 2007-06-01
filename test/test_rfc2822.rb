@@ -167,8 +167,21 @@ class TC_RFC2822Parser < Test::Unit::TestCase
     m = @p.parse(:MSG_ID_LIST, "<a@b.c> <d@e.f>")
     assert_kind_of(Array, m)
     assert_equal(2, m.size)
+    assert_equal("a@b.c", m[0].msg_id)
+    assert_equal("d@e.f", m[1].msg_id)
+    assert_equal("<a@b.c> <d@e.f>", m.to_s)
+  end
+
+  def test_phrase_msg_id_list()
+    m = @p.parse(:PHRASE_MSG_ID_LIST, "<a@b.c>")
+    assert_equal(1, m.size)
     assert_kind_of(MailParser::RFC2822::MsgId, m[0])
-    assert_kind_of(MailParser::RFC2822::MsgId, m[1])
+    assert_equal("<a@b.c>", m.to_s)
+    m = @p.parse(:PHRASE_MSG_ID_LIST, "<a@b.c> <d@e.f>")
+    assert_kind_of(Array, m)
+    assert_equal(2, m.size)
+    assert_equal("a@b.c", m[0].msg_id)
+    assert_equal("d@e.f", m[1].msg_id)
     assert_equal("<a@b.c> <d@e.f>", m.to_s)
   end
 
