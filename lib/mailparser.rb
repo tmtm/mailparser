@@ -168,6 +168,7 @@ module MailParser
     #  :decode_mime_filename:: ファイル名を MIME デコードする
     #  :output_charset::       デコード出力文字コード(デフォルト: 変換しない)
     #  :strict::               RFC違反時に ParseError 例外を発生する
+    #  :keep_raw::             生メッセージを保持する
     # boundary:: このパートの終わりを表す文字列の配列
     def initialize(src, opt={}, boundary=[])
       @src = src
@@ -177,6 +178,7 @@ module MailParser
       @from = @to = @cc = @subject = nil
       @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
       @rawheader = ""
+      @raw = ""
       @message = nil
       read_header
       read_body
@@ -201,7 +203,7 @@ module MailParser
       end
     end
 
-    attr_reader :header, :body, :part, :last_line, :message, :rawheader, :rawbody
+    attr_reader :header, :body, :part, :last_line, :message, :rawheader, :raw
 
     # From ヘッダがあれば Mailbox を返す。
     # なければ nil
@@ -350,7 +352,6 @@ module MailParser
     # 本文を読む
     def read_body()
       @body = ""
-      @rawbody = ""
       return if type == "multipart"
       unless @opt[:extract_message_type] and type == "message" then
         if @opt[:skip_body] or (@opt[:text_body_only] and type != "text")
@@ -361,7 +362,6 @@ module MailParser
       each_line_with_delimiter(@boundary) do |line|
         @body << line
       end
-      @rawbody = @body
       case content_transfer_encoding
       when "quoted-printable" then @body = RFC2045.qp_decode(@body)
       when "base64" then @body = RFC2045.b64_decode(@body)
@@ -384,6 +384,7 @@ module MailParser
       while @last_line == bd[-1] do
         m = Message.new(@src, @opt, bd)
         @part << m
+        @raw << m.raw if @opt[:keep_raw]
         @last_line = m.last_line
       end
       each_line_with_delimiter(@boundary){} if @last_line == bd[-2] # skip epilogue
@@ -397,6 +398,7 @@ module MailParser
         yield @last_line
       end
       @src.each_line do |line|
+        @raw << line if @opt[:keep_raw]
         @last_line = line.chomp
         return if delim.include? @last_line
         yield line

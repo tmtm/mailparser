@@ -44,9 +44,9 @@ File.open("/tmp/hoge.eml") do |f|
   m.subject             # => Subject 文字列 (String)
   m.body                # => 本文文字列 (String)
   m.charset             # => 本文文字コード (String)
-  m.parts               # => 添付ファイル (MailParser::Message の配列)
-  m.parts[0].filename   # => １つめの添付ファイルのファイル名 (String)
-  m.parts[0].body       # => １つめの添付ファイルの本文 (String)
+  m.part                # => 添付ファイル (MailParser::Message の配列)
+  m.part[0].filename    # => １つめの添付ファイルのファイル名 (String)
+  m.part[0].body        # => １つめの添付ファイルの本文 (String)
 end
 }}}
 
@@ -82,6 +82,9 @@ opt は Hash オブジェクトで次の値を指定できる。
 
  :strict => true
    RFC違反時に ParseError 例外を発生する。デフォルトは false。
+
+ :keep_raw => true
+   生メッセージ文字列を保持する。デフォルトは false。
 
 === MailParser::Message#from ===
 
@@ -271,7 +274,22 @@ m.message.subject  # => "message subject"
 
 ヘッダ部文字列をパースせずにそのまま返す。
 {{{
-m = MailParser::Message.new(StringIO.new(<<EOS), :extract_message_type=>true)
+m = MailParser::Message.new(StringIO.new(<<EOS))
+From: TOMITA Masahiro <tommy@tmtm.org>
+To: foo@example.com
+Subject: subject
+
+body message
+EOS
+m.rawheader  # => "From: TOMITA Masahiro <tommy@tmtm.org>\nTo: foo@example.com\nSubject: subject\n"
+}}}
+
+=== MailParser::Message#raw ===
+
+生メッセージ文字列を返す。:keep_raw=>true である必要がある。
+:keep_raw=>false の場合は空文字列が返る。
+{{{
+m = MailParser::Message.new(StringIO.new(<<EOS), :keep_raw=>true)
 From: TOMITA Masahiro <tommy@tmtm.org>
 To: foo@example.com
 Subject: subject

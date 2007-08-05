@@ -657,4 +657,69 @@ EOS
     m = MailParser::Message.new msg
     m.header.each{}
   end
+
+  def test_raw_single_part
+    msg = StringIO.new(<<EOS)
+From: from@example.com
+Content-Type: text/plain
+
+hogehoge
+
+fugafuga
+EOS
+    m = MailParser::Message.new msg, :keep_raw=>true
+    assert_equal msg.string, m.raw
+  end
+
+  def test_raw_multi_part_nest
+    msg = StringIO.new(<<EOS)
+From: from@example.com
+Content-Type: multipart/mixed; boundary="xxx"
+
+--xxx
+Content-Type: multipart/mixed; boundary="yyy"
+
+--yyy
+Content-Type: text/plain
+
+hoge
+hoge
+--yyy
+Content-Type: text/plain
+
+hoge
+hoge
+--yyy--
+
+--xxx
+Content-Type: text/plain
+
+fuga
+--xxx--
+EOS
+    m = MailParser::Message.new msg, :keep_raw=>true
+    assert_equal msg.string, m.raw
+  end
+
+  def test_raw_message_part
+    msg = StringIO.new(<<EOS)
+From: from1@example.com
+Content-Type: multipart/mixed; boundary="xxxx"
+
+--xxxx
+Content-Type: text/plain
+
+body1
+--xxxx
+Content-Type: message/rfc822
+
+From: from2@example.com
+Content-Type: text/plain
+
+body2
+--xxxx--
+EOS
+    m = MailParser::Message.new msg, :keep_raw=>true
+    assert_equal msg.string, m.raw
+  end
 end
