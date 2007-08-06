@@ -318,7 +318,7 @@ module MailParser
       elsif @header.key? "content-type" and @header["content-type"][0].params.key? "name" then
         @filename = @header["content-type"][0].params["name"]
       end
-      @filename = RFC2047.decode(@filename, @opt[:output_charset]) if @opt[:decode_mime_filename]
+      @filename = RFC2047.decode(@filename, @opt[:output_charset]) if @opt[:decode_mime_filename] and @filename
       return @filename
     end
 

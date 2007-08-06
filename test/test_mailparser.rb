@@ -448,6 +448,14 @@ EOS
     assert_equal("filename.txt", m.filename)
   end
 
+  def test_filename_mime_decode_nofilename()
+    msg = StringIO.new(<<EOS)
+
+EOS
+    m = MailParser::Message.new(msg, :decode_mime_filename=>true)
+    assert_nil m.filename
+  end
+
   def test_filename_mime_charset()
     msg = StringIO.new(<<EOS)
 Content-Disposition: attachment; filename="=?iso-2022-jp?q?=1B$B$=22$$$&$=28$=2A=1B=28B.txt?="
