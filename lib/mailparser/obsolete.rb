@@ -1,7 +1,7 @@
 #
-# $Id: mailparser.rb,v 1.18 2006/07/10 16:34:55 tommy Exp $
+# $Id$
 #
-# Copyright (C) 2003-2006 TOMITA Masahiro
+# Copyright (C) 2003-2007 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "nkf"
@@ -191,9 +191,8 @@ module MailParser
       hash[:subtype] = $2.downcase if $2
       params = $'	#'
       pending = {}
-      pending_ext = {}
       while true do
-        if params =~ /;\s*([a-z0-9_-]+)(?:\*(\d+))?\s*=\s*(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
+        if params =~ /\A\s*;\s*([a-z0-9_-]+)(?:\*(\d+))?\s*=\s*(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
           pn, ord, pv = $1, $2, $3||$4
           params = $'
           if ord then
@@ -202,31 +201,27 @@ module MailParser
           else
             hash[:parameter][pn.downcase] = pv
           end
-        elsif params =~ /;\s*([a-z0-9_-]+)\*\s*=\s*([a-z0-9_-]+)?\'(?:[a-z0-9_-]+)?\'(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
+        elsif params =~ /\A\s*;\s*([a-z0-9_-]+)\*\s*=\s*([a-z0-9_-]+)?\'(?:[a-z0-9_-]+)?\'(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
           pn, charset, pv = $1, $2, $3||$4
           params = $'
-          pending_ext[pn] = [[0, pv, charset]]
-        elsif params =~ /;\s*([a-z0-9_-]+)\*0\*\s*=\s*([a-z0-9_-]+)?\'(?:[a-z0-9_-]+)?\'(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
+          pending[pn] = [[0, pv, charset, true]]
+        elsif params =~ /\A\s*;\s*([a-z0-9_-]+)\*0\*\s*=\s*([a-z0-9_-]+)?\'(?:[a-z0-9_-]+)?\'(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
           pn, charset, pv = $1, $2, $3||$4
           params = $'
-          pending_ext[pn] = [] unless pending_ext.key? pn
-          pending_ext[pn] = [[0, pv, charset]]
-        elsif params =~ /;\s*([a-z0-9_-]+)\*(\d+)\*\s*=\s*(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
+          pending[pn] = [[0, pv, charset, true]]
+        elsif params =~ /\A\s*;\s*([a-z0-9_-]+)\*(\d+)\*\s*=\s*(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
           pn, ord, pv = $1, $2, $3||$4
           params = $'
-          pending_ext[pn] = [] unless pending_ext.key? pn
-          pending_ext[pn] << [ord.to_i, pv]
+          pending[pn] = [] unless pending.key? pn
+          pending[pn] << [ord.to_i, pv, nil, true]
         else
           break
         end
       end
       pending.each do |pn, pv|
-        hash[:parameter][pn.downcase] = pv.sort{|a,b| a[0]<=>b[0]}.map{|a|a[1]}.join
-      end
-      pending_ext.each do |pn, pv|
         pv = pv.sort{|a,b| a[0]<=>b[0]}
         charset = pv[0][2]
-        v = pv.map{|a|a[1].gsub(/%([0-9A-F][0-9A-F])/){$1.hex.chr}}.join
+        v = pv.map{|a|a[3] ? a[1].gsub(/%([0-9A-F][0-9A-F])/nio){$1.hex.chr} : a[1]}.join
         fc = MailParser::Charsets[charset.downcase] if charset
         tc = @@output_charset && MailParser::Charsets[@@output_charset.downcase]
         if fc and fc != "N" and fc != tc then

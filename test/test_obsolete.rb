@@ -1,5 +1,5 @@
 #!/usr/local/bin/ruby
-# $Id: mailparser-test.rb,v 1.14 2006/07/10 16:34:55 tommy Exp $
+# $Id$
 
 require "test/unit"
 require "mailparser/obsolete"
@@ -104,6 +104,12 @@ class TC_MailParser_Obsolete < Test::Unit::TestCase
     assert_equal("application", h[:type])
     assert_equal("octet-stream", h[:subtype])
     assert_equal("テスト", h[:parameter]["name"])
+  end
+  def test_parse_content_type_rfc2231_bug()
+    h = parse_content_type("application/octet-stream; name*0*=ISO-2022-JP'ja'%1b$B$%22$$$%26$%28$%2a$%2b$%2d$%2f$1$3%1b%28B; name*1=.txt")
+    assert_equal("application", h[:type])
+    assert_equal("octet-stream", h[:subtype])
+    assert_equal("あいうえおかきくけこ.txt", h[:parameter]["name"])
   end
   def test_mime_header_decode_plain()
     assert_equal("test", mime_header_decode("test"))
