@@ -178,11 +178,15 @@ module MailParser
       @from = @to = @cc = @subject = nil
       @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
       @rawheader = ""
-      @raw = ""
+      @rawline = []
+      @ignore_last_rawline = false
       @message = nil
-      read_header
-      read_body
-      read_part
+      @body = ""
+      @part = []
+      if read_header then
+        read_body
+        read_part
+      end
       if @header.key? "content-type" then
         @header["content-type"].each do |h|
           new = parse_param(h.params, @opt[:strict])
@@ -203,7 +207,7 @@ module MailParser
       end
     end
 
-    attr_reader :header, :body, :part, :last_line, :message, :rawheader, :raw
+    attr_reader :header, :body, :part, :last_line, :message, :rawheader, :rawline
 
     # From ヘッダがあれば Mailbox を返す。
     # なければ nil
@@ -322,18 +326,28 @@ module MailParser
       return @filename
     end
 
+    # 生メッセージを返す
+    def raw
+      if @ignore_last_rawline
+        @rawline[0..-2].join
+      else
+        @rawline.join
+      end
+    end
+
     private
 
     # ヘッダ部をパースする
+    # return:: true: 継続行あり
     def read_header()
       @header = Header.new(@opt)
       headers = []
-      each_line_with_delimiter(@boundary) do |line|
-        break if line.chomp.empty?
+      ret = each_line_with_delimiter do |line|
+        break true if line.chomp.empty?
         cont = line =~ /^\s/
         if (cont and headers.empty?) or (!cont and !line.include? ":") then
           ungetline
-          break
+          break true
         end
         if line =~ /^\s/ then
           headers.last << line
@@ -347,19 +361,19 @@ module MailParser
         name.downcase!
         @header.add(name, body)
       end
+      ret
     end
 
     # 本文を読む
     def read_body()
-      @body = ""
       return if type == "multipart"
       unless @opt[:extract_message_type] and type == "message" then
         if @opt[:skip_body] or (@opt[:text_body_only] and type != "text")
-          each_line_with_delimiter(@boundary){}       # 本文skip
+          each_line_with_delimiter{}       # 本文skip
           return
         end
       end
-      each_line_with_delimiter(@boundary) do |line|
+      each_line_with_delimiter do |line|
         @body << line
       end
       case content_transfer_encoding
@@ -376,34 +390,38 @@ module MailParser
 
     # 各パートの Message オブジェクトの配列を作成
     def read_part()
-      @part = []
       return if type != "multipart"
       b = @header["content-type"][0].params["boundary"]
-      bd = @boundary + ["--#{b}--", "--#{b}"]
+      bd = ["--#{b}--", "--#{b}"]
       each_line_with_delimiter(bd){}  # skip preamble
       while @last_line == bd[-1] do
-        m = Message.new(@src, @opt, bd)
+        m = Message.new(@src, @opt, @boundary+bd)
         @part << m
-        @raw << m.raw if @opt[:keep_raw]
+        @rawline << m.rawline if @opt[:keep_raw]
         @last_line = m.last_line
       end
-      each_line_with_delimiter(@boundary){} if @last_line == bd[-2] # skip epilogue
+      each_line_with_delimiter{} if @last_line == bd[-2] # skip epilogue
     end
 
     # 行毎にブロックを繰り返す
-    # delim に含まれる行に一致した場合は中断
+    # @boundary または delim に含まれる行に一致した場合は中断
+    # @boundary:: ファイル終端とみなす
+    # delim:: 各パートの区切りとみなす
     def each_line_with_delimiter(delim=[])
       if @line_buffered then
         @line_buffered = false
         yield @last_line
       end
       @src.each_line do |line|
-        @raw << line if @opt[:keep_raw]
+        @rawline << line if @opt[:keep_raw]
         @last_line = line.chomp
         return if delim.include? @last_line
+        if @boundary.include? @last_line
+          @ignore_last_rawline = true
+          return
+        end
         yield line
       end
-      return
     end
 
     # １行分 each_line_with_delimiter をなかったことに

@@ -123,9 +123,9 @@ module MailParser
     # Content-Type ヘッダをパースして RFC2045::ContentType を返す
     def parse_content_type(str, opt={})
       token = split_by(Tokenizer.token(str), ";")
-      type, subtype = token[0].to_s.split("/", 2)
+      type, subtype = token.shift.to_s.split("/", 2)
       params = {}
-      token[1..-1].map do |param|
+      token.map do |param|
         pn, pv = param.to_s.split(/=/, 2)
         params[pn.to_s] = pv.to_s.gsub(/\A"|"\z/,"")
       end
@@ -147,9 +147,9 @@ module MailParser
     # Content-Disposition ヘッダをパースして RFC2183::ContentDisposition を返す
     def parse_content_disposition(str, opt={})
       token = split_by(Tokenizer.token(str), ";")
-      type = token[0].to_s
+      type = token.shift.to_s
       params = {}
-      token[1..-1].map do |param|
+      token.map do |param|
         pn, pv = param.to_s.split(/=/, 2)
         params[pn.to_s] = pv.to_s.gsub(/\A"|"\z/,"")
       end

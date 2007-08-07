@@ -450,7 +450,7 @@ EOS
 
   def test_filename_mime_decode_nofilename()
     msg = StringIO.new(<<EOS)
-
+Content-Type: text/plain
 EOS
     m = MailParser::Message.new(msg, :decode_mime_filename=>true)
     assert_nil m.filename
@@ -666,6 +666,42 @@ EOS
     m.header.each{}
   end
 
+  def test_parse_header_only_part()
+    msg = StringIO.new <<EOS
+Content-Type: multipart/mixed; boundary=abcdefg
+
+--abcdefg
+Content-Type: text/plain
+--abcdefg
+Content-Type: text/plain
+
+hoge
+--abcdefg--
+EOS
+    m = MailParser::Message.new msg
+    assert_equal 2, m.part.size
+    assert_equal "", m.part[0].body
+    assert_equal "hoge\n", m.part[1].body
+  end
+
+  def test_parse_header_only_part2()
+    msg = StringIO.new <<EOS
+Content-Type: multipart/mixed; boundary=abcdefg
+
+--abcdefg
+Content-Type: multipart/mixed; boundary=xyz
+--abcdefg
+Content-Type: text/plain
+
+hoge
+--abcdefg--
+EOS
+    m = MailParser::Message.new msg
+    assert_equal 2, m.part.size
+    assert_equal "", m.part[0].body
+    assert_equal "hoge\n", m.part[1].body
+  end
+
   def test_raw_single_part
     msg = StringIO.new(<<EOS)
 From: from@example.com
@@ -707,6 +743,17 @@ fuga
 EOS
     m = MailParser::Message.new msg, :keep_raw=>true
     assert_equal msg.string, m.raw
+    assert_equal <<EOS, m.part[0].part[0].raw
+Content-Type: text/plain
+
+hoge
+hoge
+EOS
+    assert_equal <<EOS, m.part[1].raw
+Content-Type: text/plain
+
+fuga
+EOS
   end
 
   def test_raw_message_part
@@ -729,5 +776,18 @@ body2
 EOS
     m = MailParser::Message.new msg, :keep_raw=>true
     assert_equal msg.string, m.raw
+    assert_equal <<EOS, m.part[0].raw
+Content-Type: text/plain
+
+body1
+EOS
+    assert_equal <<EOS, m.part[1].raw
+Content-Type: message/rfc822
+
+From: from2@example.com
+Content-Type: text/plain
+
+body2
+EOS
   end
 end

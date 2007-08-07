@@ -85,6 +85,12 @@ class TC_Loose < Test::Unit::TestCase
     assert_equal({"name"=>"hoge.txt"}, ct.params)
   end
 
+  def test_parse_content_type_empty
+    ct = parse_content_type("")
+    assert_equal("text", ct.type)
+    assert_equal("plain", ct.subtype)
+  end
+
   def test_parse_content_type_name_quoted()
     ct = parse_content_type("text/plain; name=\"hoge.txt\"")
     assert_equal("text", ct.type)
@@ -102,6 +108,11 @@ class TC_Loose < Test::Unit::TestCase
     c = parse_content_disposition("attachment; filename=\"hoge.txt\"")
     assert_equal("attachment", c.type)
     assert_equal({"filename"=>"hoge.txt"}, c.params)
+  end
+
+  def test_parse_content_disposition_empty
+    c = parse_content_disposition("")
+    assert_equal "", c.type
   end
 
   def test_split_by()
