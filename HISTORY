@@ -1,3 +1,10 @@
+== 0.4.5 2007-08-07 ==
+ * :decode_mime_filename 指定時、Content-Type も Content-Disposition もない場合に、落ちていたバグを修正
+ * 空の Content-Type, Content-Disposition でエラーになっていた
+ * ヘッダ行のみで区切りの空行がないパートを正しく扱えてなかった
+ * Message#raw の効率化
+ * Obsolete: RFC2231形式の添付ファイル名が正しく取得できないことがあった
+
 == 0.4.4 2007-08-06 ==
  * :keep_raw オプション追加。
  * Message#raw メソッド追加。

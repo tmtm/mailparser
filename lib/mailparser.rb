@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# Copyright (C) 2006 TOMITA Masahiro
+# Copyright (C) 2006-2007 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "mailparser/error"
