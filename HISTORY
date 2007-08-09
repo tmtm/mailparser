@@ -1,3 +1,6 @@
+== 0.4.6 2007-08-09 ==
+ * :keep_raw 指定時、ヘッダの継続行が二重になっていた
+
 == 0.4.5 2007-08-07 ==
  * :decode_mime_filename 指定時、Content-Type も Content-Disposition もない場合に、落ちていたバグを修正
  * 空の Content-Type, Content-Disposition でエラーになっていた
