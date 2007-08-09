@@ -790,4 +790,23 @@ Content-Type: text/plain
 body2
 EOS
   end
+
+  def test_raw_with_continuous_header
+    msg = StringIO.new(<<EOS)
+From: from1@example.com
+Subject: hogehoge
+ fugafuga
+
+body1
+EOS
+    m = MailParser::Message.new msg, :keep_raw=>true
+    assert_equal <<EOS, m.raw
+From: from1@example.com
+Subject: hogehoge
+ fugafuga
+
+body1
+EOS
+  end
+
 end

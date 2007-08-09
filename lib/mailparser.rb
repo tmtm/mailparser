@@ -350,7 +350,7 @@ module MailParser
           break true
         end
         if line =~ /^\s/ then
-          headers.last << line
+          headers[-1] += line    # :keep_raw 時の行破壊を防ぐため`<<'は使わない
         else
           headers << line
         end
@@ -413,7 +413,7 @@ module MailParser
         yield @last_line
       end
       @src.each_line do |line|
-        @rawline << line if @opt[:keep_raw]
+        @rawline << line.freeze if @opt[:keep_raw]
         @last_line = line.chomp
         return if delim.include? @last_line
         if @boundary.include? @last_line
