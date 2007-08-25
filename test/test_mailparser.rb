@@ -329,7 +329,7 @@ EOS
     m = MailParser::Message.new(msg)
     assert_equal("text", m.type)
     assert_equal("plain", m.subtype)
-    assert_equal("us-ascii", m.charset)
+    assert_equal(nil, m.charset)
   end
 
   def test_content_type_none()
@@ -339,7 +339,7 @@ EOS
     m = MailParser::Message.new(msg)
     assert_equal("text", m.type)
     assert_equal("plain", m.subtype)
-    assert_equal("us-ascii", m.charset)
+    assert_equal(nil, m.charset)
   end
 
   def test_body()

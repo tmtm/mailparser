@@ -274,14 +274,14 @@ module MailParser
     end
 
     # Content-Type の charset 属性の値(小文字)を返す。
-    # charset 属性がない場合は "us-ascii"
+    # charset 属性がない場合は nil
     def charset()
       return @charset if @charset
       if @header.key? "content-type" then
         c = @header["content-type"][0].params["charset"]
-        @charset = c ? c.downcase : "us-ascii"
+        @charset = c && c.downcase
       else
-        @charset = "us-ascii"
+        @charset = nil
       end
       return @charset
     end

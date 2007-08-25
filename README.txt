@@ -143,7 +143,7 @@ Content-Type がない場合またはサブタイプがない場合は "plain" �
 === charset ===
 
 Content-Type ヘッダの charset 属性を小文字の文字列で返す。
-Content-Type がない場合または charset がない場合は "us-ascii" を返す。
+Content-Type がない場合または charset がない場合は nil を返す。
 
 === multipart? ===
 
