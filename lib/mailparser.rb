@@ -159,7 +159,7 @@ module MailParser
     include RFC2231
 
     # src からヘッダ部を読み込み Header オブジェクトに保持する
-    # src:: each_line イテレータを持つオブジェクト(ex. IO, String)
+    # src:: gets メソッドを持つオブジェクト(ex. IO, StringIO)
     # opt:: オプション(Hash)
     #  :skip_body::            本文をスキップする
     #  :text_body_only::       text/* type 以外の本文をスキップする
@@ -172,42 +172,34 @@ module MailParser
     # boundary:: このパートの終わりを表す文字列の配列
     def initialize(src, opt={}, boundary=[])
       @src = src
-      @line_buffered = false
+      @dio = DelimIO.new(src, boundary, opt[:keep_raw])
       @opt = opt
       @boundary = boundary
       @from = @to = @cc = @subject = nil
       @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
-      @rawheader = ""
-      @rawline = []
-      @ignore_last_rawline = false
+      @rawheader = []
       @message = nil
       @body = ""
       @part = []
-      if read_header then
-        read_body
-        read_part
-      end
-      if @header.key? "content-type" then
-        @header["content-type"].each do |h|
-          new = parse_param(h.params, @opt[:strict])
-          new.each do |k,v|
-            v.replace(ConvCharset.conv_charset(v.charset, @opt[:output_charset], v)) if v.charset and @opt[:output_charset] rescue nil
+
+      read_header
+      read_body
+      read_part
+
+      ["content-type", "content-disposition"].each do |hn|
+        if @header.key? hn
+          @header[hn].each do |h|
+            new = parse_param(h.params, @opt[:strict])
+            new.each do |k,v|
+              v.replace(ConvCharset.conv_charset(v.charset, @opt[:output_charset], v)) if v.charset and @opt[:output_charset] rescue nil
+            end
+            h.params.replace new
           end
-          h.params.replace new
-        end
-      end
-      if @header.key? "content-disposition" then
-        @header["content-disposition"].each do |h|
-          new = parse_param(h.params, @opt[:strict])
-          new.each do |k,v|
-            v.replace(ConvCharset.conv_charset(v.charset, @opt[:output_charset], v)) if v.charset and @opt[:output_charset] rescue nil
-          end
-          h.params.replace new
         end
       end
     end
 
-    attr_reader :header, :body, :part, :last_line, :message, :rawheader, :rawline
+    attr_reader :header, :body, :part, :message
 
     # From ヘッダがあれば Mailbox を返す。
     # なければ nil
@@ -328,11 +320,12 @@ module MailParser
 
     # 生メッセージを返す
     def raw
-      if @ignore_last_rawline
-        @rawline[0..-2].join
-      else
-        @rawline.join
-      end
+      @dio.keep_buffer.join
+    end
+
+    # 生ヘッダを返す
+    def rawheader
+      @rawheader.join
     end
 
     private
@@ -342,14 +335,14 @@ module MailParser
     def read_header()
       @header = Header.new(@opt)
       headers = []
-      ret = each_line_with_delimiter do |line|
-        break true if line.chomp.empty?
-        cont = line =~ /^\s/
+      @dio.each_line do |line|
+        break if line.chomp.empty?
+        cont = line =~ /^[ \t]/
         if (cont and headers.empty?) or (!cont and !line.include? ":") then
-          ungetline
-          break true
+          @dio.ungets
+          break
         end
-        if line =~ /^\s/ then
+        if line =~ /^[ \t]/ then
           headers[-1] += line    # :keep_raw 時の行破壊を防ぐため`<<'は使わない
         else
           headers << line
@@ -361,21 +354,21 @@ module MailParser
         name.downcase!
         @header.add(name, body)
       end
-      ret
     end
 
     # 本文を読む
     def read_body()
-      return if type == "multipart"
+      return if type == "multipart" or @dio.eof?
       unless @opt[:extract_message_type] and type == "message" then
         if @opt[:skip_body] or (@opt[:text_body_only] and type != "text")
-          each_line_with_delimiter{}       # 本文skip
+          @dio.each_line{}         # 本文skip
           return
         end
       end
-      each_line_with_delimiter do |line|
+      @dio.each_line do |line|
         @body << line
       end
+      @body.chomp! unless @dio.real_eof?
       case content_transfer_encoding
       when "quoted-printable" then @body = RFC2045.qp_decode(@body)
       when "base64" then @body = RFC2045.b64_decode(@body)
@@ -390,43 +383,86 @@ module MailParser
 
     # 各パートの Message オブジェクトの配列を作成
     def read_part()
-      return if type != "multipart"
+      return if type != "multipart" or @dio.eof?
       b = @header["content-type"][0].params["boundary"]
       bd = ["--#{b}--", "--#{b}"]
-      each_line_with_delimiter(bd){}  # skip preamble
-      while @last_line == bd[-1] do
-        m = Message.new(@src, @opt, @boundary+bd)
+      last_line = @dio.each_line(bd){}        # skip preamble
+      while last_line and last_line.chomp == bd.last
+        m = Message.new @dio, @opt, @boundary+bd
         @part << m
-        @rawline << m.rawline if @opt[:keep_raw]
-        @last_line = m.last_line
+        last_line = @dio.gets                 # read boundary
       end
-      each_line_with_delimiter{} if @last_line == bd[-2] # skip epilogue
+      @dio.each_line{}                        # skip epilogue
+    end
+  end
+
+  # 特定の行を EOF とみなして gets が動く IO モドキ
+  class DelimIO
+    # src:: IO または StringIO
+    # delim:: 区切り行の配列
+    # keep:: 全行保存
+    def initialize(src, delim=[], keep=false)
+      @src = src
+      @delim = delim.empty? ? {} : Hash[*delim.map{|a|[a,true]}.flatten]
+      @keep = keep
+      @keep_buffer = []
+      @line_buffer = []
+      @eof = false                # delim に達したら真
+      @real_eof = false
+      @last_read_line = nil
     end
 
-    # 行毎にブロックを繰り返す
-    # @boundary または delim に含まれる行に一致した場合は中断
-    # @boundary:: ファイル終端とみなす
-    # delim:: 各パートの区切りとみなす
-    def each_line_with_delimiter(delim=[])
-      if @line_buffered then
-        @line_buffered = false
-        yield @last_line
-      end
-      @src.each_line do |line|
-        @rawline << line.freeze if @opt[:keep_raw]
-        @last_line = line.chomp
-        return if delim.include? @last_line
-        if @boundary.include? @last_line
-          @ignore_last_rawline = true
-          return
-        end
+    attr_reader :keep_buffer
+
+    # 行毎にブロックを繰り返す。
+    # delim に含まれる行に一致した場合は中断
+    # return:: delimに一致した行 or nil(EOFに達した)
+    def each_line(delim=nil)
+      return if @eof
+      delim = delim ? Hash[*delim.map{|a|[a,true]}.flatten] : {}
+      while line = gets
+        return line if delim.include? line.chomp
         yield line
       end
+      @eof = true
+      return
+    end
+    alias each each_line
+
+    # 1行読み込む。@delim に一致する行で EOF
+    def gets
+      return if @eof
+      if @line_buffer.empty?
+        unless l = @src.gets
+          @eof = @real_eof = true
+          return
+        end
+        @line_buffer << l
+      end
+      if @delim.include? @line_buffer.first.chomp
+        @src.ungets
+        @eof = true
+        return
+      end
+      @last_read_line = @line_buffer.shift
+      @keep_buffer << @last_read_line if @keep
+      return @last_read_line
     end
 
-    # １行分 each_line_with_delimiter をなかったことに
-    def ungetline()
-      @line_bufferd = true
+    def ungets
+      raise "preread line nothing" unless @last_read_line
+      @eof = false
+      @keep_buffer.pop if @keep
+      @line_buffer.unshift @last_read_line
     end
+
+    def eof?
+      @eof
+    end
+
+    def real_eof?
+      @src.is_a?(DelimIO) ? @src.real_eof? : @real_eof
+    end
+
   end
 end

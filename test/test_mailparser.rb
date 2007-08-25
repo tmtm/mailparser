@@ -493,6 +493,7 @@ Content-Type: multipart/mixed; boundary="xxxx"
 Content-Type: text/plain
 
 body1
+
 --xxxx
 Content-Type: message/rfc822
 
@@ -509,7 +510,34 @@ EOS
     assert_equal("body1\n", m.part[0].body)
     assert_equal("message", m.part[1].type)
     assert_equal("<from2@example.com>", m.part[1].message.from.to_s)
-    assert_equal("body2\n", m.part[1].message.body)
+    assert_equal("body2", m.part[1].message.body)
+  end
+
+  def test_extract_message_type_header_only
+    msg = StringIO.new(<<EOS)
+From: from1@example.com
+Content-Type: multipart/mixed; boundary="xxxx"
+
+--xxxx
+Content-Type: text/plain
+
+body1
+
+--xxxx
+Content-Type: message/rfc822
+
+From: from2@example.com
+Content-Type: text/plain
+--xxxx--
+EOS
+    m = MailParser::Message.new(msg, :extract_message_type=>true)
+    assert_equal("<from1@example.com>", m.from.to_s)
+    assert_equal(2, m.part.size)
+    assert_equal("text", m.part[0].type)
+    assert_equal("body1\n", m.part[0].body)
+    assert_equal("message", m.part[1].type)
+    assert_equal("<from2@example.com>", m.part[1].message.from.to_s)
+    assert_equal("", m.part[1].message.body)
   end
 
   def test_extract_message_type_skip_body()
@@ -521,6 +549,7 @@ Content-Type: multipart/mixed; boundary="xxxx"
 Content-Type: text/plain
 
 body1
+
 --xxxx
 Content-Type: message/rfc822
 
@@ -549,6 +578,7 @@ Content-Type: multipart/mixed; boundary="xxxx"
 Content-Type: text/plain
 
 body1
+
 --xxxx
 Content-Type: message/rfc822
 
@@ -556,6 +586,7 @@ From: from2@example.com
 Content-Type: text/plain
 
 body2
+
 --xxxx--
 EOS
     m = MailParser::Message.new(msg, :extract_message_type=>true, :text_body_only=>true)
@@ -581,10 +612,12 @@ Content-Type: multipart/alternative;
 Content-Type: text/plain; charset=iso-2022-jp
 
 hoge
+
 --yyyy
 Content-Type: text/html; charset=iso-2022-jp
 
 fuga html
+
 --yyyy--
 
 --xxxx
@@ -599,7 +632,7 @@ EOS
     assert_equal(2, m.part[0].part.size)
     assert_equal("hoge\n", m.part[0].part[0].body)
     assert_equal("fuga html\n", m.part[0].part[1].body)
-    assert_equal("attached file\n", m.part[1].body)
+    assert_equal("attached file", m.part[1].body)
   end
 
   def test_extract_no_boundary()
@@ -644,10 +677,12 @@ Content-Type: text/plain
 
 hoge
 hoge
+
 --xxx
 Content-Type: text/plain
 
 fuga
+
 --xxx--
 EOS
     m = MailParser::Message.new(msg)
@@ -663,7 +698,8 @@ Subject: hoge
 hogehoge
 EOS
     m = MailParser::Message.new msg
-    m.header.each{}
+    assert_equal "hoge", m.subject
+    assert_equal "hogehoge\n", m.body
   end
 
   def test_parse_header_only_part()
@@ -676,6 +712,7 @@ Content-Type: text/plain
 Content-Type: text/plain
 
 hoge
+
 --abcdefg--
 EOS
     m = MailParser::Message.new msg
@@ -694,6 +731,7 @@ Content-Type: multipart/mixed; boundary=xyz
 Content-Type: text/plain
 
 hoge
+
 --abcdefg--
 EOS
     m = MailParser::Message.new msg
@@ -765,6 +803,7 @@ Content-Type: multipart/mixed; boundary="xxxx"
 Content-Type: text/plain
 
 body1
+
 --xxxx
 Content-Type: message/rfc822
 
@@ -780,6 +819,7 @@ EOS
 Content-Type: text/plain
 
 body1
+
 EOS
     assert_equal <<EOS, m.part[1].raw
 Content-Type: message/rfc822
@@ -788,6 +828,39 @@ From: from2@example.com
 Content-Type: text/plain
 
 body2
+EOS
+  end
+
+  def test_raw_message_part_header_only
+    msg = StringIO.new(<<EOS)
+From: from1@example.com
+Content-Type: multipart/mixed; boundary="xxxx"
+
+--xxxx
+Content-Type: text/plain
+
+body1
+
+--xxxx
+Content-Type: message/rfc822
+
+From: from2@example.com
+Content-Type: text/plain
+--xxxx--
+EOS
+    m = MailParser::Message.new msg, :keep_raw=>true
+    assert_equal msg.string, m.raw
+    assert_equal <<EOS, m.part[0].raw
+Content-Type: text/plain
+
+body1
+
+EOS
+    assert_equal <<EOS, m.part[1].raw
+Content-Type: message/rfc822
+
+From: from2@example.com
+Content-Type: text/plain
 EOS
   end
 
@@ -807,6 +880,85 @@ Subject: hogehoge
 
 body1
 EOS
+  end
+
+end
+
+class TC_DelimIO < Test::Unit::TestCase
+  include MailParser
+  def setup()
+  end
+  def teardown()
+  end
+
+  def test_gets
+    s = StringIO.new <<EOS
+aaaa
+bbbb
+cccc
+dddd
+EOS
+    dio = Message::DelimIO.new(Message::DelimIO.new(s), ["cccc"])
+    assert_equal "aaaa\n", dio.gets
+    assert_equal "bbbb\n", dio.gets
+    assert_equal nil, dio.gets
+    assert_equal true, dio.eof?
+    dio.ungets
+    assert_equal false, dio.eof?
+    assert_equal "bbbb\n", dio.gets
+    assert_equal nil, dio.gets
+    assert_equal true, dio.eof?
+  end
+
+  def test_each_line
+    s = StringIO.new <<EOS
+aaaa
+bbbb
+cccc
+dddd
+EOS
+    dio = Message::DelimIO.new(Message::DelimIO.new(s))
+    ret = []
+    dio.each_line do |line|
+      ret << line
+    end
+    assert_equal ["aaaa\n","bbbb\n","cccc\n","dddd\n"], ret
+    assert_equal true, dio.eof?
+  end
+
+  def test_each_line_delim
+    s = StringIO.new <<EOS
+aaaa
+bbbb
+cccc
+dddd
+EOS
+    dio = Message::DelimIO.new(Message::DelimIO.new(s), ["cccc"])
+    ret = []
+    dio.each_line do |line|
+      ret << line
+    end
+    assert_equal ["aaaa\n","bbbb\n"], ret
+    assert_equal true, dio.eof?
+  end
+
+  def test_ungets
+    s = StringIO.new <<EOS
+aaaa
+bbbb
+cccc
+dddd
+EOS
+    dio = Message::DelimIO.new(Message::DelimIO.new(s), ["cccc"])
+    ret = []
+    dio.each_line do |line|
+      ret << line
+    end
+    assert_equal ["aaaa\n","bbbb\n"], ret
+    assert_equal true, dio.eof?
+    dio.ungets
+    assert_equal false, dio.eof?
+    assert_equal "bbbb\n", dio.gets
   end
 
 end
