@@ -52,12 +52,12 @@ end
 
 == MailParser::Message ==
 
-=== MailParser::Message.new(io, [opt]) ===
+=== self.new(io, [opt]) ===
  
 io から MailParser::Message オブジェクトを生成する。
 
 io には IO または StringIO オブジェクトを指定する。実際には１行毎の文
-字列を返す each_line イテレータを持ち、処理した位置を覚えていて次回実
+字列を返す gets イテレータを持ち、処理した位置を覚えていて次回実
 行時に続きから実行できるオブジェクトであれば何でも良い。
 
 opt は Hash オブジェクトで次の値を指定できる。
@@ -86,7 +86,7 @@ opt は Hash オブジェクトで次の値を指定できる。
  :keep_raw => true
    生メッセージ文字列を保持する。デフォルトは false。
 
-=== MailParser::Message#from ===
+=== from ===
 
 From ヘッダのパース結果の最初のアドレスを MailParser::Mailbox オブジェクトで返す。
 {{{
@@ -97,7 +97,7 @@ m.from.display_name   # => "TOMITA Masahiro"
 m.from.addr_spec.to_s # => "tommy@tmtm.org"
 }}}
 
-=== MailParser::Message#to ===
+=== to ===
 
 To ヘッダのパース結果を MailParser::Mailbox オブジェクトの配列で返す。
 {{{
@@ -108,11 +108,11 @@ m.to[0].to_s   # => "TOMITA Masahiro <tommy@tmt.morg>"
 m.to[1].to_s   # => "<foo@example.com>"
 }}}
 
-=== mailparser::Message#cc ===
+=== cc ===
 
 Cc ヘッダのパース結果を MailParser::Mailbox オブジェクトの配列で返す。
 
-=== MailParser::Message#subject ===
+=== subject ===
 
 Subject ヘッダの値を文字列で返す。
 {{{
@@ -122,7 +122,7 @@ EOS
 m.subject    # => "とみたです"
 }}}
 
-=== MailParser::Message#type ===
+=== type ===
 
 Content-Type ヘッダのタイプを小文字の文字列で返す。
 Content-Type がない場合は "text" を返す。
@@ -135,21 +135,21 @@ m.subtype  # => "plain"
 m.charset  # => "iso-2022-jp"
 }}}
 
-=== MailParser::Message#subtype ===
+=== subtype ===
 
 Content-Type ヘッダのサブタイプを小文字の文字列で返す。
 Content-Type がない場合またはサブタイプがない場合は "plain" を返す。
 
-=== MailParser::Message#charset ===
+=== charset ===
 
 Content-Type ヘッダの charset 属性を小文字の文字列で返す。
 Content-Type がない場合または charset がない場合は "us-ascii" を返す。
 
-=== MailParser::Message#multipart? ===
+=== multipart? ===
 
 マルチパートメッセージの場合 true を返す。
 
-=== MailParser::Message#filename ===
+=== filename ===
 
 ファイル名を返す。
 ファイル名は、Content-Disposition ヘッダの filename 属性または Content-Type ヘッダの name 属性から取得する(Content-Disposition ヘッダが優先)。
@@ -176,7 +176,7 @@ EOS
 m.filename # => "ファイル名"
 }}}
 
-=== MailParser::Message#header ===
+=== header ===
 
 ヘッダを表す MailParser::Header オブジェクトを返す。
 MailParser::Header はハッシュのように使用できる。
@@ -219,7 +219,7 @@ m.header["subject"][0]   # => String
 || Mime-Version              || 文字列
 || Content-Disposition       || MailParser::ContentDisposition
 
-=== MailParser::Message#body ===
+=== body ===
 
 本文文字列を返す。
 {{{
@@ -232,7 +232,7 @@ EOS
 m.body  # => "これは本文です。\n"
 }}}
 
-=== MailParser::Message#part ===
+=== part ===
 
 マルチパートメッセージの場合、各パートを表す MailParser::Message オブジェクトの配列を返す。
 マルチパートメッセージでない場合は空配列を返す。
@@ -255,7 +255,7 @@ m.part[0]      # => 最初のパートの MailParser::Message オブジェクト
 m.part[1]      # => ２番目のパートの MailParser::Message オブジェクト
 }}}
 
-=== MailParser::Message#message ===
+=== message ===
 
 :extract_message_type=>true で message タイプのメッセージの場合、本文が示すメッセージの Mailparser::Message オブジェクトを返す。
 :extract_message_type=>false または message タイプでない場合は nil を返す。
@@ -270,7 +270,7 @@ EOS
 m.message.subject  # => "message subject"
 }}}
 
-=== MailParser::Message#rawheader ===
+=== rawheader ===
 
 ヘッダ部文字列をパースせずにそのまま返す。
 {{{
@@ -284,7 +284,7 @@ EOS
 m.rawheader  # => "From: TOMITA Masahiro <tommy@tmtm.org>\nTo: foo@example.com\nSubject: subject\n"
 }}}
 
-=== MailParser::Message#raw ===
+=== raw ===
 
 生メッセージ文字列を返す。:keep_raw=>true である必要がある。
 :keep_raw=>false の場合は空文字列が返る。
@@ -303,23 +303,23 @@ m.rawheader  # => "From: TOMITA Masahiro <tommy@tmtm.org>\nTo: foo@example.com\n
 
 同じ名前を持つヘッダを表すクラス。
 
-=== MailParser::Header#add(name, body) ===
+=== add(name, body) ===
 name ヘッダの値として body を追加する。
 
-=== MailParser::Header#[](name) ===
+=== [](name) ===
 name ヘッダの値をパースした結果オブジェクトの配列を返す。
 パース結果オブジェクトは raw メソッドを持ち、パース前文字列を取り出すことができる。
 
-=== MailParser::Header#raw(name) ===
+=== raw(name) ===
 name ヘッダの値のパース前の文字列の配列を返す。
 
-=== MailParser::Header#keys ===
+=== keys ===
 ヘッダ名文字列の一覧を返す。
 
-=== MailParser::Header#key?(name) ===
+=== key?(name) ===
 name ヘッダがあれば真。
 
-=== MailParser::Header#each {|n,v| } ===
+=== each {|n,v| } ===
 各ヘッダについてブロックを繰り返す。
 ブロック引数は、１番目がヘッダ名文字列、２番目がパース結果オブジェクトの配列。
 
@@ -327,35 +327,35 @@ name ヘッダがあれば真。
 
 Date ヘッダを表すクラス。
 
-=== MailParser::DateTime#year ===
+=== year ===
 
 年を表す整数。
 
-=== MailParser::DateTime#month ===
+=== month ===
 
 月を表す整数。
 
-=== MailParser::DateTime#day ===
+=== day ===
 
 日を表す整数。
 
-=== MailParser::DateTime#hour ===
+=== hour ===
 
 時を表す整数。
 
-=== MailParser::DateTime#min ===
+=== min ===
 
 分を表す整数。
 
-=== MailParser::DateTime#sec ===
+=== sec ===
 
 秒を表す整数。
 
-=== MailParser::DateTime#zone ===
+=== zone ===
 
 タイムゾーンを表す文字列。「+9999」または「-9999」の形式。
 
-=== MailParser::DateTime#time ===
+=== time ===
 
 Time オブジェクトを返す。範囲外の日付の場合は :strict が false でも ArgumentError 例外が発生するので注意。
 
@@ -363,25 +363,25 @@ Time オブジェクトを返す。範囲外の日付の場合は :strict が fa
 
 メールアドレスを表すクラス。
 
-=== MailParser::Mailbox#addr_spec ===
+=== addr_spec ===
 
 メールアドレスを表す MailParser::AddrSpec を返す。
 
-=== MailParser::Mailbox#local_part ===
+=== local_part ===
 
 ローカルパートを表す文字列。
 MailParser::Mailbox#addr_spec.local_part と同じ。
 
-=== MailParser::Mailbox#domain ===
+=== domain ===
 
 ドメインを表す文字列。
 addr_spec.domain と同じ。
 
-=== MailParser::Mailbox#display_name ===
+=== display_name ===
 
 表示名を表す文字列。
 
-=== MailParser::Mailbox#phrase ===
+=== phrase ===
 
 display_name と同じ。
 
@@ -389,21 +389,21 @@ display_name と同じ。
 
 グループアドレスを表すクラス。
 
-=== MailParser::Group#mailbox_list ===
+=== mailbox_list ===
 
 MailParser::Mailbox の配列。
 
-=== MailParser::Group#display_name ===
+=== display_name ===
 
 表示名を表す文字列。
 
-=== MailParser::Group#phrase ===
+=== phrase ===
 
 display_name と同じ。
 
 == MailParser::MsgId ==
 
-=== MailParser::MsgId#msg_id ===
+=== msg_id ===
 
 メッセージID文字列。先頭と末尾の < > は含まない。
 
@@ -411,7 +411,7 @@ display_name と同じ。
 
 Received ヘッダを表すクラス。
 
-=== MailParser::Received#name_val ===
+=== name_val ===
 
 Received ヘッダ中の名前(小文字の文字列)と値(文字列)の組を表す Hash を返す。
 {{{
@@ -427,7 +427,7 @@ r.name_val["with"]    # => "ESMTP"
 r.name_val["for"]     # => "tommy@tmtm.org"
 }}}
 
-=== MailParser::Received#date_time ===
+=== date_time ===
 
 Received ヘッダ中の日時を表す MailParser::DateTime オブジェクトを返す。
 
@@ -435,15 +435,15 @@ Received ヘッダ中の日時を表す MailParser::DateTime オブジェクト�
 
 Content-Type ヘッダのパラメータを表すクラス。
 
-=== MailParser::ContentType#type ===
+=== type ===
 
 Content-Type ヘッダのタイプを表す小文字の文字列を返す。
 
-=== MailParser::ContentType#subtype ===
+=== subtype ===
 
 Content-Type ヘッダのサブタイプを表す小文字の文字列を返す。
 
-=== MailParser::ContentType#params ===
+=== params ===
 
 Content-Type ヘッダのパラメータを表す Hash を返す。
 Hash のキーは小文字の文字列。値は文字列。
@@ -452,17 +452,17 @@ Hash のキーは小文字の文字列。値は文字列。
 
 Content-Transfer-Encoding ヘッダを表すクラス。
 
-=== MailParser::ContentTransferEncoding#mechanism ===
+=== mechanism ===
 
 Content-Transfer-Encoding ヘッダの値を小文字の文字列で返す。
 
 == MailParser::ContentDisposition ==
 
-=== MailParser::ContentDisposition#type ===
+=== type ===
 
 Content-Disposition ヘッダのタイプを表す小文字の文字列を返す。
 
-=== MailParser::ContentDisposition#params ===
+=== params ===
 
 Content-Disposition ヘッダのパラメータを表す Hash を返す。
 Hash のキーは小文字の文字列。値は文字列。
@@ -471,10 +471,10 @@ Hash のキーは小文字の文字列。値は文字列。
 
 メールアドレスを表すクラス。
 
-=== MailParser::AddrSpec#local_part ===
+=== local_part ===
 
 メールアドレスのローカルパート文字列を返す。
 
-=== MailParser::AddrSpec#domain ===
+=== domain ===
 
 メールアドレスのドメイン部文字列を返す。
