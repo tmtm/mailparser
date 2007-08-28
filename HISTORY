@@ -1,8 +1,9 @@
-== 0.4.7 2007-08-25 ==
+== 0.4.7 2007-08-29 ==
  * boundary 文字列の直前の行の改行コードを無視しないといけなかった (RFC2046)
  * Message.new の第一引数に渡すオブジェクトに必要なメソッドを each_line から gets に変更
  * Content-Type ヘッダがない場合/charset パラメータがない場合、Message#charset が nil を返すように変更
  * racc コンパイル済み .rb ファイルを同梱
+ * MailSuite::Message が String も受け付けるようにした
 
 == 0.4.6 2007-08-09 ==
  * :keep_raw 指定時、ヘッダの継続行が二重になっていた

@@ -171,7 +171,7 @@ module MailParser
     #  :keep_raw::             生メッセージを保持する
     # boundary:: このパートの終わりを表す文字列の配列
     def initialize(src, opt={}, boundary=[])
-      @src = src
+      src = src.is_a?(String) ? StringIO.new(src) : src
       @dio = DelimIO.new(src, boundary, opt[:keep_raw])
       @opt = opt
       @boundary = boundary
@@ -401,12 +401,12 @@ module MailParser
     # src:: IO または StringIO
     # delim:: 区切り行の配列
     # keep:: 全行保存
-    def initialize(src, delim=[], keep=false)
+    def initialize(src, delim=nil, keep=false)
       @src = src
-      @delim = delim.empty? ? {} : Hash[*delim.map{|a|[a,true]}.flatten]
+      @delim_re = delim && !delim.empty? && Regexp.new(delim.map{|d|"\\A#{Regexp.quote(d)}\\r?\\Z"}.join("|"))
       @keep = keep
       @keep_buffer = []
-      @line_buffer = []
+      @line_buffer = nil
       @eof = false                # delim に達したら真
       @real_eof = false
       @last_read_line = nil
@@ -415,45 +415,47 @@ module MailParser
     attr_reader :keep_buffer
 
     # 行毎にブロックを繰り返す。
-    # delim に含まれる行に一致した場合は中断
+    # delim に一致した場合は中断
+    # delim:: 区切り文字列の配列
     # return:: delimに一致した行 or nil(EOFに達した)
     def each_line(delim=nil)
       return if @eof
-      delim = delim ? Hash[*delim.map{|a|[a,true]}.flatten] : {}
       while line = gets
-        return line if delim.include? line.chomp
+        return line if delim and delim.include? line.chomp
         yield line
       end
-      @eof = true
-      return
+      nil
     end
     alias each each_line
 
-    # 1行読み込む。@delim に一致する行で EOF
+    # 1行読み込む。@delim_re に一致する行で EOF
     def gets
       return if @eof
-      if @line_buffer.empty?
-        unless l = @src.gets
+      if @line_buffer
+        line = @line_buffer
+        @line_buffer = nil
+      else
+        unless line = @src.gets
           @eof = @real_eof = true
           return
         end
-        @line_buffer << l
       end
-      if @delim.include? @line_buffer.first.chomp
+      if @delim_re and @delim_re.match line
         @src.ungets
         @eof = true
         return
       end
-      @last_read_line = @line_buffer.shift
-      @keep_buffer << @last_read_line if @keep
-      return @last_read_line
+      @last_read_line = line
+      @keep_buffer << line if @keep
+      line
     end
 
     def ungets
       raise "preread line nothing" unless @last_read_line
       @eof = false
       @keep_buffer.pop if @keep
-      @line_buffer.unshift @last_read_line
+      @line_buffer = @last_read_line
+      @last_read_line = nil
     end
 
     def eof?

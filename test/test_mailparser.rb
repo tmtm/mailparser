@@ -898,7 +898,7 @@ bbbb
 cccc
 dddd
 EOS
-    dio = Message::DelimIO.new(Message::DelimIO.new(s), ["cccc"])
+    dio = DelimIO.new(DelimIO.new(s), ["cccc"])
     assert_equal "aaaa\n", dio.gets
     assert_equal "bbbb\n", dio.gets
     assert_equal nil, dio.gets
@@ -917,7 +917,7 @@ bbbb
 cccc
 dddd
 EOS
-    dio = Message::DelimIO.new(Message::DelimIO.new(s))
+    dio = DelimIO.new(DelimIO.new(s))
     ret = []
     dio.each_line do |line|
       ret << line
@@ -933,7 +933,7 @@ bbbb
 cccc
 dddd
 EOS
-    dio = Message::DelimIO.new(Message::DelimIO.new(s), ["cccc"])
+    dio = DelimIO.new(DelimIO.new(s), ["cccc"])
     ret = []
     dio.each_line do |line|
       ret << line
@@ -949,7 +949,7 @@ bbbb
 cccc
 dddd
 EOS
-    dio = Message::DelimIO.new(Message::DelimIO.new(s), ["cccc"])
+    dio = DelimIO.new(DelimIO.new(s), ["cccc"])
     ret = []
     dio.each_line do |line|
       ret << line
