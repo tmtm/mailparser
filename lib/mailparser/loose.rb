@@ -214,7 +214,7 @@ module MailParser
         end
       end
       if ret.empty?
-        ret << str
+        ret << RFC2822::MsgId.new(str)
       end
       return ret
     end

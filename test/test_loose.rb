@@ -150,6 +150,12 @@ class TC_Loose < Test::Unit::TestCase
     assert_equal "aa@bb.cc", m[0].msg_id
     assert_equal "dd@ee.ff", m[1].msg_id
   end
+
+  def test_msg_id_list_nobracket()
+    m = msg_id_list "aa@bb.cc"
+    assert_equal 1, m.size
+    assert_equal "aa@bb.cc", m[0].msg_id
+  end
 end
 
 class TC_Loose_Tokenizer < Test::Unit::TestCase
