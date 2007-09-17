@@ -375,6 +375,28 @@ EOS
     assert_equal("あいうえお\n", m.body)
   end
 
+  def test_body_no_charset()
+    msg = StringIO.new(<<EOS)
+From: TOMITA Masahiro <tommy@tmtm.org>
+Content-Type: text/plain
+
+abcdefg
+EOS
+    m = MailParser::Message.new(msg, :output_charset=>"utf8")
+    assert_equal("abcdefg\n", m.body)
+  end
+
+  def test_body_preconv
+    m = MailParser::Message.new(<<EOS, :output_charset=>"utf8")
+From: TOMITA Masahiro <tommy@tmtm.org>
+Content-Type: text/plain; charset=iso-2022-jp
+
+\e$B$3$l$OK\\J8$G$9\e(B
+EOS
+    assert_equal "これは本文です\n", m.body
+    assert_equal "\e$B$3$l$OK\\J8$G$9\e(B\n", m.body_preconv
+  end
+
   def test_filename()
     msg = StringIO.new(<<EOS)
 Content-Type: text/plain; name="filename.txt"

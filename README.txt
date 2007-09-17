@@ -233,12 +233,26 @@ EOS
 m.body  # => "これは本文です。\n"
 }}}
 
+=== body_preconv ===
+
+本文の charset変換前文字列を返す。
+{{{
+m = MailParser::Message.new(<<EOS)
+From: TOMITA Masahiro <tommy@tmtm.org>
+Content-Type: text/plain; charset=iso-2022-jp
+
+\e$B$3$l$OK\\J8$G$9\e(B
+EOS
+m.body           # => "これは本文です\n"
+m.body_preconv   # => "\e$B$3$l$OK\\J8$G$9\e(B\n"
+}}}
+
 === part ===
 
 マルチパートメッセージの場合、各パートを表す MailParser::Message オブジェクトの配列を返す。
 マルチパートメッセージでない場合は空配列を返す。
 {{{
-m = MailParser::Message.new(StringIO.new(<<EOS))
+m = MailParser::Message.new(StringIO.new(<<EOS, :output_charset=>"utf8"))
 Content-Type: multipart/mixed; boundary="abcdefg"
 
 --abcdefg

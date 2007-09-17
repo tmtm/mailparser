@@ -199,7 +199,7 @@ module MailParser
       end
     end
 
-    attr_reader :header, :body, :part, :message
+    attr_reader :header, :body, :body_preconv, :part, :message
 
     # From ヘッダがあれば Mailbox を返す。
     # なければ nil
@@ -373,7 +373,8 @@ module MailParser
       when "quoted-printable" then @body = RFC2045.qp_decode(@body)
       when "base64" then @body = RFC2045.b64_decode(@body)
       end
-      if @opt[:output_charset] then
+      @body_preconv = @body
+      if charset and @opt[:output_charset] then
         @body = MailParser::ConvCharset.conv_charset(charset, @opt[:output_charset], @body) rescue @body
       end
       if @opt[:extract_message_type] and type == "message" and not @body.empty? then
