@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# Copyright (C) 2006 TOMITA Masahiro
+# Copyright (C) 2006-2007 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "mailparser/rfc2231"
@@ -107,7 +107,7 @@ class TC_RFC2231 < Test::Unit::TestCase
     params = {
       "hoge*" => "fuga",
     }
-    h = MailParser::RFC2231.parse_param(params, false)
+    h = MailParser::RFC2231.parse_param(params, :strict=>false)
     assert_equal("fuga", h["hoge"])
   end
 
@@ -122,8 +122,16 @@ class TC_RFC2231 < Test::Unit::TestCase
     params = {
       "hoge*0*" => "fuga",
     }
-    h = MailParser::RFC2231.parse_param(params, false)
+    h = MailParser::RFC2231.parse_param(params, :strict=>false)
     assert_equal("fuga", h["hoge"])
+  end
+
+  def test_parse_param_charset_converter
+    params = {
+      "hoge*" => "xcharset'xlang'%41%42%43",
+    }
+    h = MailParser::RFC2231.parse_param(params, :output_charset=>"xx", :charset_converter=>Proc.new{|f,t,s| s.downcase})
+    assert_equal "abc", h["hoge"]
   end
 
   def test_rfc_example()

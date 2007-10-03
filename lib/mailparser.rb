@@ -96,6 +96,13 @@ module MailParser
         attr_accessor :raw
       end
       @parsed.raw = @raw
+
+      # Content-Type, Content-Disposition parameter for RFC2231
+      if ["content-type", "content-disposition"].include? @name
+        new = RFC2231.parse_param @parsed.params, @opt
+        @parsed.params.replace new
+      end
+
       return @parsed
     end
   end
@@ -113,6 +120,7 @@ module MailParser
     # name:: ヘッダ名(String)
     # body:: ヘッダ値(String)
     def add(name, body)
+      name = name.downcase
       @hash[name] = [] unless @hash.key? name
       @hash[name] << HeaderItem.new(name, body, @opt)
     end
@@ -156,8 +164,6 @@ module MailParser
 
   # メール全体またはひとつのパートを表すクラス
   class Message
-    include RFC2231
-
     # src からヘッダ部を読み込み Header オブジェクトに保持する
     # src:: gets メソッドを持つオブジェクト(ex. IO, StringIO)
     # opt:: オプション(Hash)
@@ -169,6 +175,7 @@ module MailParser
     #  :output_charset::       デコード出力文字コード(デフォルト: 変換しない)
     #  :strict::               RFC違反時に ParseError 例外を発生する
     #  :keep_raw::             生メッセージを保持する
+    #  :charset_converter::    文字コード変換用 Proc
     # boundary:: このパートの終わりを表す文字列の配列
     def initialize(src, opt={}, boundary=[])
       src = src.is_a?(String) ? StringIO.new(src) : src
@@ -181,22 +188,11 @@ module MailParser
       @message = nil
       @body = ""
       @part = []
+      opt[:charset_converter] ||= Proc.new{|f,t,s| ConvCharset.conv_charset(f,t,s)}
 
       read_header
       read_body
       read_part
-
-      ["content-type", "content-disposition"].each do |hn|
-        if @header.key? hn
-          @header[hn].each do |h|
-            new = parse_param(h.params, @opt[:strict])
-            new.each do |k,v|
-              v.replace(ConvCharset.conv_charset(v.charset, @opt[:output_charset], v)) if v.charset and @opt[:output_charset] rescue nil
-            end
-            h.params.replace new
-          end
-        end
-      end
     end
 
     attr_reader :header, :body, :body_preconv, :part, :message
@@ -351,7 +347,6 @@ module MailParser
       end
       headers.each do |h|
         name, body = h.split(/\s*:\s*/, 2)
-        name.downcase!
         @header.add(name, body)
       end
     end
@@ -375,7 +370,7 @@ module MailParser
       end
       @body_preconv = @body
       if charset and @opt[:output_charset] then
-        @body = MailParser::ConvCharset.conv_charset(charset, @opt[:output_charset], @body) rescue @body
+        @body = @opt[:charset_converter].call(charset, @opt[:output_charset], @body) rescue @body
       end
       if @opt[:extract_message_type] and type == "message" and not @body.empty? then
         @message = Message.new(StringIO.new(@body), @opt)

@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# Copyright (C) 2006 TOMITA Masahiro
+# Copyright (C) 2006-2007 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "strscan"
@@ -15,25 +15,31 @@ end
 module MailParser::RFC2047
 
   class String < ::String
-    def initialize(str, charset=nil, raw=nil)
+    @@charset_converter = Proc.new{|f,t,s| MailParser::ConvCharset.conv_charset(f,t,s)}
+    def initialize(str, charset=nil, raw=nil, charset_converter=nil)
       super(str)
       @charset = charset
       @raw = raw || str
+      @charset_converter = charset_converter || @@charset_converter
     end
     attr_reader :charset
     attr_reader :raw
 
-    def conv_charset(charset)
-      return MailParser::ConvCharset.conv_charset(@charset, charset, self)
+    def conv_charset(to_charset)
+      if @charset and to_charset
+        @charset_converter.call @charset, to_charset, self
+      else
+        self
+      end
     end
   end
 
   module_function
 
-  def decode(str, charset=nil)
+  def decode(str, charset=nil, charset_converter=nil)
     last_charset = nil
     ret = ""
-    split_decode(str).each do |s|
+    split_decode(str, charset_converter).each do |s|
       begin
         s2 = charset && s.charset ? s.conv_charset(charset) : s
         cs = s.charset
@@ -48,21 +54,17 @@ module MailParser::RFC2047
     return ret.strip
   end
 
-  def split_decode(str)
+  def split_decode(str, charset_converter=nil)
     ret = []
     while str =~ /\=\?([^\(\)\<\>\@\,\;\:\"\/\[\]\?\.\=]+)\?([QB])\?([^\? ]+)\?\=/ni do
       raw = $&
       pre, charset, encoding, enc_text, after = $`, $1.downcase, $2.downcase, $3, $'
-      if pre.nil? or not pre.sub(/\s+/,"").empty? then
-        ret << String.new(pre.strip)
-      end
+      ret << String.new(pre.strip) unless pre.strip.empty?
       s = encoding == "q" ? q_decode(enc_text) : b_decode(enc_text)
-      ret << String.new(s, charset, raw)
+      ret << String.new(s, charset, raw, charset_converter)
       str = after
     end
-    if not str.empty? then
-      ret << String.new(str.strip)
-    end
+    ret << String.new(str.strip) unless str.empty?
     return ret
   end
 

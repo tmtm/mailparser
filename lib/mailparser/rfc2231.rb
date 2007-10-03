@@ -1,14 +1,14 @@
 #
 # $Id$
 #
-# Copyright (C) 2006 TOMITA Masahiro
+# Copyright (C) 2006-2007 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "mailparser/error"
 
 module MailParser::RFC2231
   module_function
-  def parse_param(params, strict=true)
+  def parse_param(params, opt={:strict=>true})
     newparams = {}
     h = Hash.new{|h,k| h[k] = []}
     char_lang = {}
@@ -19,7 +19,7 @@ module MailParser::RFC2231
         char, lang, v = value.split(/\'/, 3)
         char_lang[name] = [char, lang]
         if v.nil? then
-          raise MailParser::ParseError, "#{key}=#{value}" if strict
+          raise MailParser::ParseError, "#{key}=#{value}" if opt[:strict]
           v = lang || char
         end
         v = v.gsub(/%([0-9A-F][0-9A-F])/ni){$1.hex.chr}
@@ -42,11 +42,17 @@ module MailParser::RFC2231
     h.each do |k, v|
       newparams[k] = v.sort{|a,b| a[0]<=>b[0]}.map{|a| a[1]}.join
     end
-    newparams.each do |k, v|
+    newparams.keys.each do |k|
+      v = newparams[k]
+      if char_lang.key? k and opt[:output_charset]
+        charset_converter = opt[:charset_converter] || Proc.new{|f,t,s| ConvCharset.conv_charset(f,t,s)}
+        v.replace charset_converter.call(char_lang[k][0], opt[:output_charset], v) rescue nil
+      end
       class << v
         attr_accessor :charset, :language
       end
       v.charset, v.language = char_lang[k] if char_lang.key? k
+      newparams[k] = v
     end
     return newparams
   end

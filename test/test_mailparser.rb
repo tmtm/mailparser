@@ -397,6 +397,16 @@ EOS
     assert_equal "\e$B$3$l$OK\\J8$G$9\e(B\n", m.body_preconv
   end
 
+  def test_body_charset_converter
+    m = MailParser::Message.new(<<EOS, :output_charset=>"utf8", :charset_converter=>proc{|f,t,s| "abcdefg"})
+From: TOMITA Masahiro <tommy@tmtm.org>
+Content-Type: text/plain; charset=iso-2022-jp
+
+\e$B$3$l$OK\\J8$G$9\e(B
+EOS
+    assert_equal "abcdefg", m.body
+  end
+
   def test_filename()
     msg = StringIO.new(<<EOS)
 Content-Type: text/plain; name="filename.txt"

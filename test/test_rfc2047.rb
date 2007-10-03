@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# Copyright (C) 2006 TOMITA Masahiro
+# Copyright (C) 2006-2007 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "mailparser/rfc2047"
@@ -109,6 +109,12 @@ class TC_RFC2047 < Test::Unit::TestCase
   def test_decode_iso2022jp()
     s = MailParser::RFC2047.decode("=?iso-2022-jp?b?GyRCLSEbKEI=?=", "UTF-8")
     assert_equal("\xe2\x91\xa0", s)
+  end
+
+  def test_decode_charset_converter()
+    proc = Proc.new{|f,t,s| s.gsub(/o/, "X")}
+    s = MailParser::RFC2047.decode("=?us-ascii?q?hoge?=", "utf-8", proc)
+    assert_equal("hXge", s)
   end
 
 end

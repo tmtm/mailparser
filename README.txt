@@ -81,6 +81,9 @@ opt は Hash オブジェクトで次の値を指定できる。
  :output_charset => charsetname
    出力文字コード。デフォルトは nil で無変換。
 
+ :charset_converter => proc{|f,t,s| ...}
+   文字コード変換時に呼び出される Proc オブジェクト。引数は、元charset,新charset,元文字列。デフォルトは MailParser::ConvCharset.conv_charset が呼ばれる。
+
  :strict => true
    RFC違反時に ParseError 例外を発生する。デフォルトは false。
 

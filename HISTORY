@@ -1,3 +1,6 @@
+== 0.4.9 2007-10-04 ==
+ * :charset_converter 追加
+
 == 0.4.8 2007-09-17 ==
  * < > がない Message-Id で落ちていた
  * Message#body_preconv 追加
