@@ -48,7 +48,7 @@ module MailParser
       else
         r = hbody.gsub(/\s+/, " ")
         if opt[:decode_mime_header] then
-          return RFC2047.decode(r, opt[:output_charset])
+          return RFC2047.decode(r, opt)
         else
           return r
         end
@@ -90,7 +90,7 @@ module MailParser
       s = split_by(Tokenizer.token(str), ",")
       s.map!{|i| i.join(" ")}
       if opt[:decode_mime_header] then
-        s.map!{|i| RFC2047.decode(i, opt[:output_charset])}
+        s.map!{|i| RFC2047.decode(i, opt)}
       end
       s
     end
@@ -179,7 +179,7 @@ module MailParser
         if a1 = m.index("<") and a2 = m.rindex(">") and a2 > a1 then
           display_name = m[0..a1-1].join(" ")
           if opt[:decode_mime_header] then
-            display_name = RFC2047.decode(display_name, opt[:output_charset])
+            display_name = RFC2047.decode(display_name, opt)
           end
           mailaddr = m[a1+1..a2-1].to_s
           local_part, domain = mailaddr.split(/@/, 2)

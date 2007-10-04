@@ -113,7 +113,7 @@ class TC_RFC2047 < Test::Unit::TestCase
 
   def test_decode_charset_converter()
     proc = Proc.new{|f,t,s| s.gsub(/o/, "X")}
-    s = MailParser::RFC2047.decode("=?us-ascii?q?hoge?=", "utf-8", proc)
+    s = MailParser::RFC2047.decode("=?us-ascii?q?hoge?=", :output_charset=>"utf-8", :charset_converter=>proc)
     assert_equal("hXge", s)
   end
 
