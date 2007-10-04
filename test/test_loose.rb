@@ -44,6 +44,13 @@ class TC_Loose < Test::Unit::TestCase
     assert_equal("ghi jkl", p[1])
   end
 
+  def test_parse_phrase_list_mime_charset_converter
+    p = parse_phrase_list("abc =?us-ascii?q?def?=, ghi jkl", :decode_mime_header=>true, :output_charset=>"utf-8", :charset_converter=>proc{"12345"})
+    assert_equal(2, p.size)
+    assert_equal("abc 12345", p[0])
+    assert_equal("ghi jkl", p[1])
+  end
+
   def test_parse_received()
     tzbak = ENV["TZ"]
     begin
@@ -115,6 +122,26 @@ class TC_Loose < Test::Unit::TestCase
     assert_equal "", c.type
   end
 
+  def test_parse_other_header
+    s = parse("subject", "=?euc-jp?q?=A4=A2=A4=A4?=")
+    assert_equal "=?euc-jp?q?=A4=A2=A4=A4?=", s
+  end
+
+  def test_parse_other_header_decode
+    s = parse("subject", "=?euc-jp?q?=A4=A2=A4=A4?=", :decode_mime_header=>true)
+    assert_equal "\xa4\xa2\xa4\xa4", s
+  end
+
+  def test_parse_other_header_decode_charset
+    s = parse("subject", "=?euc-jp?q?=A4=A2=A4=A4?=", :decode_mime_header=>true, :output_charset=>"utf-8")
+    assert_equal "あい", s
+  end
+
+  def test_parse_other_header_decode_charset_converter
+    s = parse("subject", "=?euc-jp?q?=A4=A2=A4=A4?=", :decode_mime_header=>true, :output_charset=>"utf-8", :charset_converter=>proc{"abcdefg"})
+    assert_equal "abcdefg", s
+  end
+
   def test_split_by()
     assert_equal([["aa","bb"],["cc"],["dd"]], split_by(%w(aa bb , cc , dd), ","))
   end
@@ -134,6 +161,14 @@ class TC_Loose < Test::Unit::TestCase
     ml = mailbox_list("hoge hoge (comment) <hoge.hoge@example.com>", {})
     assert_equal(1, ml.size)
     assert_equal("hoge hoge", ml[0].phrase)
+    assert_equal("hoge.hoge", ml[0].addr_spec.local_part)
+    assert_equal("example.com", ml[0].addr_spec.domain)
+  end
+
+  def test_mailbox_charset_converter
+    ml = mailbox_list("hoge =?us-ascii?q?hoge?= <hoge.hoge@example.com>", {:decode_mime_header=>true, :output_charset=>"us-ascii", :charset_converter=>proc{"fuga"}})
+    assert_equal(1, ml.size)
+    assert_equal("hoge fuga", ml[0].phrase)
     assert_equal("hoge.hoge", ml[0].addr_spec.local_part)
     assert_equal("example.com", ml[0].addr_spec.domain)
   end

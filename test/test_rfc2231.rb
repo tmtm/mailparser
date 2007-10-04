@@ -107,7 +107,7 @@ class TC_RFC2231 < Test::Unit::TestCase
     params = {
       "hoge*" => "fuga",
     }
-    h = MailParser::RFC2231.parse_param(params, :strict=>false)
+    h = MailParser::RFC2231.parse_param(params, false)
     assert_equal("fuga", h["hoge"])
   end
 
@@ -122,7 +122,7 @@ class TC_RFC2231 < Test::Unit::TestCase
     params = {
       "hoge*0*" => "fuga",
     }
-    h = MailParser::RFC2231.parse_param(params, :strict=>false)
+    h = MailParser::RFC2231.parse_param(params, false)
     assert_equal("fuga", h["hoge"])
   end
 

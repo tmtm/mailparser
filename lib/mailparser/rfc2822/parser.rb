@@ -13,7 +13,7 @@ module MailParser
 
     class Parser < Racc::Parser
 
-module_eval <<'..end lib/mailparser/rfc2822/parser.y modeval..id5542ab9cf1', 'lib/mailparser/rfc2822/parser.y', 345
+module_eval <<'..end lib/mailparser/rfc2822/parser.y modeval..id4b5697d559', 'lib/mailparser/rfc2822/parser.y', 345
 
 require "mailparser/rfc2822/scanner"
 
@@ -49,13 +49,13 @@ end
 
 def decode(s)
   return s unless @opt[:decode_mime_header]
-  RFC2047.decode(s, @opt[:output_charset])
+  RFC2047.decode(s, @opt)
 end
 
 def decode2(ary)
   ary.map{|i| decode(i)}
 end
-..end lib/mailparser/rfc2822/parser.y modeval..id5542ab9cf1
+..end lib/mailparser/rfc2822/parser.y modeval..id4b5697d559
 
 ##### racc 1.4.5 generates ###
 

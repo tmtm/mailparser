@@ -87,7 +87,7 @@ module MailParser
       else
         r = @raw.chomp.gsub(/\s+/, " ")
         if @opt[:decode_mime_header] then
-          @parsed = RFC2047.decode(r, @opt[:output_charset])
+          @parsed = RFC2047.decode(r, @opt)
         else
           @parsed = r
         end
@@ -310,7 +310,7 @@ module MailParser
       elsif @header.key? "content-type" and @header["content-type"][0].params.key? "name" then
         @filename = @header["content-type"][0].params["name"]
       end
-      @filename = RFC2047.decode(@filename, @opt[:output_charset]) if @opt[:decode_mime_filename] and @filename
+      @filename = RFC2047.decode(@filename, @opt) if @opt[:decode_mime_filename] and @filename
       return @filename
     end
 

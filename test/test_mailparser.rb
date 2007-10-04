@@ -310,6 +310,16 @@ EOS
     assert_equal("=?xxx?b?GyRCJCIkJCQmJCgkKhsoQg==?=", m.subject)
   end
 
+  def test_subject_mime_decode_charset_converter()
+    msg = StringIO.new(<<EOS)
+Subject: =?iso-2022-jp?b?GyRCJCIkJCQmJCgkKhsoQg==?=
+
+EOS
+    cv = proc{|f,t,s| "abcdefg"}
+    m = MailParser::Message.new(msg, :decode_mime_header=>true, :output_charset=>"utf-8", :charset_converter=>cv)
+    assert_equal("abcdefg", m.subject)
+  end
+
   def test_content_type()
     msg = StringIO.new(<<EOS)
 Content-Type: text/plain; charset=us-ascii
@@ -495,6 +505,16 @@ Content-Disposition: attachment; filename="=?iso-2022-jp?q?=1B$B$=22$$$&$=28$=2A
 EOS
     m = MailParser::Message.new(msg, :decode_mime_filename=>true, :output_charset=>"utf-8")
     assert_equal("あいうえお.txt", m.filename)
+  end
+
+  def test_filename_mime_charset_converter()
+    msg = StringIO.new(<<EOS)
+Content-Disposition: attachment; filename="=?iso-2022-jp?q?=1B$B$=22$$$&$=28$=2A=1B=28B.txt?="
+
+EOS
+    cv = proc{|f,t,s| "abcdefg"}
+    m = MailParser::Message.new(msg, :decode_mime_filename=>true, :output_charset=>"utf-8", :charset_converter=>cv)
+    assert_equal("abcdefg", m.filename)
   end
 
   def test_filename_mime_unknown_charset()

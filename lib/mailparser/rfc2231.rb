@@ -9,6 +9,7 @@ require "mailparser/error"
 module MailParser::RFC2231
   module_function
   def parse_param(params, opt={:strict=>true})
+    opt = {:strict=>opt} unless opt.is_a? Hash
     newparams = {}
     h = Hash.new{|h,k| h[k] = []}
     char_lang = {}

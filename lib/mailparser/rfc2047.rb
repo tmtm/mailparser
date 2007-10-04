@@ -36,7 +36,13 @@ module MailParser::RFC2047
 
   module_function
 
-  def decode(str, charset=nil, charset_converter=nil)
+  def decode(str, opt=nil)
+    if opt.is_a? Hash
+      charset = opt[:output_charset]
+      charset_converter = opt[:charset_converter]
+    else
+      charset = opt
+    end
     last_charset = nil
     ret = ""
     split_decode(str, charset_converter).each do |s|

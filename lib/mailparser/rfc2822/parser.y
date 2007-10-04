@@ -377,7 +377,7 @@ end
 
 def decode(s)
   return s unless @opt[:decode_mime_header]
-  RFC2047.decode(s, @opt[:output_charset])
+  RFC2047.decode(s, @opt)
 end
 
 def decode2(ary)
