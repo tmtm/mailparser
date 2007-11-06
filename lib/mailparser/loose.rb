@@ -136,7 +136,7 @@ module MailParser
 
     # Content-Transfer-Encoding ヘッダをパースして RFC2045::ContentTransferEncoding を返す
     def parse_content_transfer_encoding(str, opt={})
-      RFC2045::ContentTransferEncoding.new(Tokenizer.token(str)[0])
+      RFC2045::ContentTransferEncoding.new(Tokenizer.token(str).first.to_s)
     end
 
     # Mime-Version ヘッダをパースして文字列を返す

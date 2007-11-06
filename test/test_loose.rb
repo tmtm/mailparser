@@ -105,6 +105,26 @@ class TC_Loose < Test::Unit::TestCase
     assert_equal({"name"=>"hoge.txt"}, ct.params)
   end
 
+  def test_parse_content_transfer_encoding
+    cte = parse_content_transfer_encoding("7BIT")
+    assert_equal "7bit", cte.mechanism
+  end
+
+  def test_parse_content_transfer_encoding_empty
+    cte = parse_content_transfer_encoding("")
+    assert_equal "", cte.mechanism
+  end
+
+  def test_parse_mime_version
+    assert_equal "1.0", parse_mime_version("1.0")
+    assert_equal "1.0", parse_mime_version("1 . 0")
+    assert_equal "1.0", parse_mime_version("1. 0")
+  end
+
+  def test_parse_mime_version_empty
+    assert_equal "", parse_mime_version("")
+  end
+
   def test_parse_content_disposition()
     c = parse_content_disposition("attachment; filename=hoge.txt")
     assert_equal("attachment", c.type)
