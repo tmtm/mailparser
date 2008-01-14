@@ -157,11 +157,30 @@ module MailParser::RFC2822
 
   class DateTime
     def initialize(year, month, day, hour, min, sec, zone)
-      unless zone =~ /^[+-]\d\d\d\d$/ then
+      y, m, d, h, mi, s = year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i
+      raise ArgumentError, "invalid year" if y < 0 or 9999 < y
+      raise ArgumentError, "invalid month" if m < 1 or 12 < m
+      raise ArgumentError, "invalid day of the month" if d < 1
+      if [1,3,5,7,8,10,12].include? m
+        raise ArgumentError, "invalid day of the month" if d > 31
+      elsif [4,6,9,11].include? m
+        raise ArgumentError, "invalid day of the month" if d > 30
+      else # month == 2
+        if y%4 == 0 and (y%100 !=0 or y%400 == 0)
+          raise ArgumentError, "invalid day of the month" if d > 29
+        else
+          raise ArgumentError, "invalid day of the month" if d > 28
+        end
+      end
+      raise ArgumentError, "invalid hour" if h > 23
+      raise ArgumentError, "invalid minute" if mi > 59
+      raise ArgumentError, "invalid second" if (h == 23 && mi == 59 && s > 60) or ((h != 23 || mi != 59) && s > 59)
+      if zone =~ /^[+-]\d\d(\d\d)$/ then
+        raise ArgumentError, "invalid zone" if $1.to_i > 59
+      else
         zone = ZONE[zone.upcase] || "-0000"
       end
-      @year, @month, @day, @hour, @min, @sec, @zone =
-        year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, zone
+      @year, @month, @day, @hour, @min, @sec, @zone = y, m, d, h, mi, s, zone
       z = zone[1,4].to_i
       @zone_sec = z/100*3600 + z%100*60
       @zone_sec = -@zone_sec if zone[0] == ?-

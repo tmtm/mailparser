@@ -291,41 +291,45 @@ item_value      : angle_addr_list
 date_time       : day_of_week DIGIT ATOM DIGIT time_of_day zone
                   {
                     year, month, day, time, zone = val.values_at(3,2,1,4,5)
-                    raise MailParser::ParseError, year unless year =~ /\A\d\d\d\d\Z/
+                    raise MailParser::ParseError, "invalid year: #{year}" unless year =~ /\A\d\d\d\d\Z/
                     m = [nil,"jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].index month.downcase
-                    raise MailParser::ParseError, month if m.nil?
-                    raise MailParser::ParseError, day unless day =~ /\A\d?\d\Z/
-                    DateTime.new(year, m, day, time[0], time[1], time[2], zone)
+                    raise MailParser::ParseError, "invaild month: #{month}" unless m
+                    raise MailParser::ParseError, "invalid day of the month: #{day}" unless day =~ /\A\d?\d\Z/
+                    begin
+                      DateTime.new(year.to_i, m.to_i, day.to_i, time[0], time[1], time[2], zone)
+                    rescue ArgumentError
+                      raise MailParser::ParseError, "invalid date format"
+                    end
                   }
 
 day_of_week     : /* empty */
                 | ATOM ','
                   {
                     unless ['mon','tue','wed','thu','fri','sat','sun'].include? val[0].downcase then
-                      raise MailParser::ParseError, val[0]
+                      raise MailParser::ParseError, "invalid day of the week: #{val[0]}"
                     end
                   }
 
 time_of_day     : DIGIT ':' DIGIT
                   {
                     if val[0] !~ /\A\d\d\Z/ or val[0].to_i > 23 then
-                      raise MailParser::ParseError, val[0]
+                      raise MailParser::ParseError, "invalid hour: #{val[0]}"
                     end
-                    if val[2] !~ /\A\d\d\Z/ or val[2].to_i > 60 then
-                      raise MailParser::ParseError, val[2]
+                    if val[2] !~ /\A\d\d\Z/ or val[2].to_i > 59 then
+                      raise MailParser::ParseError, "invalid minute: #{val[2]}"
                     end
                     [val[0].to_i, val[2].to_i, 0]
                   }
                 | DIGIT ':' DIGIT ':' DIGIT
                   {
                     if val[0] !~ /\A\d\d\Z/ or val[0].to_i > 23 then
-                      raise MailParser::ParseError, val[0]
+                      raise MailParser::ParseError, "invalid hour: #{val[0]}"
                     end
                     if val[2] !~ /\A\d\d\Z/ or val[2].to_i > 59 then
-                      raise MailParser::ParseError, val[2]
+                      raise MailParser::ParseError, "invalid minute: #{val[2]}"
                     end
                     if val[4] !~ /\A\d\d\Z/ or val[4].to_i > 60 then
-                      raise MailParser::ParseError, val[4]
+                      raise MailParser::ParseError, "invalid second: #{val[4]}"
                     end
                     [val[0].to_i, val[2].to_i, val[4].to_i]
                   }

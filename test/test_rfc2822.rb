@@ -233,6 +233,17 @@ class TC_RFC2822Parser < Test::Unit::TestCase
     assert_equal("-0400", d.zone)
     assert_equal(Time.utc(2006,9,25,5,23,56), d.time)
   end
+
+  def test_date_time_invalid()
+    assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "0 Jan 2007 08:19:08 +0900")}
+    assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Xxx 2007 08:19:08 +0900")}
+    assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Jan 10000 08:19:08 +0900")}
+    assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Jan 2007 25:19:08 +0900")}
+    assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Jan 2007 08:60:08 +0900")}
+    assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Jan 2007 08:19:60 +0900")}
+    assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Jan 2007 08:19:08 +0980")}
+  end
+
 end
 
 class TC_AddrSpec < Test::Unit::TestCase
@@ -309,5 +320,40 @@ class TC_DateTime < Test::Unit::TestCase
     assert_equal(10, d.sec)
     assert_equal("-0000", d.zone)
     assert_equal(Time.utc(2006,9,25,23,56,10), d.time)
+  end
+
+  def test_new_month0()
+    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2008, 0, 1, 11, 22, 33, "+0900")}
+  end
+
+  def test_new_month13()
+    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2008, 13, 1, 11, 22, 33, "+0900")}
+  end
+
+  def test_new_day0()
+    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2008, 1, 0, 11, 22, 33, "+0900")}
+  end
+
+  def test_new_day31()
+    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2008, 2, 31, 11, 22, 33, "+0900")}
+    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2008, 4, 31, 11, 22, 33, "+0900")}
+    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2008, 6, 31, 11, 22, 33, "+0900")}
+    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2008, 9, 31, 11, 22, 33, "+0900")}
+    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2008, 11, 31, 11, 22, 33, "+0900")}
+  end
+
+  def test_new_day32()
+    1.upto(12) do |m|
+      assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2008, m, 32, 11, 22, 33, "+0900")}
+    end
+  end
+
+  def test_new_leap()
+    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(1999, 2, 29, 0, 0, 0, "+0900")}
+    assert_nothing_raised(){MailParser::RFC2822::DateTime.new(2000, 2, 29, 0, 0, 0, "+0900")}
+    assert_nothing_raised(){MailParser::RFC2822::DateTime.new(2004, 2, 29, 0, 0, 0, "+0900")}
+    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2100, 2, 29, 0, 0, 0, "+0900")}
+    assert_nothing_raised(){MailParser::RFC2822::DateTime.new(2008, 1, 15, 23, 59, 60, "+0900")}
+    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2008, 1, 15, 23, 58, 60, "+0900")}
   end
 end
