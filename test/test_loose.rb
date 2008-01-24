@@ -211,6 +211,14 @@ class TC_Loose < Test::Unit::TestCase
     assert_equal 1, m.size
     assert_equal "aa@bb.cc", m[0].msg_id
   end
+
+  def test_msg_id_invalid_with_space()
+    m = msg_id_list "  aa bb "
+    assert_equal 2, m.size
+    assert_equal "aa", m[0].msg_id
+    assert_equal "bb", m[1].msg_id
+  end
+
 end
 
 class TC_Loose_Tokenizer < Test::Unit::TestCase
