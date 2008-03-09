@@ -75,7 +75,7 @@ module MailParser::RFC2047
   end
 
   def q_decode(str)
-    return str.gsub(/_/," ").gsub(/=\s*$/,"=").unpack("M")[0]
+    return str.gsub(/_/," ").gsub(/=\s*?$/,"=").unpack("M")[0]
   end
 
   def b_decode(str)

@@ -110,6 +110,8 @@ class TC_RFC2045 < Test::Unit::TestCase
     assert_equal("abcdefg", MailParser::RFC2045.qp_decode("abcd=  \r\nefg"))
     assert_equal("abcdefg", MailParser::RFC2045.qp_decode("abcd=\nefg"))
     assert_equal("abcdefg", MailParser::RFC2045.qp_decode("abcd=  \nefg"))
+    assert_equal("abcd\r\nefg", MailParser::RFC2045.qp_decode("abcd=\r\n\r\nefg"))
+    assert_equal("abcd\r\nefg", MailParser::RFC2045.qp_decode("abcd=  \r\n\r\nefg"))
   end
 
   def test_b64_decode()
