@@ -183,6 +183,12 @@ class TC_Loose < Test::Unit::TestCase
     assert_equal({"name"=>"hoge.txt"}, ct.params)
   end
 
+  def test_parse_content_type_other
+    ct = parse_content_type("other")
+    assert_equal("other", ct.type)
+    assert_equal("", ct.subtype)
+  end
+
   def test_parse_content_transfer_encoding
     cte = parse_content_transfer_encoding("7BIT")
     assert_equal "7bit", cte.mechanism

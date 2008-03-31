@@ -132,7 +132,9 @@ module MailParser
         params[pn.to_s] = pv.to_s.gsub(/\A"|"\z/,"")
       end
       type = "text" if type.nil? or type.empty?
-      subtype = "plain" if subtype.nil? or subtype.empty?
+      if subtype.nil? or subtype.empty?
+        subtype = type == "text" ? "plain" : ""
+      end
       RFC2045::ContentType.new(type, subtype, params)
     end
 
