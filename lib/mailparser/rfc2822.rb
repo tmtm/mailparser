@@ -156,6 +156,11 @@ module MailParser::RFC2822
   end
 
   class DateTime
+    def self.now
+      t = Time.now
+      self.new(t.year, t.month, t.day, t.hour, t.min, t.sec, t.zone)
+    end
+
     def initialize(year, month, day, hour, min, sec, zone)
       y, m, d, h, mi, s = year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i
       raise ArgumentError, "invalid year" if y < 0 or 9999 < y

@@ -130,7 +130,7 @@ module MailParser
     def [](name)
       return nil unless @hash.key? name
       return @parsed[name] if @parsed.key? name
-      @parsed[name] = @hash[name].map{|h| h.parse}
+      @parsed[name] = @hash[name].map{|h| h.parse}.compact
       return @parsed[name]
     end
 

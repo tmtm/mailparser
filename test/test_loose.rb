@@ -71,6 +71,84 @@ class TC_Loose < Test::Unit::TestCase
     end
   end
 
+  def test_parse_received_empty()
+    tzbak = ENV["TZ"]
+    begin
+      ENV["TZ"] = "GMT"
+      r = parse_received("")
+      t = Time.now
+      assert_equal(t.year, r.date_time.year)
+      assert_equal(t.month, r.date_time.month)
+      assert_equal(t.day, r.date_time.day)
+      assert_equal(t.hour, r.date_time.hour)
+      assert_equal(t.min, r.date_time.min)
+      assert_equal(t.sec, r.date_time.sec)
+      assert_equal("+0000", r.date_time.zone)
+      assert_equal({}, r.name_val)
+    ensure
+      ENV["TZ"] = tzbak
+    end
+  end
+
+  def test_parse_received_no_semicolon()
+    tzbak = ENV["TZ"]
+    begin
+      ENV["TZ"] = "GMT"
+      r = parse_received("from host.example.com by my.server for <user@domain.name>")
+      t = Time.now
+      assert_equal(t.year, r.date_time.year)
+      assert_equal(t.month, r.date_time.month)
+      assert_equal(t.day, r.date_time.day)
+      assert_equal(t.hour, r.date_time.hour)
+      assert_equal(t.min, r.date_time.min)
+      assert_equal(t.sec, r.date_time.sec)
+      assert_equal("+0000", r.date_time.zone)
+      assert_equal("host.example.com", r.name_val["from"])
+      assert_equal("my.server", r.name_val["by"])
+      assert_equal("<user@domain.name>", r.name_val["for"])
+    ensure
+      ENV["TZ"] = tzbak
+    end
+  end
+
+  def test_parse_received_only_semicolon()
+    tzbak = ENV["TZ"]
+    begin
+      ENV["TZ"] = "GMT"
+      r = parse_received(";")
+      t = Time.now
+      assert_equal(t.year, r.date_time.year)
+      assert_equal(t.month, r.date_time.month)
+      assert_equal(t.day, r.date_time.day)
+      assert_equal(t.hour, r.date_time.hour)
+      assert_equal(t.min, r.date_time.min)
+      assert_equal(t.sec, r.date_time.sec)
+      assert_equal("+0000", r.date_time.zone)
+      assert_equal({}, r.name_val)
+    ensure
+      ENV["TZ"] = tzbak
+    end
+  end
+
+  def test_parse_received_odd_param()
+    tzbak = ENV["TZ"]
+    begin
+      ENV["TZ"] = "GMT"
+      r = parse_received("a b c;")
+      t = Time.now
+      assert_equal(t.year, r.date_time.year)
+      assert_equal(t.month, r.date_time.month)
+      assert_equal(t.day, r.date_time.day)
+      assert_equal(t.hour, r.date_time.hour)
+      assert_equal(t.min, r.date_time.min)
+      assert_equal(t.sec, r.date_time.sec)
+      assert_equal("+0000", r.date_time.zone)
+      assert_equal({"a"=>"b", "c"=>nil}, r.name_val)
+    ensure
+      ENV["TZ"] = tzbak
+    end
+  end
+
   def test_parse_content_type()
     ct = parse_content_type("text/plain; charset=iso-2022-jp")
     assert_equal("text", ct.type)
@@ -217,6 +295,11 @@ class TC_Loose < Test::Unit::TestCase
     assert_equal 2, m.size
     assert_equal "aa", m[0].msg_id
     assert_equal "bb", m[1].msg_id
+  end
+
+  def test_msg_id_empty()
+    m = msg_id_list ""
+    assert_equal m, []
   end
 
 end

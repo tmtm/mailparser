@@ -103,19 +103,21 @@ module MailParser
     # Received ヘッダをパースして RFC2822::Received を返す
     def parse_received(str, opt={})
       a = split_by(Tokenizer.token_received(str), ";")
-      date = parse_date(a[-1].join(" "))
+      date = a.length > 1 ? parse_date(a.last.join(" ")) : RFC2822::DateTime.now
       name_val = {}
       i = 0
       v = ""
-      while i < a[0].length do
-        if a[0][i] =~ /\A[a-z0-9]+\z/ino then
-          v = a[0][i+1]
-          name_val[a[0][i].downcase] = v
+      unless a.empty?
+        while i < a[0].length do
+          if a[0][i] =~ /\A[a-z0-9]+\z/ino then
+            v = a[0][i+1]
+            name_val[a[0][i].downcase] = v
+            i += 1
+          else
+            v << a[0][i]
+          end
           i += 1
-        else
-          v << a[0][i]
         end
-        i += 1
       end
       RFC2822::Received.new(name_val, date)
     end
