@@ -129,7 +129,7 @@ display_name    : phrase
 
 phrase_list     : phrase_opt
                   {
-                    [val[0]]
+                    [val[0]].compact
                   }
                 | phrase_list ',' phrase_opt
                   {

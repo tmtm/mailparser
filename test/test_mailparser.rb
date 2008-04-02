@@ -352,6 +352,16 @@ EOS
     assert_equal(nil, m.charset)
   end
 
+  def test_content_type_other()
+    msg = StringIO.new(<<EOS)
+Content-Type: other
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("other", m.type)
+    assert_equal("", m.subtype)
+    assert_equal(nil, m.charset)
+  end
+
   def test_body()
     msg = StringIO.new(<<EOS)
 From: TOMITA Masahiro <tommy@tmtm.org>

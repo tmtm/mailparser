@@ -13,7 +13,7 @@ module MailParser
 
     class Parser < Racc::Parser
 
-module_eval <<'..end lib/mailparser/rfc2822/parser.y modeval..id42d5ec537f', 'lib/mailparser/rfc2822/parser.y', 349
+module_eval <<'..end lib/mailparser/rfc2822/parser.y modeval..idfaab7aaba4', 'lib/mailparser/rfc2822/parser.y', 349
 
 require "mailparser/rfc2822/scanner"
 
@@ -55,7 +55,7 @@ end
 def decode2(ary)
   ary.map{|i| decode(i)}
 end
-..end lib/mailparser/rfc2822/parser.y modeval..id42d5ec537f
+..end lib/mailparser/rfc2822/parser.y modeval..idfaab7aaba4
 
 ##### racc 1.4.5 generates ###
 
@@ -609,7 +609,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 128
 
 module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 133
   def _reduce_40( val, _values)
-                    [val[0]]
+                    [val[0]].compact
   end
 .,.,
 
