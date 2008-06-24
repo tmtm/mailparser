@@ -13,7 +13,7 @@ module MailParser
 
     class Parser < Racc::Parser
 
-module_eval <<'..end lib/mailparser/rfc2822/parser.y modeval..idfaab7aaba4', 'lib/mailparser/rfc2822/parser.y', 349
+module_eval <<'..end lib/mailparser/rfc2822/parser.y modeval..id5cf2490112', 'lib/mailparser/rfc2822/parser.y', 349
 
 require "mailparser/rfc2822/scanner"
 
@@ -55,7 +55,7 @@ end
 def decode2(ary)
   ary.map{|i| decode(i)}
 end
-..end lib/mailparser/rfc2822/parser.y modeval..idfaab7aaba4
+..end lib/mailparser/rfc2822/parser.y modeval..id5cf2490112
 
 ##### racc 1.4.5 generates ###
 
@@ -496,7 +496,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 37
 module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 44
   def _reduce_15( val, _values)
                     @comma_list << val[1].object_id
-                    val[0].last.comments = decode2(@scanner.get_comment_by_id(@comma_list[-2], @comma_list[-1]))
+                    val[0].last.comments = decode2(@scanner.get_comment_by_id(@comma_list[-2], @comma_list[-1])) if val[0].last.kind_of? Mailbox
                     val[0] << val[2] if val[2]
                     val[0]
   end

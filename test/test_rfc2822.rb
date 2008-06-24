@@ -143,6 +143,11 @@ class TC_RFC2822Parser < Test::Unit::TestCase
     assert_equal(["(aa)", "(bb)", "(cc)"], a[0].mailbox_list[0].comments)
     assert_equal([], a[0].mailbox_list[1].comments)
     assert_equal(["(dd)"], a[1].comments)
+    a = @p.parse(:ADDRESS_LIST, "group:,<a@b.c>;")
+    assert_equal(1, a.size)
+    assert_kind_of(MailParser::RFC2822::Group, a[0])
+    assert_equal(1, a[0].mailbox_list.size)
+    assert_kind_of(MailParser::RFC2822::Mailbox, a[0].mailbox_list[0])
   end
 
   def test_address_list_bcc()

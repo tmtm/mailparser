@@ -38,7 +38,7 @@ mailbox_list_   : mailbox_opt
                 | mailbox_list_ ',' mailbox_opt
                   {
                     @comma_list << val[1].object_id
-                    val[0].last.comments = decode2(@scanner.get_comment_by_id(@comma_list[-2], @comma_list[-1]))
+                    val[0].last.comments = decode2(@scanner.get_comment_by_id(@comma_list[-2], @comma_list[-1])) if val[0].last.kind_of? Mailbox
                     val[0] << val[2] if val[2]
                     val[0]
                   }
