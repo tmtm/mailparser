@@ -367,6 +367,7 @@ module MailParser
       case content_transfer_encoding
       when "quoted-printable" then @body = RFC2045.qp_decode(@body)
       when "base64" then @body = RFC2045.b64_decode(@body)
+      when "uuencode", "x-uuencode", "x-uue" then @body = decode_uuencode @body
       end
       @body_preconv = @body
       if charset and @opt[:output_charset] then
@@ -390,6 +391,20 @@ module MailParser
       end
       @dio.each_line{}                        # skip epilogue
     end
+
+    # uuencode のデコード
+    def decode_uuencode(str)
+      ret = ""
+      str.each_line do |line|
+        line.chomp!
+        next if line =~ /\A\s*\z/
+        next if line =~ /\Abegin \d\d\d [^ ]/
+        break if line =~ /\Aend\z/
+        ret.concat line.unpack("u").first
+      end
+      ret
+    end
+
   end
 
   # 特定の行を EOF とみなして gets が動く IO モドキ

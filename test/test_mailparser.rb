@@ -1023,4 +1023,38 @@ EOS
     assert_equal "bbbb\n", dio.gets
   end
 
+  def test_base64_body
+    msg = <<EOS
+Content-Transfer-Encoding: base64
+
+QUJDREVGR0hJSktMTU4=
+EOS
+    mp = MailParser::Message.new msg
+    assert_equal "ABCDEFGHIJKLMN", mp.body
+  end
+
+  def test_quoted_printable_body
+    msg = <<EOS
+Content-Transfer-Encoding: quoted-printable
+
+=41=42=43=44=45=46=47=48=49=4A=4B=4C=4D=4E=
+EOS
+    mp = MailParser::Message.new msg
+    assert_equal "ABCDEFGHIJKLMN", mp.body
+  end
+
+  def test_uuencode_body
+    msg = <<EOS
+Content-Transfer-Encoding: x-uuencode
+
+begin 644 hoge
+M04)#1$5&1TA)2DM,34Y/4%%24U155E=865HP,3(S-#4V-S@Y86)C9&5F9VAI
+1:FML;6YO<'%R<W1U=G=X>7H`
+`
+end
+EOS
+    mp = MailParser::Message.new msg
+    assert_equal "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz", mp.body
+  end
+
 end
