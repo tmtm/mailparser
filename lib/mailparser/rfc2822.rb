@@ -179,7 +179,7 @@ module MailParser::RFC2822
       end
       raise ArgumentError, "invalid hour" if h > 23
       raise ArgumentError, "invalid minute" if mi > 59
-      raise ArgumentError, "invalid second" if (h == 23 && mi == 59 && s > 60) or ((h != 23 || mi != 59) && s > 59)
+      raise ArgumentError, "invalid second" if s > 60
       if zone =~ /^[+-]\d\d(\d\d)$/ then
         raise ArgumentError, "invalid zone" if $1.to_i > 59
       else

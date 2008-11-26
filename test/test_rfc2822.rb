@@ -245,7 +245,7 @@ class TC_RFC2822Parser < Test::Unit::TestCase
     assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Jan 10000 08:19:08 +0900")}
     assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Jan 2007 25:19:08 +0900")}
     assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Jan 2007 08:60:08 +0900")}
-    assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Jan 2007 08:19:60 +0900")}
+    assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Jan 2007 08:19:61 +0900")}
     assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Jan 2007 08:19:08 +0980")}
   end
 
@@ -359,6 +359,7 @@ class TC_DateTime < Test::Unit::TestCase
     assert_nothing_raised(){MailParser::RFC2822::DateTime.new(2004, 2, 29, 0, 0, 0, "+0900")}
     assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2100, 2, 29, 0, 0, 0, "+0900")}
     assert_nothing_raised(){MailParser::RFC2822::DateTime.new(2008, 1, 15, 23, 59, 60, "+0900")}
-    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2008, 1, 15, 23, 58, 60, "+0900")}
+    assert_nothing_raised(){MailParser::RFC2822::DateTime.new(2009, 1, 1, 8, 59, 60, "+0900")}
+    assert_raises(ArgumentError){MailParser::RFC2822::DateTime.new(2009, 1, 1, 8, 59, 61, "+0900")}
   end
 end
