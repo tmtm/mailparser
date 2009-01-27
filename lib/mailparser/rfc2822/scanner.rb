@@ -18,6 +18,7 @@ class MailParser::RFC2822::Scanner
     @header_type = header_type
     @comments = []
     @token = []
+    @token_idx = {}
     @ss = StringScanner.new(str)
   end
 
@@ -28,22 +29,29 @@ class MailParser::RFC2822::Scanner
       case
       when s = @ss.scan(/\s*\(/nmo)
         @token << cfws(@ss)
+        @token_idx[@token.last.object_id] = @token.size-1
       when s = @ss.scan(/\s+/nmo)
         @token << s
+        @token_idx[s.object_id] = @token.size-1
       when s = @ss.scan(/\"(\\[#{TEXT_RE}]|[#{QTEXT_RE}])*\"/no)
         @token << s
+        @token_idx[s.object_id] = @token.size-1
         yield :NO_FOLD_QUOTE, s
       when s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/nmo)
         @token << s
+        @token_idx[s.object_id] = @token.size-1
         yield :QUOTED_STRING, s
       when s = @ss.scan(/\[(\\[#{TEXT_RE}]|[#{DTEXT_RE}])*\]/no)
         @token << s
+        @token_idx[s.object_id] = @token.size-1
         yield :NO_FOLD_LITERAL, s
       when s = @ss.scan(/\[(\s*(\\[#{TEXT_RE}]|[#{DTEXT_RE}]))*\s*\]/nmo)
         @token << s
+        @token_idx[s.object_id] = @token.size-1
         yield :DOMAIN_LITERAL, s
       when s = @ss.scan(/[#{ATEXT_RE}]+/no)
         @token << s
+        @token_idx[s.object_id] = @token.size-1
         if s =~ /\A\d+\z/ then
           yield :DIGIT, s
         else
@@ -51,6 +59,7 @@ class MailParser::RFC2822::Scanner
         end
       when s = @ss.scan(/./no)
         @token << s
+        @token_idx[s.object_id] = @token.size-1
         yield s, s
       end
     end
@@ -104,8 +113,8 @@ class MailParser::RFC2822::Scanner
 
   # @token中の object_id が s_id から e_id までの間のコメント文字列の配列を得る
   def get_comment_by_id(s_id, e_id)
-    s = s_id.nil? ? 0 : @token.map{|i|i.object_id}.index(s_id)
-    e = e_id.nil? ? -1 : @token.map{|i|i.object_id}.index(e_id)
+    s = s_id ? @token_idx[s_id] : 0
+    e = e_id ? @token_idx[e_id] : -1
     return get_comment(s, e)
   end
 

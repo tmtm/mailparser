@@ -4,6 +4,7 @@
 # Copyright (C) 2006 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
+require "timeout"
 require "mailparser/rfc2822"
 
 unless ARGV.empty?
@@ -171,6 +172,12 @@ class TC_RFC2822Parser < Test::Unit::TestCase
     assert_kind_of(MailParser::RFC2822::Mailbox, a[0].mailbox_list[0])
     assert_kind_of(MailParser::RFC2822::Mailbox, a[0].mailbox_list[1])
     assert_equal("group:<a@b.c>,hoge <d@e.f>;", a[0].to_s)
+  end
+
+  def test_many_address_list()
+    Timeout.timeout 5 do
+      @p.parse(:ADDRESS_LIST, (["foo bar <hoge@example.com>"]*1000).join(","))
+    end
   end
 
   def test_msg_id()
