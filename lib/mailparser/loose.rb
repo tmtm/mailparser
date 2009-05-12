@@ -258,7 +258,7 @@ module MailParser
       def token_received()
         ret = []
         while @ss.rest? do
-          if s = @ss.scan(/\s+/nmo) then
+          if s = @ss.scan(/[\s]+/nmo) then
             # ignore blank
           elsif s = @ss.scan(/\(/nmo) then
             begin
@@ -268,7 +268,7 @@ module MailParser
               @ss.pos = pos
               ret.last << s unless ret.empty?
             end
-          elsif s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/nmo)
+          elsif s = @ss.scan(/\"([\s]*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*[\s]*\"/nmo)
             ret << s
           elsif s = @ss.scan(/;/)
             ret << s

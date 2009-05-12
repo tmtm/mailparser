@@ -362,4 +362,10 @@ class TC_Loose_Tokenizer < Test::Unit::TestCase
     assert_equal(["a","b",";","d","e"], Tokenizer.token_received("a b;d e"))
   end
 
+  def test_token_received_VT()
+    timeout(2) do
+      assert_equal(["a","b","c","d"], Tokenizer.token_received("a b\vc d"))
+    end
+  end
+
 end
