@@ -1,3 +1,6 @@
+== 0.4.20 2010-05-04 ==
+* ヘッダが8bit文字を含む場合に MailParser::Header#each が落ちることがあるバグを修正
+
 == 0.4.19 2009-05-12 ==
  * Received に \v が含まれていると無限ループになっていたバグを修正
    cf. http://redmine.ruby-lang.org/issues/show/1196

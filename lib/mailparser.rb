@@ -346,7 +346,7 @@ module MailParser
         @rawheader << line
       end
       headers.each do |h|
-        name, body = h.split(/\s*:\s*/, 2)
+        name, body = h.split(/\s*:\s*/n, 2)
         @header.add(name, body)
       end
     end
