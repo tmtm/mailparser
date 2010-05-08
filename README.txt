@@ -90,6 +90,9 @@ opt は Hash オブジェクトで次の値を指定できる。
  :keep_raw => true
    生メッセージ文字列を保持する。デフォルトは false。
 
+ :use_file => bytes
+   raw が指定したサイズを超えたら、メモリではなくファイルを使う。nil 指定時は無制限にメモリを使う。デフォルトは nil。
+
 === from ===
 
 From ヘッダのパース結果の最初のアドレスを MailParser::Mailbox オブジェクトで返す。

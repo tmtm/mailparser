@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # $Id$
 # Copyright (C) 2007 TOMITA Masahiro
 # mailto:tommy@tmtm.org
@@ -944,6 +945,18 @@ body1
 EOS
   end
 
+  def test_raw_and_use_file
+    msg = StringIO.new(<<EOS)
+From: from@example.com
+Content-Type: text/plain
+
+hogehoge
+
+fugafuga
+EOS
+    m = MailParser::Message.new msg, :keep_raw=>true, :use_file=>1
+    assert_equal msg.string, m.raw
+  end
 end
 
 class TC_DelimIO < Test::Unit::TestCase
@@ -1057,4 +1070,21 @@ EOS
     assert_equal "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz", mp.body
   end
 
+end
+
+class TC_DataBuffer < Test::Unit::TestCase
+  def test_string
+    b = MailParser::DataBuffer.new(nil)
+    assert_equal '', b.to_s
+    b << 'hogehoge'
+    b << 'fugafuga'
+    assert_equal 'hogehogefugafuga', b.to_s
+  end
+  def test_file
+    b = MailParser::DataBuffer.new(1)
+    assert_equal '', b.to_s
+    b << 'hogehoge'
+    b << 'fugafuga'
+    assert_equal 'hogehogefugafuga', b.to_s
+  end
 end

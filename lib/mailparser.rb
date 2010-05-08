@@ -15,6 +15,7 @@ require "mailparser/loose"
 require "mailparser/conv_charset"
 
 require "stringio"
+require "tempfile"
 
 # メールをパースする。
 #
@@ -177,10 +178,11 @@ module MailParser
     #  :strict::               RFC違反時に ParseError 例外を発生する
     #  :keep_raw::             生メッセージを保持する
     #  :charset_converter::    文字コード変換用 Proc
+    #  :use_file::             body, raw がこのサイズを超えたらメモリではなくファイルを使用する
     # boundary:: このパートの終わりを表す文字列の配列
     def initialize(src, opt={}, boundary=[])
       src = src.is_a?(String) ? StringIO.new(src) : src
-      @dio = DelimIO.new(src, boundary, opt[:keep_raw])
+      @dio = DelimIO.new(src, boundary, opt[:keep_raw], opt[:use_file])
       @opt = opt
       @boundary = boundary
       @from = @to = @cc = @subject = nil
@@ -317,7 +319,7 @@ module MailParser
 
     # 生メッセージを返す
     def raw
-      @dio.keep_buffer
+      @dio.keep_buffer.to_s
     end
 
     # 生ヘッダを返す
@@ -413,11 +415,12 @@ module MailParser
     # src:: IO または StringIO
     # delim:: 区切り行の配列
     # keep:: 全行保存
-    def initialize(src, delim=nil, keep=false)
+    # use_file:: keep_buffer がこのサイズを超えたらメモリではなくファイルを使用する
+    def initialize(src, delim=nil, keep=false, use_file=nil)
       @src = src
       @delim_re = delim && !delim.empty? && Regexp.new(delim.map{|d|"\\A#{Regexp.quote(d)}\\r?\\Z"}.join("|"))
       @keep = keep
-      @keep_buffer = ''
+      @keep_buffer = DataBuffer.new(use_file)
       @line_buffer = nil
       @eof = false                # delim に達したら真
       @real_eof = false
@@ -480,5 +483,31 @@ module MailParser
       @src.is_a?(DelimIO) ? @src.real_eof? : @real_eof
     end
 
+  end
+
+  # 通常はメモリにデータを保持し、それ以上はファイル(Tempfile)に保持するためのクラス
+  class DataBuffer
+    # limit:: データがこのバイト数を超えたらファイルに保持する。nil の場合は無制限。
+    def initialize(limit)
+      @limit = limit
+      @buffer = StringIO.new
+    end
+
+    # バッファに文字列を追加する
+    def <<(str)
+      @buffer << str
+      if @limit and @buffer.is_a? StringIO and @buffer.size > @limit
+        file = Tempfile.new 'mailparser_databuffer'
+        @buffer.rewind
+        file.write @buffer.read
+        @buffer = file
+      end
+    end
+
+    # バッファ内の文字列を返す
+    def to_s
+      @buffer.rewind
+      @buffer.read
+    end
   end
 end
