@@ -185,7 +185,7 @@ module MailParser
       @boundary = boundary
       @from = @to = @cc = @subject = nil
       @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
-      @rawheader = ""
+      @rawheader = ''
       @message = nil
       @body = ""
       @part = []
@@ -447,25 +447,27 @@ module MailParser
         line = @line_buffer
         @line_buffer = nil
       else
-        unless line = @src.gets
+        line = @src.gets
+        unless line  # EOF
+          @keep_buffer << @last_read_line if @keep and @last_read_line
           @eof = @real_eof = true
           return
         end
       end
       if @delim_re and @delim_re.match line
+        @keep_buffer << @last_read_line if @keep and @last_read_line
         @src.ungets
         @eof = true
         return
       end
+      @keep_buffer << @last_read_line if @keep and @last_read_line
       @last_read_line = line
-      @keep_buffer << line if @keep
       line
     end
 
     def ungets
       raise "preread line nothing" unless @last_read_line
       @eof = false
-      @keep_buffer.slice!(/^.*\n?\z/) if @keep
       @line_buffer = @last_read_line
       @last_read_line = nil
     end
