@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # $Id$
 #
@@ -184,7 +185,7 @@ module MailParser
       @boundary = boundary
       @from = @to = @cc = @subject = nil
       @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
-      @rawheader = []
+      @rawheader = ""
       @message = nil
       @body = ""
       @part = []
@@ -316,12 +317,12 @@ module MailParser
 
     # 生メッセージを返す
     def raw
-      @dio.keep_buffer.join
+      @dio.keep_buffer
     end
 
     # 生ヘッダを返す
     def rawheader
-      @rawheader.join
+      @rawheader
     end
 
     private
@@ -416,7 +417,7 @@ module MailParser
       @src = src
       @delim_re = delim && !delim.empty? && Regexp.new(delim.map{|d|"\\A#{Regexp.quote(d)}\\r?\\Z"}.join("|"))
       @keep = keep
-      @keep_buffer = []
+      @keep_buffer = ''
       @line_buffer = nil
       @eof = false                # delim に達したら真
       @real_eof = false
@@ -464,7 +465,7 @@ module MailParser
     def ungets
       raise "preread line nothing" unless @last_read_line
       @eof = false
-      @keep_buffer.pop if @keep
+      @keep_buffer.slice!(/^.*\n?\z/) if @keep
       @line_buffer = @last_read_line
       @last_read_line = nil
     end
