@@ -21,7 +21,7 @@ Ruby ライセンス http://www.ruby-lang.org/ja/LICENSE.txt と同等。
 
 == ダウンロード ==
 
- * http://tmtm.org/downloads/ruby/mailparser/
+ * http://github.com/tmtm/mailparser
 
 == インストール ==
 
