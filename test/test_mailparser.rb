@@ -428,6 +428,17 @@ EOS
     assert_equal "abcdefg", m.body
   end
 
+  def test_body_use_file
+    m = MailParser::Message.new(<<EOS, :output_charset=>"utf8", :use_file=>1)
+From: TOMITA Masahiro <tommy@tmtm.org>
+Content-Type: text/plain; charset=iso-2022-jp
+
+\e$B$3$l$OK\\J8$G$9\e(B
+EOS
+    assert_equal "これは本文です\n", m.body
+    assert_equal "\e$B$3$l$OK\\J8$G$9\e(B\n", m.body_preconv
+  end
+
   def test_filename()
     msg = StringIO.new(<<EOS)
 Content-Type: text/plain; name="filename.txt"
@@ -1075,16 +1086,16 @@ end
 class TC_DataBuffer < Test::Unit::TestCase
   def test_string
     b = MailParser::DataBuffer.new(nil)
-    assert_equal '', b.to_s
+    assert_equal '', b.str
     b << 'hogehoge'
     b << 'fugafuga'
-    assert_equal 'hogehogefugafuga', b.to_s
+    assert_equal 'hogehogefugafuga', b.str
   end
   def test_file
     b = MailParser::DataBuffer.new(1)
-    assert_equal '', b.to_s
+    assert_equal '', b.str
     b << 'hogehoge'
     b << 'fugafuga'
-    assert_equal 'hogehogefugafuga', b.to_s
+    assert_equal 'hogehogefugafuga', b.str
   end
 end

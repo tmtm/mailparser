@@ -189,7 +189,7 @@ module MailParser
       @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
       @rawheader = ''
       @message = nil
-      @body = ""
+      @body = DataBuffer.new(opt[:use_file])
       @part = []
       opt[:charset_converter] ||= Proc.new{|f,t,s| ConvCharset.conv_charset(f,t,s)}
 
@@ -198,7 +198,15 @@ module MailParser
       read_part
     end
 
-    attr_reader :header, :body, :body_preconv, :part, :message
+    attr_reader :header, :part, :message
+
+    def body
+      @body.str
+    end
+
+    def body_preconv
+      @body_preconv.str
+    end
 
     # From ヘッダがあれば Mailbox を返す。
     # なければ nil
@@ -319,7 +327,7 @@ module MailParser
 
     # 生メッセージを返す
     def raw
-      @dio.keep_buffer.to_s
+      @dio.keep_buffer.str
     end
 
     # 生ヘッダを返す
@@ -363,21 +371,27 @@ module MailParser
           return
         end
       end
+      decoder = case content_transfer_encoding
+                when "quoted-printable"
+                  RFC2045.method(:qp_decode)
+                when "base64"
+                  RFC2045.method(:b64_decode)
+                when "uuencode", "x-uuencode", "x-uue"
+                  self.method(:decode_uuencode)
+                else lambda{|s| s}
+                end
       @dio.each_line do |line|
-        @body << line
+        @body << decoder.call(line)
       end
       @body.chomp! unless @dio.real_eof?
-      case content_transfer_encoding
-      when "quoted-printable" then @body = RFC2045.qp_decode(@body)
-      when "base64" then @body = RFC2045.b64_decode(@body)
-      when "uuencode", "x-uuencode", "x-uue" then @body = decode_uuencode @body
-      end
       @body_preconv = @body
       if charset and @opt[:output_charset] then
-        @body = @opt[:charset_converter].call(charset, @opt[:output_charset], @body) rescue @body
+        new_body = DataBuffer.new(@opt[:use_file])
+        new_body << @opt[:charset_converter].call(charset, @opt[:output_charset], @body.str) rescue @body
+        @body = new_body
       end
       if @opt[:extract_message_type] and type == "message" and not @body.empty? then
-        @message = Message.new(StringIO.new(@body), @opt)
+        @message = Message.new(@body.io, @opt)
       end
     end
 
@@ -504,10 +518,31 @@ module MailParser
       end
     end
 
-    # バッファ内の文字列を返す
-    def to_s
+    # バッファ内のデータを返す
+    def str
       @buffer.rewind
       @buffer.read
+    end
+
+    # IOオブジェクト(のようなもの)を返す
+    def io
+      @buffer.rewind
+      @buffer
+    end
+
+    # 末尾が改行文字(\r\n or \n)の場合に削除する
+    def chomp!
+      @buffer.seek(-2, IO::SEEK_END)
+      case @buffer.read(2)
+      when "\r\n" then @buffer.truncate(@buffer.pos-2)
+      when /\n\z/ then @buffer.truncate(@buffer.pos-1)
+      end
+      @buffer.seek 0, IO::SEEK_END
+    end
+
+    # バッファが空かどうかを返す
+    def empty?
+      @buffer.pos == 0
     end
   end
 end
