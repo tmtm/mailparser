@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-#
-# $Id$
-#
-# Copyright (C) 2006-2007 TOMITA Masahiro
+# Copyright (C) 2006-2010 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "mailparser/error"

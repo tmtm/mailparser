@@ -1,5 +1,5 @@
 #!/usr/local/bin/ruby
-# $Id$
+# -*- coding: euc-jp -*-
 
 require "test/unit"
 require "mailparser/obsolete"

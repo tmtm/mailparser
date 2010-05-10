@@ -1,5 +1,5 @@
-# $Id$
-# Copyright (C) 2007 TOMITA Masahiro
+# -*- coding: utf-8 -*-
+# Copyright (C) 2007-2010 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "time"

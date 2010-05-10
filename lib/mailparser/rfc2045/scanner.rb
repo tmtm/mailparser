@@ -1,7 +1,4 @@
-#
-# $Id$
-#
-# Copyright (C) 2006 TOMITA Masahiro
+# Copyright (C) 2006-2010 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "mailparser/rfc2822"

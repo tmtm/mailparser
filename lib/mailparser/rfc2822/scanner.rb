@@ -1,7 +1,5 @@
-#
-# $Id$
-#
-# Copyright (C) 2006 TOMITA Masahiro
+# -*- coding: utf-8 -*-
+# Copyright (C) 2006-2010 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "strscan"
