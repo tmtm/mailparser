@@ -13,7 +13,7 @@ module MailParser
 
     class Parser < Racc::Parser
 
-module_eval <<'..end lib/mailparser/rfc2822/parser.y modeval..id5cf2490112', 'lib/mailparser/rfc2822/parser.y', 349
+module_eval <<'..end lib/mailparser/rfc2822/parser.y modeval..id191275a7dd', 'lib/mailparser/rfc2822/parser.y', 346
 
 require "mailparser/rfc2822/scanner"
 
@@ -55,7 +55,7 @@ end
 def decode2(ary)
   ary.map{|i| decode(i)}
 end
-..end lib/mailparser/rfc2822/parser.y modeval..id5cf2490112
+..end lib/mailparser/rfc2822/parser.y modeval..id191275a7dd
 
 ##### racc 1.4.5 generates ###
 
@@ -406,79 +406,79 @@ Racc_debug_parser = false
 
  # reduce 0 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 12
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 9
   def _reduce_1( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 13
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 10
   def _reduce_2( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 14
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 11
   def _reduce_3( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 15
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 12
   def _reduce_4( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 16
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 13
   def _reduce_5( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 17
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 14
   def _reduce_6( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 18
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 15
   def _reduce_7( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 19
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 16
   def _reduce_8( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 20
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 17
   def _reduce_9( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 21
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 18
   def _reduce_10( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 22
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 19
   def _reduce_11( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 23
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 20
   def _reduce_12( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 32
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 29
   def _reduce_13( val, _values)
                     unless val[0].empty? then
                       val[0].last.comments = decode2(@scanner.get_comment_by_id(@comma_list[-1], nil))
@@ -487,13 +487,13 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 32
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 37
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 34
   def _reduce_14( val, _values)
                     val[0] ? [val[0]] : []
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 44
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 41
   def _reduce_15( val, _values)
                     @comma_list << val[1].object_id
                     val[0].last.comments = decode2(@scanner.get_comment_by_id(@comma_list[-2], @comma_list[-1])) if val[0].last.kind_of? Mailbox
@@ -506,7 +506,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 44
 
  # reduce 17 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 55
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 52
   def _reduce_18( val, _values)
                     if not val[0].empty? and val[0].last.kind_of? Mailbox then
                       val[0].last.comments = decode2(@scanner.get_comment_by_id(@comma_list[-1], nil))
@@ -515,13 +515,13 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 55
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 60
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 57
   def _reduce_19( val, _values)
                     val[0] ? [val[0]] : []
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 69
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 66
   def _reduce_20( val, _values)
                     @comma_list << val[1].object_id
                     if val[0].last.kind_of? Mailbox then
@@ -542,44 +542,44 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 69
 
  # reduce 25 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 81
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 78
   def _reduce_26( val, _values)
                     Mailbox.new(val[0])
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 86
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 83
   def _reduce_27( val, _values)
                     Mailbox.new(val[0])
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 90
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 87
   def _reduce_28( val, _values)
                     Mailbox.new(val[1], val[0])
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 95
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 92
   def _reduce_29( val, _values)
                     [val[0]]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 100
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 97
   def _reduce_30( val, _values)
                     val[0] << val[1]
                     val[0]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 105
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 102
   def _reduce_31( val, _values)
                     val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 109
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 106
   def _reduce_32( val, _values)
                     val[2]
   end
@@ -595,25 +595,25 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 109
 
  # reduce 37 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 123
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 120
   def _reduce_38( val, _values)
                     Group.new(val[2], val[0])
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 128
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 125
   def _reduce_39( val, _values)
                     decode(val[0])
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 133
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 130
   def _reduce_40( val, _values)
                     [val[0]].compact
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 138
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 135
   def _reduce_41( val, _values)
                     val[0] << val[2] if val[2]
                     val[0]
@@ -622,7 +622,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 138
 
  # reduce 42 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 144
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 141
   def _reduce_43( val, _values)
                     decode(val[0])
   end
@@ -632,19 +632,19 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 144
 
  # reduce 45 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 152
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 149
   def _reduce_46( val, _values)
                     val[0].to_s
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 156
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 153
   def _reduce_47( val, _values)
                     val[0] << " #{val[1]}"
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 161
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 158
   def _reduce_48( val, _values)
                     AddrSpec.new(val[0], val[2])
   end
@@ -652,13 +652,13 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 161
 
  # reduce 49 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 167
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 164
   def _reduce_50( val, _values)
                     val.join
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 171
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 168
   def _reduce_51( val, _values)
                     val.join
   end
@@ -666,7 +666,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 171
 
  # reduce 52 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 177
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 174
   def _reduce_53( val, _values)
                     val.join
   end
@@ -686,43 +686,43 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 177
 
  # reduce 60 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 192
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 189
   def _reduce_61( val, _values)
                     val.join
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 196
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 193
   def _reduce_62( val, _values)
                     val[0] << val[1]+val[2]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 200
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 197
   def _reduce_63( val, _values)
                     val[0] << val[1]+val[2]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 205
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 202
   def _reduce_64( val, _values)
                     val.join
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 209
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 206
   def _reduce_65( val, _values)
                     val.join
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 214
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 211
   def _reduce_66( val, _values)
                     val.join
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 218
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 215
   def _reduce_67( val, _values)
                     val.join
   end
@@ -732,25 +732,25 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 218
 
  # reduce 69 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 226
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 223
   def _reduce_70( val, _values)
                     MsgIdList.new(val[0])
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 230
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 227
   def _reduce_71( val, _values)
                     val[0] << val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 235
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 232
   def _reduce_72( val, _values)
                     MsgId.new(val[1,3].join)
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 240
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 237
   def _reduce_73( val, _values)
                     MsgIdList.new()
   end
@@ -758,7 +758,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 240
 
  # reduce 74 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 245
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 242
   def _reduce_75( val, _values)
                     val[0] << val[1]
   end
@@ -768,7 +768,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 245
 
  # reduce 77 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 258
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 255
   def _reduce_78( val, _values)
                     nil
   end
@@ -776,26 +776,26 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 258
 
  # reduce 79 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 265
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 262
   def _reduce_80( val, _values)
                     Received.new(val[0], val[2])
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 270
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 267
   def _reduce_81( val, _values)
                     {}
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 275
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 272
   def _reduce_82( val, _values)
                     val[0][val[1][0]] = val[1][1]
                     val[0]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 283
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 280
   def _reduce_83( val, _values)
                     unless val[0] =~ /\A[a-zA-Z0-9](-?[a-zA-Z0-9])*\z/ then
                       raise MailParser::ParseError, val[0]+@scanner.rest
@@ -810,7 +810,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 283
 
  # reduce 86 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 303
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 300
   def _reduce_87( val, _values)
                     year, month, day, time, zone = val.values_at(3,2,1,4,5)
                     raise MailParser::ParseError, "invalid year: #{year}" unless year =~ /\A\d\d\d\d\Z/
@@ -827,7 +827,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 303
 
  # reduce 88 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 311
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 308
   def _reduce_89( val, _values)
                     unless ['mon','tue','wed','thu','fri','sat','sun'].include? val[0].downcase then
                       raise MailParser::ParseError, "invalid day of the week: #{val[0]}"
@@ -835,7 +835,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 311
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 322
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 319
   def _reduce_90( val, _values)
                     if val[0] !~ /\A\d\d\Z/ or val[0].to_i > 23 then
                       raise MailParser::ParseError, "invalid hour: #{val[0]}"
@@ -847,7 +847,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 322
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 335
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 332
   def _reduce_91( val, _values)
                     if val[0] !~ /\A\d\d\Z/ or val[0].to_i > 23 then
                       raise MailParser::ParseError, "invalid hour: #{val[0]}"
@@ -862,7 +862,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 335
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 344
+module_eval <<'.,.,', 'lib/mailparser/rfc2822/parser.y', 341
   def _reduce_92( val, _values)
                     if val[0] =~ /\A[+-]\d\d\d\d\Z/ then
                       val[0]

@@ -13,7 +13,7 @@ module MailParser
 
     class Parser < Racc::Parser
 
-module_eval <<'..end lib/mailparser/rfc2183/parser.y modeval..idef07097977', 'lib/mailparser/rfc2183/parser.y', 45
+module_eval <<'..end lib/mailparser/rfc2183/parser.y modeval..id5c1f7a7c89', 'lib/mailparser/rfc2183/parser.y', 42
 
 require "mailparser/rfc2183/scanner"
 
@@ -39,7 +39,7 @@ def on_error(t, val, vstack)
 #  p racc_token2str(t)
   raise MailParser::ParseError, val+@scanner.rest
 end
-..end lib/mailparser/rfc2183/parser.y modeval..idef07097977
+..end lib/mailparser/rfc2183/parser.y modeval..id5c1f7a7c89
 
 ##### racc 1.4.5 generates ###
 
@@ -137,13 +137,13 @@ Racc_debug_parser = false
 
  # reduce 0 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2183/parser.y', 12
+module_eval <<'.,.,', 'lib/mailparser/rfc2183/parser.y', 9
   def _reduce_1( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2183/parser.y', 18
+module_eval <<'.,.,', 'lib/mailparser/rfc2183/parser.y', 15
   def _reduce_2( val, _values)
                     ContentDisposition.new(val[0], val[1])
   end
@@ -151,13 +151,13 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2183/parser.y', 18
 
  # reduce 3 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2183/parser.y', 25
+module_eval <<'.,.,', 'lib/mailparser/rfc2183/parser.y', 22
   def _reduce_4( val, _values)
                     {}
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2183/parser.y', 32
+module_eval <<'.,.,', 'lib/mailparser/rfc2183/parser.y', 29
   def _reduce_5( val, _values)
                     pn, pv = val[2]
                     pv = $1 if pv =~ /\A\"(.*)\"\Z/m
@@ -166,7 +166,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2183/parser.y', 32
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2183/parser.y', 37
+module_eval <<'.,.,', 'lib/mailparser/rfc2183/parser.y', 34
   def _reduce_6( val, _values)
                     [val[0].downcase, val[2]]
   end

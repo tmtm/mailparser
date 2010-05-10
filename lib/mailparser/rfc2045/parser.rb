@@ -13,7 +13,7 @@ module MailParser
 
     class Parser < Racc::Parser
 
-module_eval <<'..end lib/mailparser/rfc2045/parser.y modeval..id7726e3f21d', 'lib/mailparser/rfc2045/parser.y', 65
+module_eval <<'..end lib/mailparser/rfc2045/parser.y modeval..idcdf01fc9ea', 'lib/mailparser/rfc2045/parser.y', 62
 
 require "mailparser/rfc2045/scanner"
 
@@ -39,7 +39,7 @@ def on_error(t, val, vstack)
 #  p racc_token2str(t)
   raise MailParser::ParseError, val+@scanner.rest
 end
-..end lib/mailparser/rfc2045/parser.y modeval..id7726e3f21d
+..end lib/mailparser/rfc2045/parser.y modeval..idcdf01fc9ea
 
 ##### racc 1.4.5 generates ###
 
@@ -165,37 +165,37 @@ Racc_debug_parser = false
 
  # reduce 0 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 12
+module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 9
   def _reduce_1( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 14
+module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 11
   def _reduce_2( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 16
+module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 13
   def _reduce_3( val, _values)
 val[1]
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 22
+module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 19
   def _reduce_4( val, _values)
                     ContentType.new(val[0], val[2], val[3])
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 27
+module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 24
   def _reduce_5( val, _values)
                     ContentTransferEncoding.new(val[0])
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 34
+module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 31
   def _reduce_6( val, _values)
                     val.join
   end
@@ -207,13 +207,13 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 34
 
  # reduce 9 omitted
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 45
+module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 42
   def _reduce_10( val, _values)
                     {}
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 52
+module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 49
   def _reduce_11( val, _values)
                     pn, pv = val[2]
                     pv = $1 if pv =~ /\A\"(.*)\"\Z/m
@@ -222,7 +222,7 @@ module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 52
   end
 .,.,
 
-module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 57
+module_eval <<'.,.,', 'lib/mailparser/rfc2045/parser.y', 54
   def _reduce_12( val, _values)
                     [val[0].downcase, val[2]]
   end
