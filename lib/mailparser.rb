@@ -384,8 +384,19 @@ module MailParser
       @body_preconv = @body
       if charset and @opt[:output_charset] then
         new_body = DataBuffer.new(@opt[:use_file])
-        new_body << @opt[:charset_converter].call(charset, @opt[:output_charset], @body.str) rescue @body
-        @body = new_body
+        begin
+          if @opt[:use_file] and @body.size > @opt[:use_file]
+            newline = @opt[:charset_converter].call(@opt[:output_charset], charset, "\n")
+            @body.io.each_line(newline) do |line|
+              new_body << @opt[:charset_converter].call(charset, @opt[:output_charset], line)
+            end
+          else
+            new_body << @opt[:charset_converter].call(charset, @opt[:output_charset], @body.str)
+          end
+          @body = new_body
+        rescue
+          # ignore
+        end
       end
       if @opt[:extract_message_type] and type == "message" and not @body.empty? then
         @message = Message.new(@body.io, @opt)
@@ -509,8 +520,7 @@ module MailParser
       @buffer << str
       if @limit and @buffer.is_a? StringIO and @buffer.size > @limit
         file = Tempfile.new 'mailparser_databuffer'
-        @buffer.rewind
-        file.write @buffer.read
+        file.write @buffer.string
         @buffer = file
       end
     end
@@ -525,6 +535,11 @@ module MailParser
     def io
       @buffer.rewind
       @buffer
+    end
+
+    # データの大きさを返す
+    def size
+      @buffer.pos
     end
 
     # 末尾が改行文字(\r\n or \n)の場合に削除する
