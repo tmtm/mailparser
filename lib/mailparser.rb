@@ -527,8 +527,12 @@ module MailParser
 
     # バッファ内のデータを返す
     def str
-      @buffer.rewind
-      @buffer.read
+      if @buffer.is_a? StringIO
+        @buffer.string
+      else
+        @buffer.rewind
+        @buffer.read
+      end
     end
 
     # IOオブジェクト(のようなもの)を返す
