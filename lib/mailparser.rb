@@ -520,6 +520,7 @@ module MailParser
       @buffer << str
       if @limit and @buffer.is_a? StringIO and @buffer.size > @limit
         file = Tempfile.new 'mailparser_databuffer'
+        file.unlink rescue nil
         file.write @buffer.string
         @buffer = file
       end
