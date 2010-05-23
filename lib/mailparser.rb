@@ -186,7 +186,7 @@ module MailParser
       @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
       @rawheader = ''
       @message = nil
-      @body = DataBuffer.new(opt[:use_file])
+      @body = @body_preconv = DataBuffer.new(opt[:use_file])
       @part = []
       opt[:charset_converter] ||= Proc.new{|f,t,s| ConvCharset.conv_charset(f,t,s)}
 
