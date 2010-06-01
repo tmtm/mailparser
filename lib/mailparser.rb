@@ -174,7 +174,7 @@ module MailParser
     #  :output_charset::       デコード出力文字コード(デフォルト: 変換しない)
     #  :strict::               RFC違反時に ParseError 例外を発生する
     #  :keep_raw::             生メッセージを保持する
-    #  :charset_converter::    文字コード変換用 Proc
+    #  :charset_converter::    文字コード変換用 Proc または Method
     #  :use_file::             body, raw がこのサイズを超えたらメモリではなくファイルを使用する
     # boundary:: このパートの終わりを表す文字列の配列
     def initialize(src, opt={}, boundary=[])
@@ -188,7 +188,7 @@ module MailParser
       @message = nil
       @body = @body_preconv = DataBuffer.new(opt[:use_file])
       @part = []
-      opt[:charset_converter] ||= Proc.new{|f,t,s| ConvCharset.conv_charset(f,t,s)}
+      opt[:charset_converter] ||= ConvCharset.method(:conv_charset)
 
       read_header
       read_body
@@ -382,7 +382,7 @@ module MailParser
       end
       @body.chomp! unless @dio.real_eof?
       @body_preconv = @body
-      if charset and @opt[:output_charset] then
+      if type == 'text' and charset and @opt[:output_charset] then
         new_body = DataBuffer.new(@opt[:use_file])
         begin
           if @opt[:use_file] and @body.size > @opt[:use_file]

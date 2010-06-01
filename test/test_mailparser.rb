@@ -395,6 +395,17 @@ EOS
     assert_equal("あいうえお\n", m.body)
   end
 
+  def test_body_with_charset_but_not_text_type()
+    msg = StringIO.new(<<EOS)
+From: TOMITA Masahiro <tommy@tmtm.org>
+Content-Type: application/octet-stream; charset=iso-2022-jp
+
+\e\$B\$\"\$\$\$\&\$\(\$\*\e(B
+EOS
+    m = MailParser::Message.new(msg, :output_charset=>"utf8")
+    assert_equal("\e\$B\$\"\$\$\$\&\$\(\$\*\e(B\n", m.body)
+  end
+
   def test_body_no_charset()
     msg = StringIO.new(<<EOS)
 From: TOMITA Masahiro <tommy@tmtm.org>
