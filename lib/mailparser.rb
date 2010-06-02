@@ -375,7 +375,8 @@ module MailParser
                   RFC2045.method(:b64_decode)
                 when "uuencode", "x-uuencode", "x-uue"
                   self.method(:decode_uuencode)
-                else lambda{|s| s}
+                else
+                  self.method(:decode_plain)
                 end
       @dio.each_line do |line|
         @body << decoder.call(line)
@@ -428,6 +429,11 @@ module MailParser
         ret.concat line.unpack("u").first
       end
       ret
+    end
+
+    # str をそのまま返す
+    def decode_plain(str)
+      str
     end
 
   end
@@ -517,13 +523,13 @@ module MailParser
 
     # バッファに文字列を追加する
     def <<(str)
-      @buffer << str
-      if @limit and @buffer.is_a? StringIO and @buffer.size > @limit
+      if @limit and @buffer.is_a? StringIO and @buffer.size+str.size > @limit
         file = Tempfile.new 'mailparser_databuffer'
         file.unlink rescue nil
         file.write @buffer.string
         @buffer = file
       end
+      @buffer << str
     end
 
     # バッファ内のデータを返す
