@@ -824,6 +824,25 @@ EOS
     assert_equal "hoge\n", m.part[1].body
   end
 
+  def test_parse_last_crlf
+    msg = StringIO.new <<EOS
+Content-Type: multipart/mixed; boundary=abcdefg
+
+--abcdefg
+Content-Type: multipart/mixed; boundary=xyz
+--abcdefg
+Content-Type: text/plain
+Content-Transfer-Encoding: base64
+
+aG9nZQo=
+--abcdefg--
+EOS
+    m = MailParser::Message.new msg
+    assert_equal 2, m.part.size
+    assert_equal "", m.part[0].body
+    assert_equal "hoge\n", m.part[1].body
+  end
+
   def test_raw_single_part
     msg = StringIO.new(<<EOS)
 From: from@example.com

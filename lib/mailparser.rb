@@ -368,20 +368,17 @@ module MailParser
           return
         end
       end
-      decoder = case content_transfer_encoding
-                when "quoted-printable"
-                  RFC2045.method(:qp_decode)
-                when "base64"
-                  RFC2045.method(:b64_decode)
-                when "uuencode", "x-uuencode", "x-uue"
-                  self.method(:decode_uuencode)
-                else
-                  self.method(:decode_plain)
-                end
+      body = ''
       @dio.each_line do |line|
-        @body << decoder.call(line)
+        body << line
       end
-      @body.chomp! unless @dio.real_eof?
+      body.chomp! unless @dio.real_eof?
+      case content_transfer_encoding
+      when "quoted-printable" then @body << RFC2045.qp_decode(body)
+      when "base64" then @body << RFC2045.b64_decode(body)
+      when "uuencode", "x-uuencode", "x-uue" then @body << decode_uuencode(body)
+      else @body << body
+      end
       @body_preconv = @body
       if type == 'text' and charset and @opt[:output_charset] then
         new_body = DataBuffer.new(@opt[:use_file])
@@ -551,16 +548,6 @@ module MailParser
     # データの大きさを返す
     def size
       @buffer.pos
-    end
-
-    # 末尾が改行文字(\r\n or \n)の場合に削除する
-    def chomp!
-      @buffer.seek(-2, IO::SEEK_END)
-      case @buffer.read(2)
-      when "\r\n" then @buffer.truncate(@buffer.pos-2)
-      when /\n\z/ then @buffer.truncate(@buffer.pos-1)
-      end
-      @buffer.seek 0, IO::SEEK_END
     end
 
     # バッファが空かどうかを返す
