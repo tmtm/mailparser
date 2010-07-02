@@ -239,6 +239,10 @@ EOS
 m.body  # => "これは本文です。\n"
 }}}
 
+=== body_io ===
+
+body と同じだが、IO オブジェクト(厳密は StringIO か Tempfile) で返す。
+
 === body_preconv ===
 
 本文の charset変換前文字列を返す。
@@ -252,6 +256,10 @@ EOS
 m.body           # => "これは本文です\n"
 m.body_preconv   # => "\e$B$3$l$OK\\J8$G$9\e(B\n"
 }}}
+
+=== body_preconv_io ===
+
+body_preconv と同じだが、IO オブジェクト(厳密は StringIO か Tempfile) で返す。
 
 === part ===
 
