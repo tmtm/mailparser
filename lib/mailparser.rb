@@ -201,8 +201,16 @@ module MailParser
       @body.str
     end
 
+    def body_io
+      @body.io
+    end
+
     def body_preconv
       @body_preconv.str
+    end
+
+    def body_preconv_io
+      @body_preconv.io
     end
 
     # From ヘッダがあれば Mailbox を返す。
