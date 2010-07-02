@@ -376,16 +376,23 @@ module MailParser
           return
         end
       end
-      body = ''
-      @dio.each_line do |line|
-        body << line
+      buff = DataBuffer.new(@opt[:use_file])
+      @dio.each_slice(100) do |lines|
+        buff << lines.join
       end
-      body.chomp! unless @dio.real_eof?
-      case content_transfer_encoding
-      when "quoted-printable" then @body << RFC2045.qp_decode(body)
-      when "base64" then @body << RFC2045.b64_decode(body)
-      when "uuencode", "x-uuencode", "x-uue" then @body << decode_uuencode(body)
-      else @body << body
+      buff.chomp! unless @dio.real_eof?
+      decoder = case content_transfer_encoding
+                when "quoted-printable"
+                  RFC2045.method(:qp_decode)
+                when "base64"
+                  RFC2045.method(:b64_decode)
+                when "uuencode", "x-uuencode", "x-uue"
+                  self.method(:decode_uuencode)
+                else
+                  self.method(:decode_plain)
+                end
+      buff.io.each_slice(100) do |lines|
+        @body << decoder.call(lines.join)
       end
       @body_preconv = @body
       if type == 'text' and charset and @opt[:output_charset] then
@@ -445,6 +452,8 @@ module MailParser
 
   # 特定の行を EOF とみなして gets が動く IO モドキ
   class DelimIO
+    include Enumerable
+
     # src:: IO または StringIO
     # delim:: 区切り行の配列
     # keep:: 全行保存
@@ -556,6 +565,16 @@ module MailParser
     # データの大きさを返す
     def size
       @buffer.pos
+    end
+
+    # 末尾が改行文字(\r\n or \n)の場合に削除する
+    def chomp!
+      @buffer.seek(-2, IO::SEEK_END)
+      case @buffer.read(2)
+      when "\r\n" then @buffer.truncate(@buffer.pos-2)
+      when /\n\z/ then @buffer.truncate(@buffer.pos-1)
+      end
+      @buffer.seek 0, IO::SEEK_END
     end
 
     # バッファが空かどうかを返す
