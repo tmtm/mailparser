@@ -394,6 +394,7 @@ module MailParser
       buff.io.each_slice(100) do |lines|
         @body << decoder.call(lines.join)
       end
+      buff.io.close
       @body_preconv = @body
       if type == 'text' and charset and @opt[:output_charset] then
         new_body = DataBuffer.new(@opt[:use_file])
