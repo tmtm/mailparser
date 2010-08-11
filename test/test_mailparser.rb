@@ -449,6 +449,18 @@ EOS
     assert_equal "\e$B$3$l$OK\\J8$G$9\e(B\n", m.body_preconv
   end
 
+  def test_duplicate_close
+    m = MailParser::Message.new("aa", :use_file=>1)
+    m.close
+    assert_nothing_raised{m.close}
+  end
+
+  def test_body_after_close
+    m = MailParser::Message.new("aa", :use_file=>1)
+    m.close
+    assert_raise(IOError, "closed stream"){m.body}
+  end
+
   def test_body_io
     m = MailParser::Message.new(<<EOS, :output_charset=>"utf-8")
 Subject: test

@@ -197,6 +197,13 @@ module MailParser
 
     attr_reader :header, :part, :message
 
+    # 内部で作成された DataBuffer#io を close する。
+    def close
+      @body.io.close rescue nil
+      @body_preconv.io.close rescue nil
+      @dio.keep_buffer.io.close rescue nil
+    end
+
     def body
       @body.str
     end
