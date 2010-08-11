@@ -854,6 +854,27 @@ EOS
     assert_equal "hoge\n", m.part[1].body
   end
 
+  def test_parse_empty_attachment
+    msg = StringIO.new <<EOS
+Content-Type: multipart/mixed; boundary=abcdefg
+
+--abcdefg
+Content-Type: text/plin
+Content-Transfer-Encoding: 7bit
+
+body
+--abcdefg
+Content-Type: text/plain
+Content-Transfer-Encoding: base64
+
+--abcdefg--
+EOS
+    m = MailParser::Message.new msg
+    assert_equal 2, m.part.size
+    assert_equal 'body', m.part[0].body
+    assert_equal '', m.part[1].body
+  end
+
   def test_raw_single_part
     msg = StringIO.new(<<EOS)
 From: from@example.com

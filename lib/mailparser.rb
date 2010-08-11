@@ -570,7 +570,8 @@ module MailParser
 
     # 末尾が改行文字(\r\n or \n)の場合に削除する
     def chomp!
-      @buffer.seek(-2, IO::SEEK_END)
+      size = [@buffer.size, 2].min
+      @buffer.seek(-size, IO::SEEK_END)
       case @buffer.read(2)
       when "\r\n" then @buffer.truncate(@buffer.pos-2)
       when /\n\z/ then @buffer.truncate(@buffer.pos-1)
