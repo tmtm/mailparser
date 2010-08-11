@@ -859,7 +859,7 @@ EOS
 Content-Type: multipart/mixed; boundary=abcdefg
 
 --abcdefg
-Content-Type: text/plin
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 
 body
