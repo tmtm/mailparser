@@ -325,7 +325,7 @@ Subject: subject
 
 body message
 EOS
-m.rawheader  # => "From: TOMITA Masahiro <tommy@tmtm.org>\nTo: foo@example.com\nSubject: subject\n"
+m.raw  # => "From: TOMITA Masahiro <tommy@tmtm.org>\nTo: foo@example.com\nSubject: subject\n\nbody message\n"
 }}}
 
 == MailParser::Header ==
