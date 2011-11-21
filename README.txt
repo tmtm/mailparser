@@ -87,9 +87,6 @@ opt は Hash オブジェクトで次の値を指定できる。
  :strict => true
    RFC違反時に ParseError 例外を発生する。デフォルトは false。
 
- :keep_raw => true
-   生メッセージ文字列を保持する。デフォルトは false。
-
  :use_file => bytes
    raw が指定したサイズを超えたら、メモリではなくファイルを使う。nil 指定時は無制限にメモリを使う。デフォルトは nil。
 
@@ -307,10 +304,9 @@ m.rawheader  # => "From: TOMITA Masahiro <tommy@tmtm.org>\nTo: foo@example.com\n
 
 === raw ===
 
-生メッセージ文字列を返す。:keep_raw=>true である必要がある。
-:keep_raw=>false の場合は空文字列が返る。
+生メッセージ文字列を返す。
 {{{
-m = MailParser::Message.new(StringIO.new(<<EOS), :keep_raw=>true)
+m = MailParser::Message.new(StringIO.new(<<EOS))
 From: TOMITA Masahiro <tommy@tmtm.org>
 To: foo@example.com
 Subject: subject

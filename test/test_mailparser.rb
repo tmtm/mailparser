@@ -568,6 +568,35 @@ EOS
     assert_equal("aaaa bbb", m.filename)
   end
 
+  def test_multipart()
+    msg = StringIO.new(<<EOS)
+From: from1@example.com
+Content-Type: multipart/mixed; boundary="xxxx"
+
+preamble
+--xxxx
+Content-Type: text/plain
+
+body1
+
+--xxxx
+Content-Type: application/octet-stream
+
+body2
+--xxxx--
+epilogue
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("<from1@example.com>", m.from.to_s)
+    assert_equal(2, m.part.size)
+    assert_equal("text", m.part[0].type)
+    assert_equal("plain", m.part[0].subtype)
+    assert_equal("body1\n", m.part[0].body)
+    assert_equal("application", m.part[1].type)
+    assert_equal("octet-stream", m.part[1].subtype)
+    assert_equal("body2", m.part[1].body)
+  end
+
   def test_extract_message_type()
     msg = StringIO.new(<<EOS)
 From: from1@example.com
@@ -783,7 +812,7 @@ hogehoge
 EOS
     m = MailParser::Message.new msg
     assert_equal "hoge", m.subject
-    assert_equal "hogehoge\n", m.body
+    assert_equal "", m.body
   end
 
   def test_parse_header_only_part()
@@ -843,6 +872,39 @@ EOS
     assert_equal "hoge\n", m.part[1].body
   end
 
+  def test_parse_invalid_format_header
+    msg = StringIO.new <<EOS
+From: hoge@example.com
+invalid-header
+Subject: hoge
+
+body
+EOS
+    m = MailParser::Message.new msg
+    assert_equal 'hoge', m.subject
+    assert_equal "body\n", m.body
+  end
+
+  def test_parse_invalid_format_header2
+    msg = StringIO.new <<EOS.chomp
+From: hoge@example.com
+invalid-header
+EOS
+    m = MailParser::Message.new msg
+    assert_equal "From: hoge@example.com\ninvalid-header", m.rawheader
+  end
+
+  def test_rawheader
+    msg = StringIO.new(<<EOS)
+From: from@example.com\r
+Content-Type: text/plain\r
+\r
+hogehoge\r
+EOS
+    m = MailParser::Message.new msg
+    assert_equal "From: from@example.com\r\nContent-Type: text/plain\r\n", m.rawheader
+  end
+
   def test_raw_single_part
     msg = StringIO.new(<<EOS)
 From: from@example.com
@@ -852,7 +914,7 @@ hogehoge
 
 fugafuga
 EOS
-    m = MailParser::Message.new msg, :keep_raw=>true
+    m = MailParser::Message.new msg
     assert_equal msg.string, m.raw
   end
 
@@ -882,15 +944,15 @@ Content-Type: text/plain
 fuga
 --xxx--
 EOS
-    m = MailParser::Message.new msg, :keep_raw=>true
+    m = MailParser::Message.new msg
     assert_equal msg.string, m.raw
-    assert_equal <<EOS, m.part[0].part[0].raw
+    assert_equal <<EOS.chomp, m.part[0].part[0].raw
 Content-Type: text/plain
 
 hoge
 hoge
 EOS
-    assert_equal <<EOS, m.part[1].raw
+    assert_equal <<EOS.chomp, m.part[1].raw
 Content-Type: text/plain
 
 fuga
@@ -916,15 +978,14 @@ Content-Type: text/plain
 body2
 --xxxx--
 EOS
-    m = MailParser::Message.new msg, :keep_raw=>true
+    m = MailParser::Message.new msg
     assert_equal msg.string, m.raw
     assert_equal <<EOS, m.part[0].raw
 Content-Type: text/plain
 
 body1
-
 EOS
-    assert_equal <<EOS, m.part[1].raw
+    assert_equal <<EOS.chomp, m.part[1].raw
 Content-Type: message/rfc822
 
 From: from2@example.com
@@ -951,15 +1012,14 @@ From: from2@example.com
 Content-Type: text/plain
 --xxxx--
 EOS
-    m = MailParser::Message.new msg, :keep_raw=>true
+    m = MailParser::Message.new msg
     assert_equal msg.string, m.raw
     assert_equal <<EOS, m.part[0].raw
 Content-Type: text/plain
 
 body1
-
 EOS
-    assert_equal <<EOS, m.part[1].raw
+    assert_equal <<EOS.chomp, m.part[1].raw
 Content-Type: message/rfc822
 
 From: from2@example.com
@@ -975,7 +1035,7 @@ Subject: hogehoge
 
 body1
 EOS
-    m = MailParser::Message.new msg, :keep_raw=>true
+    m = MailParser::Message.new msg
     assert_equal <<EOS, m.raw
 From: from1@example.com
 Subject: hogehoge
@@ -994,86 +1054,8 @@ hogehoge
 
 fugafuga
 EOS
-    m = MailParser::Message.new msg, :keep_raw=>true, :use_file=>1
+    m = MailParser::Message.new msg, :use_file=>1
     assert_equal msg.string, m.raw
-  end
-end
-
-class TC_DelimIO < Test::Unit::TestCase
-  include MailParser
-  def setup()
-  end
-  def teardown()
-  end
-
-  def test_gets
-    s = StringIO.new <<EOS
-aaaa
-bbbb
-cccc
-dddd
-EOS
-    dio = DelimIO.new(DelimIO.new(s), ["cccc"])
-    assert_equal "aaaa\n", dio.gets
-    assert_equal "bbbb\n", dio.gets
-    assert_equal nil, dio.gets
-    assert_equal true, dio.eof?
-    dio.ungets
-    assert_equal false, dio.eof?
-    assert_equal "bbbb\n", dio.gets
-    assert_equal nil, dio.gets
-    assert_equal true, dio.eof?
-  end
-
-  def test_each_line
-    s = StringIO.new <<EOS
-aaaa
-bbbb
-cccc
-dddd
-EOS
-    dio = DelimIO.new(DelimIO.new(s))
-    ret = []
-    dio.each_line do |line|
-      ret << line
-    end
-    assert_equal ["aaaa\n","bbbb\n","cccc\n","dddd\n"], ret
-    assert_equal true, dio.eof?
-  end
-
-  def test_each_line_delim
-    s = StringIO.new <<EOS
-aaaa
-bbbb
-cccc
-dddd
-EOS
-    dio = DelimIO.new(DelimIO.new(s), ["cccc"])
-    ret = []
-    dio.each_line do |line|
-      ret << line
-    end
-    assert_equal ["aaaa\n","bbbb\n"], ret
-    assert_equal true, dio.eof?
-  end
-
-  def test_ungets
-    s = StringIO.new <<EOS
-aaaa
-bbbb
-cccc
-dddd
-EOS
-    dio = DelimIO.new(DelimIO.new(s), ["cccc"])
-    ret = []
-    dio.each_line do |line|
-      ret << line
-    end
-    assert_equal ["aaaa\n","bbbb\n"], ret
-    assert_equal true, dio.eof?
-    dio.ungets
-    assert_equal false, dio.eof?
-    assert_equal "bbbb\n", dio.gets
   end
 
   def test_base64_body
@@ -1110,21 +1092,4 @@ EOS
     assert_equal "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz", mp.body
   end
 
-end
-
-class TC_DataBuffer < Test::Unit::TestCase
-  def test_string
-    b = MailParser::DataBuffer.new(nil)
-    assert_equal '', b.str
-    b << 'hogehoge'
-    b << 'fugafuga'
-    assert_equal 'hogehogefugafuga', b.str
-  end
-  def test_file
-    b = MailParser::DataBuffer.new(1)
-    assert_equal '', b.str
-    b << 'hogehoge'
-    b << 'fugafuga'
-    assert_equal 'hogehogefugafuga', b.str
-  end
 end

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2006-2010 TOMITA Masahiro
+# Copyright (C) 2006-2011 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "mailparser/error"
@@ -10,6 +10,7 @@ require "mailparser/rfc2231"
 require "mailparser/rfc2822"
 require "mailparser/loose"
 require "mailparser/conv_charset"
+require "mmapscanner"
 
 require "stringio"
 require "tempfile"
@@ -164,7 +165,7 @@ module MailParser
   # メール全体またはひとつのパートを表すクラス
   class Message
     # src からヘッダ部を読み込み Header オブジェクトに保持する
-    # src:: gets メソッドを持つオブジェクト(ex. IO, StringIO)
+    # src:: String / File / MmapScanner / read メソッドを持つオブジェクト
     # opt:: オプション(Hash)
     #  :skip_body::            本文をスキップする
     #  :text_body_only::       text/* type 以外の本文をスキップする
@@ -173,20 +174,34 @@ module MailParser
     #  :decode_mime_filename:: ファイル名を MIME デコードする
     #  :output_charset::       デコード出力文字コード(デフォルト: 変換しない)
     #  :strict::               RFC違反時に ParseError 例外を発生する
-    #  :keep_raw::             生メッセージを保持する
     #  :charset_converter::    文字コード変換用 Proc または Method
     #  :use_file::             body, raw がこのサイズを超えたらメモリではなくファイルを使用する
-    # boundary:: このパートの終わりを表す文字列の配列
-    def initialize(src, opt={}, boundary=[])
-      src = src.is_a?(String) ? StringIO.new(src) : src
-      @dio = DelimIO.new(src, boundary, opt[:keep_raw], opt[:use_file])
+    def initialize(src, opt={})
+      if src.is_a? String
+        @src = MmapScanner.new src
+      elsif src.is_a? File and src.stat.ftype == 'file'
+        @src = MmapScanner.new src
+      elsif src.is_a? StringIO
+        @src = MmapScanner.new src.string
+      elsif src.is_a? MmapScanner
+        @src = src
+      else
+        tmpf = Tempfile.new 'mailparser'
+        buf = ''
+        while src.read(4096, buf)
+          tmpf.write buf
+        end
+        tmpf.close
+        @src = File.open(tmpf.path){|f| MmapScanner.new f}
+        File.unlink tmpf.path
+      end
+
       @opt = opt
-      @boundary = boundary
       @from = @to = @cc = @subject = nil
       @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
-      @rawheader = ''
+      @rawheader = nil
       @message = nil
-      @body = @body_preconv = DataBuffer.new(opt[:use_file])
+      @body = @body_preconv = ''
       @part = []
       opt[:charset_converter] ||= ConvCharset.method(:conv_charset)
 
@@ -198,11 +213,11 @@ module MailParser
     attr_reader :header, :part, :message
 
     def body
-      @body.str
+      @body
     end
 
     def body_preconv
-      @body_preconv.str
+      @body_preconv
     end
 
     # From ヘッダがあれば Mailbox を返す。
@@ -324,55 +339,41 @@ module MailParser
 
     # 生メッセージを返す
     def raw
-      @dio.keep_buffer.str
+      return @src.to_s
     end
 
     # 生ヘッダを返す
     def rawheader
-      @rawheader
+      @rawheader.to_s
     end
 
     private
 
     # ヘッダ部をパースする
-    # return:: true: 継続行あり
     def read_header()
+      @rawheader = @src.scan_until(/^(?=\r?\n)|\z/)
       @header = Header.new(@opt)
-      headers = []
-      @dio.each_line do |line|
-        break if line.chomp.empty?
-        cont = line =~ /^[ \t]/
-        if (cont and headers.empty?) or (!cont and !line.include? ":") then
-          @dio.ungets
-          break
-        end
-        if line =~ /^[ \t]/ then
-          headers[-1] += line    # :keep_raw 時の行破壊を防ぐため`<<'は使わない
+      until @rawheader.eos?
+        if @rawheader.skip(/(.*?)[ \t]*:[ \t]*(.*(\r?\n[ \t].*)*(\r?\n)?)/)
+          name = @rawheader.matched(1).to_s
+          body = @rawheader.matched(2).to_s
+          @header.add(name, body)
         else
-          headers << line
+          @rawheader.skip(/.*\n/) or break
         end
-        @rawheader << line
       end
-      headers.each do |h|
-        name, body = h.split(/\s*:\s*/n, 2)
-        @header.add(name, body)
-      end
+      @src.scan(/\r?\n/)        # 空行スキップ
     end
 
     # 本文を読む
     def read_body()
-      return if type == "multipart" or @dio.eof?
+      return if type == "multipart" or @src.eos?
       unless @opt[:extract_message_type] and type == "message" then
         if @opt[:skip_body] or (@opt[:text_body_only] and type != "text")
-          @dio.each_line{}         # 本文skip
           return
         end
       end
-      body = ''
-      @dio.each_line do |line|
-        body << line
-      end
-      body.chomp! unless @dio.real_eof?
+      body = @src.rest.to_s
       case content_transfer_encoding
       when "quoted-printable" then @body << RFC2045.qp_decode(body)
       when "base64" then @body << RFC2045.b64_decode(body)
@@ -381,38 +382,31 @@ module MailParser
       end
       @body_preconv = @body
       if type == 'text' and charset and @opt[:output_charset] then
-        new_body = DataBuffer.new(@opt[:use_file])
         begin
-          if @opt[:use_file] and @body.size > @opt[:use_file]
-            newline = @opt[:charset_converter].call(@opt[:output_charset], charset, "\n")
-            @body.io.each_line(newline) do |line|
-              new_body << @opt[:charset_converter].call(charset, @opt[:output_charset], line)
-            end
-          else
-            new_body << @opt[:charset_converter].call(charset, @opt[:output_charset], @body.str)
-          end
-          @body = new_body
+          @body = @opt[:charset_converter].call(charset, @opt[:output_charset], @body)
         rescue
           # ignore
         end
       end
       if @opt[:extract_message_type] and type == "message" and not @body.empty? then
-        @message = Message.new(@body.io, @opt)
+        @message = Message.new(@body, @opt)
       end
     end
 
     # 各パートの Message オブジェクトの配列を作成
     def read_part()
-      return if type != "multipart" or @dio.eof?
+      return if type != "multipart" or @src.eos?
       b = @header["content-type"][0].params["boundary"]
-      bd = ["--#{b}--", "--#{b}"]
-      last_line = @dio.each_line(bd){}        # skip preamble
-      while last_line and last_line.chomp == bd.last
-        m = Message.new @dio, @opt, @boundary+bd
-        @part << m
-        last_line = @dio.gets                 # read boundary
+      re = /(?:\A|\r?\n)--#{Regexp.escape b}(?:|(--))(?:\r?\n|\z)/
+      @src.scan_until(re) or return  # skip preamble
+      until @src.eos?
+        unless p = @src.scan_until(re)
+          @part.push Message.new(@src.rest, @opt)
+          break
+        end
+        @part.push Message.new(p.peek(p.size-@src.matched.length), @opt)
+        break if @src.matched(1)
       end
-      @dio.each_line{}                        # skip epilogue
     end
 
     # uuencode のデコード
@@ -433,126 +427,5 @@ module MailParser
       str
     end
 
-  end
-
-  # 特定の行を EOF とみなして gets が動く IO モドキ
-  class DelimIO
-    # src:: IO または StringIO
-    # delim:: 区切り行の配列
-    # keep:: 全行保存
-    # use_file:: keep_buffer がこのサイズを超えたらメモリではなくファイルを使用する
-    def initialize(src, delim=nil, keep=false, use_file=nil)
-      @src = src
-      @delim_re = delim && !delim.empty? && Regexp.new(delim.map{|d|"\\A#{Regexp.quote(d)}\\r?\\Z"}.join("|"))
-      @keep = keep
-      @keep_buffer = DataBuffer.new(use_file)
-      @line_buffer = nil
-      @eof = false                # delim に達したら真
-      @real_eof = false
-      @last_read_line = nil
-    end
-
-    attr_reader :keep_buffer
-
-    # 行毎にブロックを繰り返す。
-    # delim に一致した場合は中断
-    # delim:: 区切り文字列の配列
-    # return:: delimに一致した行 or nil(EOFに達した)
-    def each_line(delim=nil)
-      return if @eof
-      while line = gets
-        return line if delim and delim.include? line.chomp
-        yield line
-      end
-      nil
-    end
-    alias each each_line
-
-    # 1行読み込む。@delim_re に一致する行で EOF
-    def gets
-      return if @eof
-      if @line_buffer
-        line = @line_buffer
-        @line_buffer = nil
-      else
-        line = @src.gets
-        unless line  # EOF
-          @keep_buffer << @last_read_line if @keep and @last_read_line
-          @eof = @real_eof = true
-          return
-        end
-      end
-      if @delim_re and @delim_re.match line
-        @keep_buffer << @last_read_line if @keep and @last_read_line
-        @src.ungets
-        @eof = true
-        return
-      end
-      @keep_buffer << @last_read_line if @keep and @last_read_line
-      @last_read_line = line
-      line
-    end
-
-    def ungets
-      raise "preread line nothing" unless @last_read_line
-      @eof = false
-      @line_buffer = @last_read_line
-      @last_read_line = nil
-    end
-
-    def eof?
-      @eof
-    end
-
-    def real_eof?
-      @src.is_a?(DelimIO) ? @src.real_eof? : @real_eof
-    end
-
-  end
-
-  # 通常はメモリにデータを保持し、それ以上はファイル(Tempfile)に保持するためのクラス
-  class DataBuffer
-    # limit:: データがこのバイト数を超えたらファイルに保持する。nil の場合は無制限。
-    def initialize(limit)
-      @limit = limit
-      @buffer = StringIO.new
-    end
-
-    # バッファに文字列を追加する
-    def <<(str)
-      if @limit and @buffer.is_a? StringIO and @buffer.size+str.size > @limit
-        file = Tempfile.new 'mailparser_databuffer'
-        file.unlink rescue nil
-        file.write @buffer.string
-        @buffer = file
-      end
-      @buffer << str
-    end
-
-    # バッファ内のデータを返す
-    def str
-      if @buffer.is_a? StringIO
-        @buffer.string
-      else
-        @buffer.rewind
-        @buffer.read
-      end
-    end
-
-    # IOオブジェクト(のようなもの)を返す
-    def io
-      @buffer.rewind
-      @buffer
-    end
-
-    # データの大きさを返す
-    def size
-      @buffer.pos
-    end
-
-    # バッファが空かどうかを返す
-    def empty?
-      @buffer.pos == 0
-    end
   end
 end
