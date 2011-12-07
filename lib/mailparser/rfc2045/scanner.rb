@@ -24,11 +24,11 @@ class MailParser::RFC2045::Scanner < MailParser::RFC2822::Scanner
       when s = @ss.scan(/\s+/nmo)
         next
       when s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/nmo)
-        yield :QUOTED_STRING, s
+        yield [:QUOTED_STRING, s]
       when s = @ss.scan(/[#{TOKEN_RE}]+/no)
-        yield :TOKEN, s
+        yield [:TOKEN, s]
       when s = @ss.scan(/./no)
-        yield s, s
+        yield [s, s]
       end
     end
     yield nil
@@ -43,9 +43,9 @@ class MailParser::RFC2045::Scanner < MailParser::RFC2822::Scanner
       when s = @ss.scan(/\s+/nmo)
         next
       when s = @ss.scan(/\d+/no)
-        yield :DIGIT, s
+        yield [:DIGIT, s]
       when s = @ss.scan(/./no)
-        yield s, s
+        yield [s, s]
       end
     end
     yield nil

@@ -103,7 +103,8 @@ module MailParser
   end
 
   def mime_header_decode(str)
-    return str.gsub(/\s+/no, " ").gsub(/\?=\s+=\?/no, "?==?").gsub(/=\?[a-z0-9_-]+\?(Q|B)\?[^?]+\?=/nio){mdecode_token $&}
+    ret = str.gsub(/\s+/no, " ").gsub(/\?=\s+=\?/no, "?==?").gsub(/=\?[a-z0-9_-]+\?(Q|B)\?[^?]+\?=/nio){mdecode_token $&}
+    @@output_charset ? ret.force_encoding(@@output_charset) : ret
   end
 
   def trunc_comment(v)
@@ -198,11 +199,11 @@ module MailParser
           else
             hash[:parameter][pn.downcase] = pv
           end
-        elsif params =~ /\A\s*;\s*([a-z0-9_-]+)\*\s*=\s*([a-z0-9_-]+)?\'(?:[a-z0-9_-]+)?\'(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
+        elsif params =~ /\A\s*;\s*([a-z0-9_-]+)\*\s*=\s*([a-z0-9_-]*)\'(?:[a-z0-9_-]*)\'(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
           pn, charset, pv = $1, $2, $3||$4
           params = $'
           pending[pn] = [[0, pv, charset, true]]
-        elsif params =~ /\A\s*;\s*([a-z0-9_-]+)\*0\*\s*=\s*([a-z0-9_-]+)?\'(?:[a-z0-9_-]+)?\'(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
+        elsif params =~ /\A\s*;\s*([a-z0-9_-]+)\*0\*\s*=\s*([a-z0-9_-]*)\'(?:[a-z0-9_-]*)\'(?:\"((?:\\\"|[^\"])*)\"|([^\s\(\)\<\>\@\,\;\:\\\"\/\[\]\?\=]*))\s*/nio then
           pn, charset, pv = $1, $2, $3||$4
           params = $'
           pending[pn] = [[0, pv, charset, true]]
@@ -398,6 +399,6 @@ EOS
     if fc == nil then return body end
     tc = @@output_charset && MailParser::Charsets[@@output_charset.downcase]
     if fc == "N" or tc.nil? or fc == tc then return body end
-    MailParser.send(MailParser::ConvertMethods[fc+tc], body)
+    MailParser.send(MailParser::ConvertMethods[fc+tc], body).force_encoding(@@output_charset)
   end
 end

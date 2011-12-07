@@ -15,11 +15,11 @@ class TC_RFC2047 < Test::Unit::TestCase
   end
 
   def test_q_decode_utf8()
-    assert_equal("とみた", MailParser::RFC2047.q_decode("=E3=81=A8=E3=81=BF=E3=81=9F"))
+    assert_equal("とみた".force_encoding('binary'), MailParser::RFC2047.q_decode("=E3=81=A8=E3=81=BF=E3=81=9F"))
   end
 
   def test_q_decode_utf8_ascii()
-    assert_equal("とaみbた", MailParser::RFC2047.q_decode("=E3=81=A8a=E3=81=BFb=E3=81=9F"))
+    assert_equal("とaみbた".force_encoding('binary'), MailParser::RFC2047.q_decode("=E3=81=A8a=E3=81=BFb=E3=81=9F"))
   end
 
   def test_q_decode_end_equal()
@@ -31,11 +31,11 @@ class TC_RFC2047 < Test::Unit::TestCase
   end
 
   def test_b_decode_utf8()
-    assert_equal("とみた", MailParser::RFC2047.b_decode("44Go44G/44Gf"))
+    assert_equal("とみた".force_encoding('binary'), MailParser::RFC2047.b_decode("44Go44G/44Gf"))
   end
 
   def test_b_decode_invalid_space()
-    assert_equal("とみた", MailParser::RFC2047.b_decode("44Go 44 G/4 4Gf"))
+    assert_equal("とみた".force_encoding('binary'), MailParser::RFC2047.b_decode("44Go 44 G/4 4Gf"))
   end
 
   def test_split_decode_q_ascii()

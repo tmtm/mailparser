@@ -4,6 +4,7 @@
 
 require "mailparser/loose"
 require "test/unit"
+require "timeout"
 
 class TC_Loose < Test::Unit::TestCase
   include MailParser::Loose
@@ -233,7 +234,7 @@ class TC_Loose < Test::Unit::TestCase
 
   def test_parse_other_header_decode
     s = parse("subject", "=?euc-jp?q?=A4=A2=A4=A4?=", :decode_mime_header=>true)
-    assert_equal "\xa4\xa2\xa4\xa4", s
+    assert_equal "\xa4\xa2\xa4\xa4".force_encoding('binary'), s
   end
 
   def test_parse_other_header_decode_charset

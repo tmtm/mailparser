@@ -143,15 +143,15 @@ class TC_MailParser_Obsolete < Test::Unit::TestCase
   end
   def test_mime_header_decode_e2u()
     MailParser.output_charset = "utf-8"
-    assert_equal("\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88", mime_header_decode("=?euc-jp?q?=A5=C6=A5=B9=A5=C8?="))
+    assert_equal("\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88".force_encoding('utf-8'), mime_header_decode("=?euc-jp?q?=A5=C6=A5=B9=A5=C8?="))
   end
   def test_mime_header_decode_s2u()
     MailParser.output_charset = "utf-8"
-    assert_equal("\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88", mime_header_decode("=?shift_jis?q?=83=65=83=58=83=67?="))
+    assert_equal("\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88".force_encoding('utf-8'), mime_header_decode("=?shift_jis?q?=83=65=83=58=83=67?="))
   end
   def test_mime_header_decode_noconv()
     MailParser.output_charset = nil
-    assert_equal("\x83\x65\x83\x58\x83\x67", mime_header_decode("=?shift_jis?q?=83=65=83=58=83=67?="))
+    assert_equal("\x83\x65\x83\x58\x83\x67".force_encoding('binary'), mime_header_decode("=?shift_jis?q?=83=65=83=58=83=67?="))
   end
   def test_trunc_comment()
     assert_equal("abcdefg", trunc_comment("abcdefg"))

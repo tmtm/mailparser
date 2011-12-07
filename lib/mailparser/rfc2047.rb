@@ -2,7 +2,7 @@
 # mailto:tommy@tmtm.org
 
 require "strscan"
-require "iconv"
+require "iconv" unless defined? Encoding
 require "nkf"
 require "mailparser/conv_charset"
 
@@ -46,7 +46,7 @@ module MailParser::RFC2047
       begin
         s2 = charset && s.charset ? s.conv_charset(charset) : s
         cs = s.charset
-      rescue Iconv::Failure
+      rescue
         s2 = s.raw
         cs = nil
       end

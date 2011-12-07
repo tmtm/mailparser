@@ -5,7 +5,7 @@
 require "timeout"
 require "mailparser/rfc2822"
 
-unless ARGV.empty?
+if $0 == __FILE__ and not ARGV.empty?
   ARGV.each do |fname|
     File.open(fname) do |f|
       header = []
@@ -89,7 +89,7 @@ class TC_RFC2822Parser < Test::Unit::TestCase
     assert_equal("a@b.c", m.addr_spec.to_s)
 
     m = MailParser::RFC2822::Parser.new(:decode_mime_header=>true).parse(:MAILBOX, "=?euc-jp?q?=A4=A2=A4=A4?= <a@b.c>")
-    assert_equal("\xA4\xA2\xA4\xA4", m.display_name.to_s)
+    assert_equal("\xA4\xA2\xA4\xA4".force_encoding('binary'), m.display_name.to_s)
     assert_equal("a@b.c", m.addr_spec.to_s)
 
     m = MailParser::RFC2822::Parser.new(:decode_mime_header=>true, :output_charset=>"utf-8").parse(:MAILBOX, "=?euc-jp?q?=A4=A2=A4=A4?= <a@b.c>")
