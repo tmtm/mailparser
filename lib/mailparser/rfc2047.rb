@@ -2,34 +2,12 @@
 # mailto:tommy@tmtm.org
 
 require "strscan"
-require "iconv"
-require "nkf"
 require "mailparser/conv_charset"
 
 module MailParser
 end
 
 module MailParser::RFC2047
-
-  class String < ::String
-    @@charset_converter = Proc.new{|f,t,s| MailParser::ConvCharset.conv_charset(f,t,s)}
-    def initialize(str, charset=nil, raw=nil, charset_converter=nil)
-      super(str)
-      @charset = charset
-      @raw = raw || str
-      @charset_converter = charset_converter || @@charset_converter
-    end
-    attr_reader :charset
-    attr_reader :raw
-
-    def conv_charset(to_charset)
-      if @charset and to_charset
-        @charset_converter.call @charset, to_charset, self
-      else
-        self
-      end
-    end
-  end
 
   module_function
 
@@ -42,14 +20,8 @@ module MailParser::RFC2047
     end
     last_charset = nil
     ret = ""
-    split_decode(str, charset_converter).each do |s|
-      begin
-        s2 = charset && s.charset ? s.conv_charset(charset) : s
-        cs = s.charset
-      rescue Iconv::Failure
-        s2 = s.raw
-        cs = nil
-      end
+    split_decode(str, charset_converter, charset).each do |s, cs|
+      s2 = s
       ret << " " if last_charset.nil? or cs.nil?
       ret << s2
       last_charset = cs
@@ -57,17 +29,36 @@ module MailParser::RFC2047
     return ret.strip
   end
 
-  def split_decode(str, charset_converter=nil)
+  def split_decode(str, charset_converter=nil, output_charset=nil)
     ret = []
-    while str =~ /\=\?([^\(\)\<\>\@\,\;\:\"\/\[\]\?\.\=]+)\?([QB])\?([^\? ]+)\?\=/ni do
+    while str =~ /\=\?([^\(\)\<\>\@\,\;\:\"\/\[\]\?\.\=]+)\?([QB])\?([^\? ]+)\?\=/i do
       raw = $&
       pre, charset, encoding, enc_text, after = $`, $1.downcase, $2.downcase, $3, $'
-      ret << String.new(pre.strip) unless pre.strip.empty?
+      ret << [pre.strip, nil] unless pre.strip.empty?
       s = encoding == "q" ? q_decode(enc_text) : b_decode(enc_text)
-      ret << String.new(s, charset, raw, charset_converter)
+      if String.method_defined? :force_encoding
+        begin
+          s.force_encoding(charset)
+        rescue
+          s.force_encoding('ascii-8bit')
+        end
+      end
+      begin
+        if output_charset
+          if charset_converter
+            s = charset_converter.call(charset, output_charset, s)
+          else
+            s = MailParser::ConvCharset.conv_charset(charset, output_charset, s)
+          end
+        end
+      rescue
+        s = raw
+        charset = nil
+      end
+      ret << [s, charset]
       str = after
     end
-    ret << String.new(str.strip) unless str.empty?
+    ret << [str.strip, nil] unless str.empty?
     return ret
   end
 

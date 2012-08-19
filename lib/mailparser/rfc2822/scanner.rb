@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: ascii-8bit
 # Copyright (C) 2006-2010 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
@@ -34,31 +34,31 @@ class MailParser::RFC2822::Scanner
       when s = @ss.scan(/\"(\\[#{TEXT_RE}]|[#{QTEXT_RE}])*\"/no)
         @token << s
         @token_idx[s.object_id] = @token.size-1
-        yield :NO_FOLD_QUOTE, s
+        yield [:NO_FOLD_QUOTE, s]
       when s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/nmo)
         @token << s
         @token_idx[s.object_id] = @token.size-1
-        yield :QUOTED_STRING, s
+        yield [:QUOTED_STRING, s]
       when s = @ss.scan(/\[(\\[#{TEXT_RE}]|[#{DTEXT_RE}])*\]/no)
         @token << s
         @token_idx[s.object_id] = @token.size-1
-        yield :NO_FOLD_LITERAL, s
+        yield [:NO_FOLD_LITERAL, s]
       when s = @ss.scan(/\[(\s*(\\[#{TEXT_RE}]|[#{DTEXT_RE}]))*\s*\]/nmo)
         @token << s
         @token_idx[s.object_id] = @token.size-1
-        yield :DOMAIN_LITERAL, s
+        yield [:DOMAIN_LITERAL, s]
       when s = @ss.scan(/[#{ATEXT_RE}]+/no)
         @token << s
         @token_idx[s.object_id] = @token.size-1
         if s =~ /\A\d+\z/ then
-          yield :DIGIT, s
+          yield [:DIGIT, s]
         else
-          yield :ATOM, s
+          yield [:ATOM, s]
         end
       when s = @ss.scan(/./no)
         @token << s
         @token_idx[s.object_id] = @token.size-1
-        yield s, s
+        yield [s, s]
       end
     end
     yield nil

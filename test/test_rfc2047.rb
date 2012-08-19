@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: ascii-8bit
 # Copyright (C) 2006-2010 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
@@ -41,17 +41,13 @@ class TC_RFC2047 < Test::Unit::TestCase
   def test_split_decode_q_ascii()
     s = MailParser::RFC2047.split_decode("=?us-ascii?q?hoge?=")
     assert_equal(1, s.size)
-    assert_equal("hoge", s[0])
-    assert_equal("us-ascii", s[0].charset)
-    assert_equal("=?us-ascii?q?hoge?=", s[0].raw)
+    assert_equal(["hoge", "us-ascii"], s[0])
   end
 
   def test_split_decode_q_ascii_upcase()
     s = MailParser::RFC2047.split_decode("=?US-ASCII?Q?hoge?=")
     assert_equal(1, s.size)
-    assert_equal("hoge", s[0])
-    assert_equal("us-ascii", s[0].charset)
-    assert_equal("=?US-ASCII?Q?hoge?=", s[0].raw)
+    assert_equal(["hoge", "us-ascii"], s[0])
   end
 
   def test_decode_q_ascii()
@@ -101,12 +97,16 @@ class TC_RFC2047 < Test::Unit::TestCase
 
   def test_decode_sjis()
     s = MailParser::RFC2047.decode("=?sjis?b?h0A=?=", "UTF-8")
-    assert_equal("\xe2\x91\xa0", s)
+    if String.method_defined? :force_encoding
+      assert_equal("\xe2\x91\xa0".force_encoding('utf-8'), s)
+    end
   end
 
   def test_decode_iso2022jp()
     s = MailParser::RFC2047.decode("=?iso-2022-jp?b?GyRCLSEbKEI=?=", "UTF-8")
-    assert_equal("\xe2\x91\xa0", s)
+    if String.method_defined? :force_encoding
+      assert_equal("\xe2\x91\xa0".force_encoding('utf-8'), s)
+    end
   end
 
   def test_decode_charset_converter()

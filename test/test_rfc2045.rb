@@ -3,7 +3,7 @@
 
 require "mailparser/rfc2045"
 
-unless ARGV.empty?
+if $0 == __FILE__ and not ARGV.empty?
   ARGV.each do |fname|
     File.open(fname) do |f|
       header = []

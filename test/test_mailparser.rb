@@ -381,7 +381,11 @@ Content-Type: text/plain; charset=iso-2022-jp
 \e\$B\$\"\$\$\$\&\$\(\$\*\e(B
 EOS
     m = MailParser::Message.new(msg)
-    assert_equal("\e\$B\$\"\$\$\$\&\$\(\$\*\e(B\n", m.body)
+    if String.method_defined? :encode
+      assert_equal("あいうえお\n".encode('iso-2022-jp'), m.body)
+    else
+      assert_equal("\e\$B\$\"\$\$\$\&\$\(\$\*\e(B\n", m.body)
+    end
   end
 
   def test_body_iso2022jp_charset()
@@ -391,7 +395,7 @@ Content-Type: text/plain; charset=iso-2022-jp
 
 \e\$B\$\"\$\$\$\&\$\(\$\*\e(B
 EOS
-    m = MailParser::Message.new(msg, :output_charset=>"utf8")
+    m = MailParser::Message.new(msg, :output_charset=>"utf-8")
     assert_equal("あいうえお\n", m.body)
   end
 
@@ -402,7 +406,7 @@ Content-Type: application/octet-stream; charset=iso-2022-jp
 
 \e\$B\$\"\$\$\$\&\$\(\$\*\e(B
 EOS
-    m = MailParser::Message.new(msg, :output_charset=>"utf8")
+    m = MailParser::Message.new(msg, :output_charset=>"utf-8")
     assert_equal("\e\$B\$\"\$\$\$\&\$\(\$\*\e(B\n", m.body)
   end
 
@@ -413,23 +417,37 @@ Content-Type: text/plain
 
 abcdefg
 EOS
-    m = MailParser::Message.new(msg, :output_charset=>"utf8")
+    m = MailParser::Message.new(msg, :output_charset=>"utf-8")
     assert_equal("abcdefg\n", m.body)
   end
 
   def test_body_preconv
-    m = MailParser::Message.new(<<EOS, :output_charset=>"utf8")
+    m = MailParser::Message.new(<<EOS, :output_charset=>"utf-8")
 From: TOMITA Masahiro <tommy@tmtm.org>
 Content-Type: text/plain; charset=iso-2022-jp
 
 \e$B$3$l$OK\\J8$G$9\e(B
 EOS
     assert_equal "これは本文です\n", m.body
-    assert_equal "\e$B$3$l$OK\\J8$G$9\e(B\n", m.body_preconv
+    if String.method_defined? :encode
+      assert_equal "これは本文です\n".encode('iso-2022-jp'), m.body_preconv
+    else
+      assert_equal "\e$B$3$l$OK\\J8$G$9\e(B\n", m.body_preconv
+    end
+  end
+
+  def test_body_preconv_with_unknown_charset
+    m = MailParser::Message.new(<<EOS)
+From: TOMITA Masahiro <tommy@tmtm.org>
+Content-Type: text/plain; charset=hogehoge
+
+abc
+EOS
+    assert_equal "abc\n", m.body_preconv
   end
 
   def test_body_charset_converter
-    m = MailParser::Message.new(<<EOS, :output_charset=>"utf8", :charset_converter=>proc{|f,t,s| "abcdefg"})
+    m = MailParser::Message.new(<<EOS, :output_charset=>"utf-8", :charset_converter=>proc{|f,t,s| "abcdefg"})
 From: TOMITA Masahiro <tommy@tmtm.org>
 Content-Type: text/plain; charset=iso-2022-jp
 
@@ -673,8 +691,13 @@ EOS
     m = MailParser::Message.new(msg)
     assert_equal(2, m.part.size)
     assert_equal(2, m.part[0].part.size)
-    assert_equal("hoge\n", m.part[0].part[0].body)
-    assert_equal("fuga html\n", m.part[0].part[1].body)
+    if String.method_defined? :encode
+      assert_equal("hoge\n".encode('iso-2022-jp'), m.part[0].part[0].body)
+      assert_equal("fuga html\n".encode('iso-2022-jp'), m.part[0].part[1].body)
+    else
+      assert_equal("hoge\n", m.part[0].part[0].body)
+      assert_equal("fuga html\n", m.part[0].part[1].body)
+    end
     assert_equal("attached file", m.part[1].body)
   end
 

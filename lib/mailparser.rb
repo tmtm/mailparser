@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: ascii-8bit
 # Copyright (C) 2006-2011 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
@@ -230,6 +230,9 @@ module MailParser
             when "uuencode", "x-uuencode", "x-uue" then decode_uuencode(body)
             else body
             end
+      if type == 'text' and charset
+        ret.force_encoding(charset) rescue nil
+      end
       ret
     end
 

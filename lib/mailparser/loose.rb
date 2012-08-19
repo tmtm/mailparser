@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: ascii-8bit
 # Copyright (C) 2007-2010 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
@@ -6,6 +6,8 @@ require "time"
 require "strscan"
 require "mailparser/rfc2822"
 require "mailparser/rfc2045"
+require "mailparser/rfc2047"
+require "mailparser/rfc2183"
 
 module MailParser
   module Loose
@@ -125,10 +127,10 @@ module MailParser
     # Content-Type ヘッダをパースして RFC2045::ContentType を返す
     def parse_content_type(str, opt={})
       token = split_by(Tokenizer.token(str), ";")
-      type, subtype = token.shift.to_s.split("/", 2)
+      type, subtype = token.empty? ? nil : token.shift.join.split("/", 2)
       params = {}
-      token.map do |param|
-        pn, pv = param.to_s.split(/=/, 2)
+      token.each do |param|
+        pn, pv = param.join.split(/=/, 2)
         params[pn.to_s] = pv.to_s.gsub(/\A"|"\z/,"")
       end
       type = "text" if type.nil? or type.empty?
@@ -151,10 +153,10 @@ module MailParser
     # Content-Disposition ヘッダをパースして RFC2183::ContentDisposition を返す
     def parse_content_disposition(str, opt={})
       token = split_by(Tokenizer.token(str), ";")
-      type = token.shift.to_s
+      type = token.empty? ? '' : token.shift.join
       params = {}
-      token.map do |param|
-        pn, pv = param.to_s.split(/=/, 2)
+      token.each do |param|
+        pn, pv = param.join.split(/=/, 2)
         params[pn.to_s] = pv.to_s.gsub(/\A"|"\z/,"")
       end
       RFC2183::ContentDisposition.new(type, params)
@@ -185,11 +187,11 @@ module MailParser
           if opt[:decode_mime_header] then
             display_name = RFC2047.decode(display_name, opt)
           end
-          mailaddr = m[a1+1..a2-1].to_s
+          mailaddr = m[a1+1..a2-1].join
           local_part, domain = mailaddr.split(/@/, 2)
           ret << RFC2822::Mailbox.new(RFC2822::AddrSpec.new(local_part, domain), display_name)
         else
-          local_part, domain = m.to_s.split(/@/, 2)
+          local_part, domain = m.join.split(/@/, 2)
           ret << RFC2822::Mailbox.new(RFC2822::AddrSpec.new(local_part, domain))
         end
       end

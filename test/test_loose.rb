@@ -1,9 +1,10 @@
-# -*- coding: utf-8 -*-
+# coding: ascii-8bit
 # Copyright (C) 2007-2010 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
 require "mailparser/loose"
 require "test/unit"
+require "timeout"
 
 class TC_Loose < Test::Unit::TestCase
   include MailParser::Loose
@@ -233,12 +234,20 @@ class TC_Loose < Test::Unit::TestCase
 
   def test_parse_other_header_decode
     s = parse("subject", "=?euc-jp?q?=A4=A2=A4=A4?=", :decode_mime_header=>true)
-    assert_equal "\xa4\xa2\xa4\xa4", s
+    if String.method_defined? :encode
+      assert_equal 'あい'.encode('euc-jp', 'utf-8'), s
+    else
+      assert_equal "\xa4\xa2\xa4\xa4", s
+    end
   end
 
   def test_parse_other_header_decode_charset
     s = parse("subject", "=?euc-jp?q?=A4=A2=A4=A4?=", :decode_mime_header=>true, :output_charset=>"utf-8")
-    assert_equal "あい", s
+    if String.method_defined? :force_encoding
+      assert_equal "あい".force_encoding('utf-8'), s
+    else
+      assert_equal "あい", s
+    end
   end
 
   def test_parse_other_header_decode_charset_converter
