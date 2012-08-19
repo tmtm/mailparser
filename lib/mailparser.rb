@@ -200,24 +200,52 @@ module MailParser
       @from = @to = @cc = @subject = nil
       @type = @subtype = @charset = @content_transfer_encoding = @filename = nil
       @rawheader = nil
-      @message = nil
-      @body = @body_preconv = ''
+      @rawbody = nil
       @part = []
       opt[:charset_converter] ||= ConvCharset.method(:conv_charset)
 
       read_header
-      read_body
       read_part
     end
 
-    attr_reader :header, :part, :message
+    attr_reader :header, :part
 
+    # charset 変換後の本文を返す
     def body
-      @body
+      body = body_preconv
+      if type == 'text' and charset and @opt[:output_charset]
+        begin
+          body = @opt[:charset_converter].call(charset, @opt[:output_charset], body)
+        rescue
+          # ignore
+        end
+      end
+      body
     end
 
+    # charset 変換前の本文を返す
     def body_preconv
-      @body_preconv
+      return '' if type == 'multipart' or type == 'message'
+      body = @rawbody.to_s
+      ret = case content_transfer_encoding
+            when "quoted-printable" then RFC2045.qp_decode(body)
+            when "base64" then RFC2045.b64_decode(body)
+            when "uuencode", "x-uuencode", "x-uue" then decode_uuencode(body)
+            else body
+            end
+      ret
+    end
+
+    # Content-Type が message の時 Message を返す。そうでなければ nil を返す。
+    def message
+      unless @opt[:extract_message_type] and type == "message"
+        return nil
+      end
+      if ['7bit', '8bit'].include? content_transfer_encoding
+        @rawbody.pos = 0
+        return Message.new(@rawbody, @opt)
+      end
+      return Message.new(body_preconv, @opt)
     end
 
     # From ヘッダがあれば Mailbox を返す。
@@ -363,34 +391,7 @@ module MailParser
         end
       end
       @src.scan(/\r?\n/)        # 空行スキップ
-    end
-
-    # 本文を読む
-    def read_body()
-      return if type == "multipart" or @src.eos?
-      unless @opt[:extract_message_type] and type == "message" then
-        if @opt[:skip_body] or (@opt[:text_body_only] and type != "text")
-          return
-        end
-      end
-      body = @src.rest.to_s
-      case content_transfer_encoding
-      when "quoted-printable" then @body << RFC2045.qp_decode(body)
-      when "base64" then @body << RFC2045.b64_decode(body)
-      when "uuencode", "x-uuencode", "x-uue" then @body << decode_uuencode(body)
-      else @body << body
-      end
-      @body_preconv = @body
-      if type == 'text' and charset and @opt[:output_charset] then
-        begin
-          @body = @opt[:charset_converter].call(charset, @opt[:output_charset], @body)
-        rescue
-          # ignore
-        end
-      end
-      if @opt[:extract_message_type] and type == "message" and not @body.empty? then
-        @message = Message.new(@body, @opt)
-      end
+      @rawbody = @src.rest
     end
 
     # 各パートの Message オブジェクトの配列を作成
