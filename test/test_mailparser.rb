@@ -438,17 +438,6 @@ EOS
     assert_equal "abcdefg", m.body
   end
 
-  def test_body_use_file
-    m = MailParser::Message.new(<<EOS, :output_charset=>"utf8", :use_file=>1)
-From: TOMITA Masahiro <tommy@tmtm.org>
-Content-Type: text/plain; charset=iso-2022-jp
-
-\e$B$3$l$OK\\J8$G$9\e(B
-EOS
-    assert_equal "これは本文です\n", m.body
-    assert_equal "\e$B$3$l$OK\\J8$G$9\e(B\n", m.body_preconv
-  end
-
   def test_filename()
     msg = StringIO.new(<<EOS)
 Content-Type: text/plain; name="filename.txt"
@@ -651,65 +640,6 @@ EOS
     assert_equal("message", m.part[1].type)
     assert_equal("<from2@example.com>", m.part[1].message.from.to_s)
     assert_equal("", m.part[1].message.body)
-  end
-
-  def test_extract_message_type_skip_body()
-    msg = StringIO.new(<<EOS)
-From: from1@example.com
-Content-Type: multipart/mixed; boundary="xxxx"
-
---xxxx
-Content-Type: text/plain
-
-body1
-
---xxxx
-Content-Type: message/rfc822
-
-From: from2@example.com
-Content-Type: text/plain
-
-body2
---xxxx--
-EOS
-    m = MailParser::Message.new(msg, :extract_message_type=>true, :skip_body=>true)
-    assert_equal("<from1@example.com>", m.from.to_s)
-    assert_equal(2, m.part.size)
-    assert_equal("text", m.part[0].type)
-    assert_equal("", m.part[0].body)
-    assert_equal("message", m.part[1].type)
-    assert_equal("<from2@example.com>", m.part[1].message.from.to_s)
-    assert_equal("", m.part[1].message.body)
-  end
-
-  def test_extract_message_type_text_body_only()
-    msg = StringIO.new(<<EOS)
-From: from1@example.com
-Content-Type: multipart/mixed; boundary="xxxx"
-
---xxxx
-Content-Type: text/plain
-
-body1
-
---xxxx
-Content-Type: message/rfc822
-
-From: from2@example.com
-Content-Type: text/plain
-
-body2
-
---xxxx--
-EOS
-    m = MailParser::Message.new(msg, :extract_message_type=>true, :text_body_only=>true)
-    assert_equal("<from1@example.com>", m.from.to_s)
-    assert_equal(2, m.part.size)
-    assert_equal("text", m.part[0].type)
-    assert_equal("body1\n", m.part[0].body)
-    assert_equal("message", m.part[1].type)
-    assert_equal("<from2@example.com>", m.part[1].message.from.to_s)
-    assert_equal("body2\n", m.part[1].message.body)
   end
 
   def test_extract_multipart_alternative_attach()
@@ -1043,19 +973,6 @@ Subject: hogehoge
 
 body1
 EOS
-  end
-
-  def test_raw_and_use_file
-    msg = StringIO.new(<<EOS)
-From: from@example.com
-Content-Type: text/plain
-
-hogehoge
-
-fugafuga
-EOS
-    m = MailParser::Message.new msg, :use_file=>1
-    assert_equal msg.string, m.raw
   end
 
   def test_base64_body

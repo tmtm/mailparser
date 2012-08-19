@@ -167,15 +167,12 @@ module MailParser
     # src からヘッダ部を読み込み Header オブジェクトに保持する
     # src:: String / File / MmapScanner / read メソッドを持つオブジェクト
     # opt:: オプション(Hash)
-    #  :skip_body::            本文をスキップする
-    #  :text_body_only::       text/* type 以外の本文をスキップする
     #  :extract_message_type:: message/* type を展開する
     #  :decode_mime_header::   MIMEヘッダをデコードする
     #  :decode_mime_filename:: ファイル名を MIME デコードする
     #  :output_charset::       デコード出力文字コード(デフォルト: 変換しない)
     #  :strict::               RFC違反時に ParseError 例外を発生する
     #  :charset_converter::    文字コード変換用 Proc または Method
-    #  :use_file::             body, raw がこのサイズを超えたらメモリではなくファイルを使用する
     def initialize(src, opt={})
       if src.is_a? String
         @src = MmapScanner.new src
