@@ -40,10 +40,10 @@ module MailParser
     }
 
     module_function
-    # ヘッダをパースした結果のオブジェクトを返す
-    # hname:: ヘッダ名(String)
-    # hbody:: ヘッダ本文(String)
-    # opt:: オプション(Hash)
+    # @param [String] hname
+    # @param [String] hbody
+    # @param [Hash] opt options
+    # @return [header field value]
     def parse(hname, hbody, opt={})
       if HEADER_PARSER.key? hname then
         return method(HEADER_PARSER[hname]).call(hbody, opt)
@@ -57,7 +57,10 @@ module MailParser
       end
     end
 
-    # Date ヘッダをパースして、RFC2822::DateTime を返す
+    # parse Date field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [MailParser::RFC2822::DateTime]
     def parse_date(str, opt={})
       begin
         t = Time.rfc2822(str) rescue Time.parse(str)
@@ -67,27 +70,42 @@ module MailParser
       return RFC2822::DateTime.new(t.year, t.month, t.day, t.hour, t.min, t.sec, t.zone)
     end
 
-    # From,To,Cc 等のヘッダをパースして RFC2822::Mailbox の配列を返す
+    # parse From, To,Cc field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [Array<MailParser::RFC2822::Mailbox>]
     def parse_mailbox_list(str, opt={})
       mailbox_list(str, opt)
     end
 
-    # Sender,Resent-Sender ヘッダをパースして RFC2822::Mailbox を返す
+    # parse Sender,Resent-Sender field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [MailParser::RFC2822::Mailbox]
     def parse_mailbox(str, opt={})
       mailbox_list(str, opt)[0]
     end
 
-    # Message-Id,Resent-Message-Id ヘッダをパースして RFC2822::MsgId を返す
+    # parse Message-Id, Resent-Message-Id field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [MailParser::RFC2822::MsgId]
     def parse_msg_id(str, opt={})
       msg_id_list(str)[0]
     end
 
-    # In-Reply-To,References 等のヘッダを RFC2822::MsgIdList を返す
+    # parse In-Reply-To, References field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [MailParser::RFC2822::MsgIdList]
     def parse_msg_id_list(str, opt={})
       msg_id_list(str)
     end
 
-    # Keywords ヘッダをパースして文字列の配列を返す
+    # parse Keywords field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [Array<String>]
     def parse_phrase_list(str, opt={})
       s = split_by(Tokenizer.token(str), ",")
       s.map!{|i| i.join(" ")}
@@ -97,12 +115,18 @@ module MailParser
       s
     end
 
-    # Return-Path ヘッダをパースして RFC2822:ReturnPath を返す
+    # parse Return-Path field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [Array<MailParser::RFC2822::ReturnPath>]
     def parse_return_path(str, opt={})
       mailbox_list(str, opt)[0]
     end
 
-    # Received ヘッダをパースして RFC2822::Received を返す
+    # parse Received field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [MailParser::RFC2822::Received]
     def parse_received(str, opt={})
       a = split_by(Tokenizer.token_received(str), ";")
       date = a.length > 1 ? parse_date(a.last.join(" ")) : RFC2822::DateTime.now
@@ -124,7 +148,10 @@ module MailParser
       RFC2822::Received.new(name_val, date)
     end
 
-    # Content-Type ヘッダをパースして RFC2045::ContentType を返す
+    # parse Content-Type field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [MailParser::RFC2045::ContentType]
     def parse_content_type(str, opt={})
       token = split_by(Tokenizer.token(str), ";")
       type, subtype = token.empty? ? nil : token.shift.join.split("/", 2)
@@ -140,17 +167,26 @@ module MailParser
       RFC2045::ContentType.new(type, subtype, params)
     end
 
-    # Content-Transfer-Encoding ヘッダをパースして RFC2045::ContentTransferEncoding を返す
+    # parse Content-Transfer-Encoding field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [MailParser::RFC2045::ContentTransferEncoding]
     def parse_content_transfer_encoding(str, opt={})
       RFC2045::ContentTransferEncoding.new(Tokenizer.token(str).first.to_s)
     end
 
-    # Mime-Version ヘッダをパースして文字列を返す
+    # parse Mime-Version field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [String]
     def parse_mime_version(str, opt={})
       Tokenizer.token(str).join
     end
 
-    # Content-Disposition ヘッダをパースして RFC2183::ContentDisposition を返す
+    # parse Content-Disposition field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [MailParser::RFC2183::ContentDispositoin]
     def parse_content_disposition(str, opt={})
       token = split_by(Tokenizer.token(str), ";")
       type = token.empty? ? '' : token.shift.join
@@ -162,7 +198,10 @@ module MailParser
       RFC2183::ContentDisposition.new(type, params)
     end
 
-    # array を delim で分割した配列(要素は配列)を返す
+    # split arry by delim
+    # @param [Array] array
+    # @param [Object] delim
+    # @return [Array<Array>]
     def split_by(array, delim)
       ret = []
       a = []
@@ -178,7 +217,10 @@ module MailParser
       return ret
     end
 
-    # Mailbox のリストを返す
+    # parse Mailbox type field
+    # @param [String] str
+    # @param [Hash] opt options
+    # @return [Array<MailParser::RFC2822::Mailbox>]
     def mailbox_list(str, opt)
       ret = []
       split_by(Tokenizer.token(str), ",").each do |m|
@@ -198,7 +240,9 @@ module MailParser
       return ret
     end
 
-    # MsgId のリストを返す
+    # parse MsgId type field
+    # @param [String] str
+    # @return [Array<MailParser::RFC2822::MsgId>]
     def msg_id_list(str)
       ret = []
       flag = false
@@ -226,12 +270,14 @@ module MailParser
     end
 
     class Tokenizer < RFC2822::Scanner
+      # @return [String] str source string
       def initialize(str)
         @comments = []
         @ss = StringScanner.new(str)
       end
 
-      # トークンに分割(コメント部は削除)
+      # tokenize
+      # @return [Array<String>] tokens
       def token()
         token = []
         while @ss.rest? do
@@ -256,7 +302,8 @@ module MailParser
         return token
       end
 
-      # Received 用に分割
+      # tokenize for Received field
+      # @return [Array<String>] tokens
       def token_received()
         ret = []
         while @ss.rest? do

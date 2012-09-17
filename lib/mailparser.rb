@@ -15,14 +15,6 @@ require "mmapscanner"
 require "stringio"
 require "tempfile"
 
-# メールをパースする。
-#
-#   m = MailParser.new
-#   m.parse(src)
-#   m.header => #<MailParser::Header>
-#   m.body => パースされた本文文字列
-#   m.part => [#<Mailparser>, ...]
-#
 module MailParser
   include RFC2045, RFC2183, RFC2822
 
@@ -57,14 +49,14 @@ module MailParser
     "content-disposition"       => RFC2183,
   }
 
-  # 単一のヘッダ
+  # Header field
   class HeaderItem
-    # name:: ヘッダ名(String)
-    # raw:: ヘッダ値(String)
-    # opt:: オプション(Hash)
-    #  :decode_mime_header::   MIMEヘッダをデコードする
-    #  :output_charset::       デコード出力文字コード(デフォルト: UTF-8)
-    #  :strict::               RFC違反時に ParseError 例外を発生する
+    # @param [String] name header field name
+    # @param [String] raw header field value
+    # @param [Hash] opt options
+    # @option opt [Boolean] :decode_mime_header (false) decode MIME header
+    # @option opt [String] :output_charset (nil) output encoding name
+    # @option opt [Boolean] :strict (false) raise ParseError exception when message is invalid
     def initialize(name, raw, opt={})
       @name = name
       @raw = raw
@@ -72,9 +64,10 @@ module MailParser
       @opt = opt
     end
 
+    # @return [String] raw field value
     attr_reader :raw
 
-    # パースした結果オブジェクトを返す
+    # @return [header field value] parsed header object
     def parse()
       return @parsed if @parsed
       if HEADER_PARSER.key? @name then
@@ -107,8 +100,12 @@ module MailParser
     end
   end
 
-  # 同じ名前を持つヘッダの集まり
+  # Header part
   class Header
+    # @param [Hash] opt options
+    # @option opt [Boolean] :decode_mime_header decode MIME header
+    # @option opt [String] :output_charset output encoding name
+    # @option opt [Boolean] :strict raise ParseError exception when message is invalid
     def initialize(opt={})
       @hash = {}
       @parsed = {}
@@ -116,17 +113,19 @@ module MailParser
       @opt = opt
     end
 
-    # name ヘッダに body を追加する
-    # name:: ヘッダ名(String)
-    # body:: ヘッダ値(String)
+    # add header field
+    # @param [String] name header field name
+    # @param [String] body header field value
+    # @return [void]
     def add(name, body)
       name = name.downcase
       @hash[name] = [] unless @hash.key? name
       @hash[name] << HeaderItem.new(name, body, @opt)
     end
 
-    # パースした結果オブジェクトの配列を返す
-    # name:: ヘッダ名(String)
+    # header field value
+    # @param [String] name header field name
+    # @return [Array<header field value>]
     def [](name)
       return nil unless @hash.key? name
       return @parsed[name] if @parsed.key? name
@@ -134,8 +133,8 @@ module MailParser
       return @parsed[name]
     end
 
-    # 生ヘッダ値文字列の配列を返す
-    # name:: ヘッダ名(String)
+    # @param [String] name header field name
+    # @return [Array<String>] raw header value
     def raw(name)
       return nil unless @hash.key? name
       return @raw[name] if @raw.key? name
@@ -143,18 +142,22 @@ module MailParser
       return @raw[name]
     end
 
-    # ヘッダ名の配列を返す
+    # @return [Array<String>] header names
     def keys()
       return @hash.keys
     end
 
-    # ヘッダが存在するか？
+    # @param [String] name header field name
+    # @return [Boolean] true if header field exists
     def key?(name)
       return @hash.key?(name)
     end
 
-    # 各ヘッダについてブロックを繰り返す
-    # ブロック引数は、[ヘッダ名, パース結果オブジェクト,...]]
+    # repeat block for each header field
+    # @yield [key, value]
+    # @yieldparam [String] key header field name
+    # @yieldparam [header field value] value header field value
+    # @return [void]
     def each()
       @hash.each do |k, v|
         yield k, self[k]
@@ -162,17 +165,23 @@ module MailParser
     end
   end
 
-  # メール全体またはひとつのパートを表すクラス
+  # Mail message
+  # @example
+  #  require 'mailparser'
+  #  f = File.open('hoge.eml')
+  #  m = MailParser::Message.new(f, :output_charset=>'utf-8')
+  #  m.subject  #=> String
+  #  m.body     #=> String
+  #  m.part     #=> Array of Mailparser::Message
   class Message
-    # src からヘッダ部を読み込み Header オブジェクトに保持する
-    # src:: String / File / MmapScanner / read メソッドを持つオブジェクト
-    # opt:: オプション(Hash)
-    #  :extract_message_type:: message/* type を展開する
-    #  :decode_mime_header::   MIMEヘッダをデコードする
-    #  :decode_mime_filename:: ファイル名を MIME デコードする
-    #  :output_charset::       デコード出力文字コード(デフォルト: 変換しない)
-    #  :strict::               RFC違反時に ParseError 例外を発生する
-    #  :charset_converter::    文字コード変換用 Proc または Method
+    # @param [String, File, MmapScanner, #read] src source object
+    # @param [Hash] opt options
+    # @option opt [Boolean] :extract_message_type (false) extract message for type message/*
+    # @option opt [Boolean] :decode_mime_header (false) decode MIME header
+    # @option opt [Boolean] :decode_mime_filename (false) decode MIME encoded filename
+    # @option opt [Boolean] :output_charset (nil) output encoding
+    # @option opt [Boolean] :strict (false) raise ParseError exception when message is invalid
+    # @option opt [Proc, Method, #call] :charset_converter (nil) charset converter. default is MailParser::ConvCharset.conv_charset
     def initialize(src, opt={})
       if src.is_a? String
         @src = MmapScanner.new src
@@ -206,8 +215,12 @@ module MailParser
     end
 
     attr_reader :header, :part
+    # @!attribute [r] header
+    #   @return [MailParser::Header]
+    # @!attribute [r] part
+    #   @return [Array<MailParser::Message>]
 
-    # charset 変換後の本文を返す
+    # @return [String] message body decoded and converted charset
     def body
       body = body_preconv
       if type == 'text' and charset and @opt[:output_charset]
@@ -220,7 +233,7 @@ module MailParser
       body
     end
 
-    # charset 変換前の本文を返す
+    # @return [String] message body decoded and not converted charset
     def body_preconv
       return '' if type == 'multipart' or type == 'message'
       body = @rawbody.to_s
@@ -236,7 +249,8 @@ module MailParser
       ret
     end
 
-    # Content-Type が message の時 Message を返す。そうでなければ nil を返す。
+    # @return [MailParser::Message] body type is message/*
+    # @return [nil] when type is not message/*
     def message
       unless @opt[:extract_message_type] and type == "message"
         return nil
@@ -248,8 +262,8 @@ module MailParser
       return Message.new(body_preconv, @opt)
     end
 
-    # From ヘッダがあれば Mailbox を返す。
-    # なければ nil
+    # @return [MailParser::RFC2822::Mailbox] From field
+    # @return [nil] when From field don't exist
     def from()
       return @from if @from
       if @header.key? "from" then
@@ -260,8 +274,8 @@ module MailParser
       return @from
     end
 
-    # To ヘッダがあれば Mailbox の配列を返す
-    # なければ空配列
+    # @return [Array<MailParser::RFC2822::Mailbox>] To field
+    # @return [nil] when To field don't exist
     def to()
       return @to if @to
       if @header.key? "to" then
@@ -272,8 +286,8 @@ module MailParser
       return @to
     end
 
-    # Cc ヘッダがあれば Mailbox の配列を返す
-    # なければ空配列
+    # @return [Array<MailParser::RFC2822::Mailbox>] Cc field
+    # @return [nil] when Cc field don't exist
     def cc()
       return @cc if @cc
       if @header.key? "cc" then
@@ -284,8 +298,7 @@ module MailParser
       return @cc
     end
 
-    # Subject ヘッダがあれば文字列を返す
-    # なければ空文字
+    # @return [String] Subject field
     def subject()
       return @subject if @subject
       if @header.key? "subject" then
@@ -296,8 +309,7 @@ module MailParser
       return @subject
     end
 
-    # Content-Type の type を返す。
-    # Content-Type がない場合は "text"
+    # @return [String] Content-Type main type as lower-case
     def type()
       return @type if @type
       if @header.key? "content-type" then
@@ -308,8 +320,7 @@ module MailParser
       return @type
     end
 
-    # Content-Type の subtype を返す。
-    # Content-Type がない場合は "plain"
+    # @return [String] Content-Type sub type as lower-case
     def subtype()
       return @subtype if @subtype
       if @header.key? "content-type" then
@@ -320,8 +331,8 @@ module MailParser
       return @subtype
     end
 
-    # Content-Type の charset 属性の値(小文字)を返す。
-    # charset 属性がない場合は nil
+    # @return [String] Content-Type charset attribute as lower-case
+    # @return [nil] when charset attribute don't exist
     def charset()
       return @charset if @charset
       if @header.key? "content-type" then
@@ -333,13 +344,12 @@ module MailParser
       return @charset
     end
 
-    # マルチパートメッセージかどうかを返す
+    # @return [Boolean] true if multipart type
     def multipart?()
       return type == "multipart"
     end
 
-    # Content-Transfer-Encoding の mechanism を返す
-    # Content-Transfer-Encoding がない場合は "7bit"
+    # @return [String] Content-Transfer-Encoding mechanism. default is "7bit"
     def content_transfer_encoding()
       return @content_transfer_encoding if @content_transfer_encoding
       if @header.key? "content-transfer-encoding" then
@@ -350,10 +360,8 @@ module MailParser
       return @content_transfer_encoding
     end
 
-    # ファイル名を返す。
-    # Content-Disposition の filename パラメータ
-    # または Content-Type の name パラメータ。
-    # デフォルトは nil。
+    # @return [String] Content-Disposition filename attribute or Content-Type name attribute
+    # @return [nil] when filename attribute don't exist
     def filename()
       return @filename if @filename
       if @header.key? "content-disposition" and @header["content-disposition"][0].params.key? "filename" then
@@ -365,19 +373,18 @@ module MailParser
       return @filename
     end
 
-    # 生メッセージを返す
+    # @return [String] raw message
     def raw
       return @src.to_s
     end
 
-    # 生ヘッダを返す
+    # @return [String] raw header
     def rawheader
       @rawheader.to_s
     end
 
     private
 
-    # ヘッダ部をパースする
     def read_header()
       @rawheader = @src.scan_until(/^(?=\r?\n)|\z/)
       @header = Header.new(@opt)
@@ -390,11 +397,10 @@ module MailParser
           @rawheader.skip(/.*\n/) or break
         end
       end
-      @src.scan(/\r?\n/)        # 空行スキップ
+      @src.scan(/\r?\n/)        # skip delimiter line
       @rawbody = @src.rest
     end
 
-    # 各パートの Message オブジェクトの配列を作成
     def read_part()
       return if type != "multipart" or @src.eos?
       b = @header["content-type"][0].params["boundary"]
@@ -410,7 +416,6 @@ module MailParser
       end
     end
 
-    # uuencode のデコード
     def decode_uuencode(str)
       ret = ""
       str.each_line do |line|
@@ -423,7 +428,6 @@ module MailParser
       ret
     end
 
-    # str をそのまま返す
     def decode_plain(str)
       str
     end

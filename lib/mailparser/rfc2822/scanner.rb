@@ -68,7 +68,8 @@ class MailParser::RFC2822::Scanner
     @ss.rest
   end
 
-  # 「(」の直後からコメント部の終わりまでスキャン
+  # scan from after "(" to end of comment part
+  # @return [String] comment
   def cfws(ss)
     comments = []
     while true
@@ -81,17 +82,17 @@ class MailParser::RFC2822::Scanner
     return comments.join
   end
 
-  # コメント部の処理
-  # return: コメント部の文字列
+  # process comment part
+  # @return [String] comment part
   def cfws_sub(ss)
     ret = ""
     until ss.eos? do
       if ss.scan(/(\s*(\\[#{TEXT_RE}]|[#{CTEXT_RE}]))*\s*/o) then
         ret << ss.matched
       end
-      if ss.scan(/\)/) then      # 「)」が来たら復帰
+      if ss.scan(/\)/) then         # return when ")"
         return ret
-      elsif ss.scan(/\(/) then      # 「(」が来たら再帰
+      elsif ss.scan(/\(/) then      # recursive when "("
         c = cfws_sub(ss)
         break if c.nil?
         ret << "(" << c << ")"
@@ -99,17 +100,19 @@ class MailParser::RFC2822::Scanner
         raise MailParser::ParseError, ss.rest
       end
     end
-    # 「)」がなかったら例外
+    # error when ")" don't exist
     raise MailParser::ParseError, ss.rest
   end
 
-  # @token中の位置が s から e までの間のコメント文字列の配列を得る
+  # @param [Integer] s start index
+  # @param [Integer] e end index
   def get_comment(s, e)
     a = @token[s..e].select{|i| i =~ /^\s*\(/}.map{|i| i.strip}
     return a
   end
 
-  # @token中の object_id が s_id から e_id までの間のコメント文字列の配列を得る
+  # @param [Integer] s_id start object id
+  # @param [Integer] e_id end object id
   def get_comment_by_id(s_id, e_id)
     s = s_id ? @token_idx[s_id] : 0
     e = e_id ? @token_idx[e_id] : -1
