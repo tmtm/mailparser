@@ -46,10 +46,10 @@ class TC_Loose < Test::Unit::TestCase
   end
 
   def test_parse_phrase_list_mime_charset_converter
-    p = parse_phrase_list("abc =?us-ascii?q?def?=, ghi jkl", :decode_mime_header=>true, :output_charset=>"utf-8", :charset_converter=>proc{"12345"})
+    p = parse_phrase_list("abc =?us-ascii?q?def?=, ghi jkl", :decode_mime_header=>true, :output_charset=>"utf-8", :charset_converter=>proc{|_,_,s| s.upcase})
     assert_equal(2, p.size)
-    assert_equal("abc 12345", p[0])
-    assert_equal("ghi jkl", p[1])
+    assert_equal("ABC DEF", p[0])
+    assert_equal("GHI JKL", p[1])
   end
 
   def test_parse_received()
@@ -279,9 +279,9 @@ class TC_Loose < Test::Unit::TestCase
   end
 
   def test_mailbox_charset_converter
-    ml = mailbox_list("hoge =?us-ascii?q?hoge?= <hoge.hoge@example.com>", {:decode_mime_header=>true, :output_charset=>"us-ascii", :charset_converter=>proc{"fuga"}})
+    ml = mailbox_list("hoge =?us-ascii?q?hoge?= <hoge.hoge@example.com>", {:decode_mime_header=>true, :output_charset=>"us-ascii", :charset_converter=>proc{|_,_,s| s.upcase}})
     assert_equal(1, ml.size)
-    assert_equal("hoge fuga", ml[0].phrase)
+    assert_equal("HOGE HOGE", ml[0].phrase)
     assert_equal("hoge.hoge", ml[0].addr_spec.local_part)
     assert_equal("example.com", ml[0].addr_spec.domain)
   end

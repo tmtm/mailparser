@@ -20,6 +20,7 @@ module MailParser::RFC2047
     end
     last_charset = nil
     ret = ""
+    ret.force_encoding(charset) if String.method_defined? :force_encoding and charset
     split_decode(str, charset_converter, charset).each do |s, cs|
       s2 = s
       ret << " " if last_charset.nil? or cs.nil?
@@ -30,11 +31,19 @@ module MailParser::RFC2047
   end
 
   def split_decode(str, charset_converter=nil, output_charset=nil)
+    charset_converter ||= MailParser::ConvCharset.method(:conv_charset)
     ret = []
     while str =~ /\=\?([^\(\)\<\>\@\,\;\:\"\/\[\]\?\.\=]+)\?([QB])\?([^\? ]+)\?\=/i do
       raw = $&
       pre, charset, encoding, enc_text, after = $`, $1.downcase, $2.downcase, $3, $'
-      ret << [pre.strip, nil] unless pre.strip.empty?
+      s = pre.strip
+      unless s.empty?
+        begin
+          s = charset_converter.call(output_charset, output_charset, s) if output_charset
+        rescue
+        end
+        ret << [s, nil]
+      end
       s = encoding == "q" ? q_decode(enc_text) : b_decode(enc_text)
       if String.method_defined? :force_encoding
         begin
@@ -44,13 +53,7 @@ module MailParser::RFC2047
         end
       end
       begin
-        if output_charset
-          if charset_converter
-            s = charset_converter.call(charset, output_charset, s)
-          else
-            s = MailParser::ConvCharset.conv_charset(charset, output_charset, s)
-          end
-        end
+        s = charset_converter.call(charset, output_charset, s) if output_charset
       rescue
         s = raw
         charset = nil
@@ -58,7 +61,14 @@ module MailParser::RFC2047
       ret << [s, charset]
       str = after
     end
-    ret << [str.strip, nil] unless str.empty?
+    s = str.strip
+    unless s.empty?
+      begin
+        s = charset_converter.call(output_charset, output_charset, s) if output_charset
+      rescue
+      end
+      ret << [s, nil]
+    end
     return ret
   end
 

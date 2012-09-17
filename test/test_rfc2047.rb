@@ -65,6 +65,24 @@ class TC_RFC2047 < Test::Unit::TestCase
     assert_equal("abcdefg", s)
   end
 
+  def test_decode_with_output_charset
+    s = MailParser::RFC2047.decode('abcdefg', :output_charset=>'utf-8')
+    assert_equal Encoding::UTF_8, s.encoding if defined? Encoding
+    assert_equal('abcdefg', s)
+  end
+
+  def test_decode_raw_utf8
+    s = MailParser::RFC2047.decode('あいう')
+    assert_equal('あいう', s)
+  end
+
+  if defined? Encoding
+    def test_decode_raw_utf8_with_output_charset
+      s = MailParser::RFC2047.decode('あいう', :output_charset=>'utf-8')
+      assert_equal('あいう'.force_encoding('utf-8'), s)
+    end
+  end
+
   def test_decode_encode_plain()
     s = MailParser::RFC2047.decode("012345 =?us-ascii?q?hoge?= abcdefg")
     assert_equal("012345 hoge abcdefg", s)
