@@ -13,7 +13,7 @@ module MailParser::RFC2231
     char_lang = {}
     params.each do |key, value|
       case key
-      when /^([^\*]+)(\*0)?\*$/no
+      when /^([^\*]+)(\*0)?\*$/
         name, ord = $1, $2
         char, lang, v = value.split(/\'/, 3)
         char_lang[name] = [char, lang]
@@ -21,17 +21,17 @@ module MailParser::RFC2231
           raise MailParser::ParseError, "#{key}=#{value}" if opt[:strict]
           v = lang || char
         end
-        v = v.gsub(/%([0-9A-F][0-9A-F])/ni){$1.hex.chr}
+        v = v.gsub(/%([0-9A-F][0-9A-F])/i){$1.hex.chr}
         if ord then
           h[name] << [0, v]
         else
           newparams[name] = v
         end
-      when /^([^\*]+)\*([1-9]\d*)\*$/no
+      when /^([^\*]+)\*([1-9]\d*)\*$/
         name, ord = $1, $2.to_i
-        v = value.gsub(/%([0-9A-F][0-9A-F])/ni){$1.hex.chr}
+        v = value.gsub(/%([0-9A-F][0-9A-F])/i){$1.hex.chr}
         h[name] << [ord, v]
-      when /^([^\*]+)\*([0-9]\d*)$/no
+      when /^([^\*]+)\*([0-9]\d*)$/
         name, ord = $1, $2.to_i
         h[name] << [ord, value]
       else

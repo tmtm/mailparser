@@ -111,7 +111,7 @@ module MailParser
       v = ""
       unless a.empty?
         while i < a[0].length do
-          if a[0][i] =~ /\A[a-z0-9]+\z/ino then
+          if a[0][i] =~ /\A[a-z0-9]+\z/i then
             v = a[0][i+1]
             name_val[a[0][i].downcase] = v
             i += 1
@@ -235,9 +235,9 @@ module MailParser
       def token()
         token = []
         while @ss.rest? do
-          if s = @ss.scan(/\s+/nmo) then
+          if s = @ss.scan(/\s+/) then
             # ignore
-          elsif s = @ss.scan(/\(/nmo) then
+          elsif s = @ss.scan(/\(/) then
             begin
               pos = @ss.pos
               cfws(@ss)
@@ -245,12 +245,12 @@ module MailParser
               @ss.pos = pos
               token << s
             end
-          elsif s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/nmo) ||
-              @ss.scan(/\[(\s*(\\[#{TEXT_RE}]|[#{DTEXT_RE}]))*\s*\]/nmo) ||
-              @ss.scan(/[#{ATEXT_RE}]+/no)
+          elsif s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/o) ||
+              @ss.scan(/\[(\s*(\\[#{TEXT_RE}]|[#{DTEXT_RE}]))*\s*\]/o) ||
+              @ss.scan(/[#{ATEXT_RE}]+/o)
             token << s
           else
-            token << @ss.scan(/./no)
+            token << @ss.scan(/./)
           end
         end
         return token
@@ -260,9 +260,9 @@ module MailParser
       def token_received()
         ret = []
         while @ss.rest? do
-          if s = @ss.scan(/[\s]+/nmo) then
+          if s = @ss.scan(/[\s]+/) then
             # ignore blank
-          elsif s = @ss.scan(/\(/nmo) then
+          elsif s = @ss.scan(/\(/) then
             begin
               pos = @ss.pos
               cfws(@ss)
@@ -270,12 +270,12 @@ module MailParser
               @ss.pos = pos
               ret.last << s unless ret.empty?
             end
-          elsif s = @ss.scan(/\"([\s]*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*[\s]*\"/nmo)
+          elsif s = @ss.scan(/\"([\s]*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*[\s]*\"/o)
             ret << s
           elsif s = @ss.scan(/;/)
             ret << s
           else
-            ret << @ss.scan(/[^\s\(\;]+/nmo)
+            ret << @ss.scan(/[^\s\(\;]+/o)
           end
         end
         return ret

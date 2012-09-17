@@ -25,29 +25,29 @@ class MailParser::RFC2822::Scanner
   def scan()
     until @ss.eos?
       case
-      when s = @ss.scan(/\s*\(/nmo)
+      when s = @ss.scan(/\s*\(/)
         @token << cfws(@ss)
         @token_idx[@token.last.object_id] = @token.size-1
-      when s = @ss.scan(/\s+/nmo)
+      when s = @ss.scan(/\s+/)
         @token << s
         @token_idx[s.object_id] = @token.size-1
-      when s = @ss.scan(/\"(\\[#{TEXT_RE}]|[#{QTEXT_RE}])*\"/no)
+      when s = @ss.scan(/\"(\\[#{TEXT_RE}]|[#{QTEXT_RE}])*\"/o)
         @token << s
         @token_idx[s.object_id] = @token.size-1
         yield [:NO_FOLD_QUOTE, s]
-      when s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/nmo)
+      when s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/o)
         @token << s
         @token_idx[s.object_id] = @token.size-1
         yield [:QUOTED_STRING, s]
-      when s = @ss.scan(/\[(\\[#{TEXT_RE}]|[#{DTEXT_RE}])*\]/no)
+      when s = @ss.scan(/\[(\\[#{TEXT_RE}]|[#{DTEXT_RE}])*\]/o)
         @token << s
         @token_idx[s.object_id] = @token.size-1
         yield [:NO_FOLD_LITERAL, s]
-      when s = @ss.scan(/\[(\s*(\\[#{TEXT_RE}]|[#{DTEXT_RE}]))*\s*\]/nmo)
+      when s = @ss.scan(/\[(\s*(\\[#{TEXT_RE}]|[#{DTEXT_RE}]))*\s*\]/o)
         @token << s
         @token_idx[s.object_id] = @token.size-1
         yield [:DOMAIN_LITERAL, s]
-      when s = @ss.scan(/[#{ATEXT_RE}]+/no)
+      when s = @ss.scan(/[#{ATEXT_RE}]+/o)
         @token << s
         @token_idx[s.object_id] = @token.size-1
         if s =~ /\A\d+\z/ then
@@ -55,7 +55,7 @@ class MailParser::RFC2822::Scanner
         else
           yield [:ATOM, s]
         end
-      when s = @ss.scan(/./no)
+      when s = @ss.scan(/./)
         @token << s
         @token_idx[s.object_id] = @token.size-1
         yield [s, s]
@@ -73,9 +73,9 @@ class MailParser::RFC2822::Scanner
     comments = []
     while true
       c = cfws_sub(ss)
-      ss.skip(/\s+/nmo)
+      ss.skip(/\s+/)
       comments << "(#{c})"
-      break unless @ss.scan(/\(/no)
+      break unless @ss.scan(/\(/)
     end
     @comments.concat comments
     return comments.join
@@ -86,12 +86,12 @@ class MailParser::RFC2822::Scanner
   def cfws_sub(ss)
     ret = ""
     until ss.eos? do
-      if ss.scan(/(\s*(\\[#{TEXT_RE}]|[#{CTEXT_RE}]))*\s*/nmo) then
+      if ss.scan(/(\s*(\\[#{TEXT_RE}]|[#{CTEXT_RE}]))*\s*/o) then
         ret << ss.matched
       end
-      if ss.scan(/\)/no) then      # 「)」が来たら復帰
+      if ss.scan(/\)/) then      # 「)」が来たら復帰
         return ret
-      elsif ss.scan(/\(/no) then      # 「(」が来たら再帰
+      elsif ss.scan(/\(/) then      # 「(」が来たら再帰
         c = cfws_sub(ss)
         break if c.nil?
         ret << "(" << c << ")"

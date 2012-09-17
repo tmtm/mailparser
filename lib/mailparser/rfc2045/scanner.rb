@@ -19,16 +19,16 @@ class MailParser::RFC2045::Scanner < MailParser::RFC2822::Scanner
   def scan_structured()
     until @ss.eos?
       case
-      when s = @ss.scan(/\s*\(/nmo)
+      when s = @ss.scan(/\s*\(/)
         s << cfws(@ss)
         next
-      when s = @ss.scan(/\s+/nmo)
+      when s = @ss.scan(/\s+/)
         next
-      when s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/nmo)
+      when s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/o)
         yield [:QUOTED_STRING, s]
-      when s = @ss.scan(/[#{TOKEN_RE}]+/no)
+      when s = @ss.scan(/[#{TOKEN_RE}]+/o)
         yield [:TOKEN, s]
-      when s = @ss.scan(/./no)
+      when s = @ss.scan(/./)
         yield [s, s]
       end
     end
@@ -38,14 +38,14 @@ class MailParser::RFC2045::Scanner < MailParser::RFC2822::Scanner
   def scan_mime_version()
     until @ss.eos?
       case
-      when s = @ss.scan(/\s*\(/nmo)
+      when s = @ss.scan(/\s*\(/)
         s << cfws(@ss)
         next
-      when s = @ss.scan(/\s+/nmo)
+      when s = @ss.scan(/\s+/)
         next
-      when s = @ss.scan(/\d+/no)
+      when s = @ss.scan(/\d+/)
         yield [:DIGIT, s]
-      when s = @ss.scan(/./no)
+      when s = @ss.scan(/./)
         yield [s, s]
       end
     end
