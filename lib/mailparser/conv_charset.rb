@@ -1,3 +1,4 @@
+# coding: ascii-8bit
 # Copyright (C) 2007-2011 TOMITA Masahiro
 # mailto:tommy@tmtm.org
 
