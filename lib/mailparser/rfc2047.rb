@@ -18,32 +18,32 @@ module MailParser::RFC2047
     else
       charset = opt
     end
+    charset_converter ||= MailParser::ConvCharset.method(:conv_charset)
     last_charset = nil
     ret = ""
     ret.force_encoding(charset) if String.method_defined? :force_encoding and charset
-    split_decode(str, charset_converter, charset).each do |s, cs|
-      s2 = s
+    split_decode(str) do |s, cs, raw|
+      if charset
+        begin
+          s = charset_converter.call(cs || charset, charset, s)
+        rescue
+          s = raw
+          cs = nil
+        end
+      end
       ret << " " if last_charset.nil? or cs.nil?
-      ret << s2
+      ret << s
       last_charset = cs
     end
     return ret.strip
   end
 
-  def split_decode(str, charset_converter=nil, output_charset=nil)
-    charset_converter ||= MailParser::ConvCharset.method(:conv_charset)
-    ret = []
+  def split_decode(str)
     while str =~ /\=\?([^\(\)\<\>\@\,\;\:\"\/\[\]\?\.\=]+)\?([QB])\?([^\? ]+)\?\=/i do
       raw = $&
       pre, charset, encoding, enc_text, after = $`, $1.downcase, $2.downcase, $3, $'
       s = pre.strip
-      unless s.empty?
-        begin
-          s = charset_converter.call(output_charset, output_charset, s) if output_charset
-        rescue
-        end
-        ret << [s, nil]
-      end
+      yield s, nil, raw unless s.empty?
       s = encoding == "q" ? q_decode(enc_text) : b_decode(enc_text)
       if String.method_defined? :force_encoding
         begin
@@ -52,24 +52,11 @@ module MailParser::RFC2047
           s.force_encoding('ascii-8bit')
         end
       end
-      begin
-        s = charset_converter.call(charset, output_charset, s) if output_charset
-      rescue
-        s = raw
-        charset = nil
-      end
-      ret << [s, charset]
+      yield s, charset, raw
       str = after
     end
     s = str.strip
-    unless s.empty?
-      begin
-        s = charset_converter.call(output_charset, output_charset, s) if output_charset
-      rescue
-      end
-      ret << [s, nil]
-    end
-    return ret
+    yield s, nil, raw unless s.empty?
   end
 
   def q_decode(str)

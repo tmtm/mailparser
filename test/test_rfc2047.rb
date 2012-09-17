@@ -39,15 +39,19 @@ class TC_RFC2047 < Test::Unit::TestCase
   end
 
   def test_split_decode_q_ascii()
-    s = MailParser::RFC2047.split_decode("=?us-ascii?q?hoge?=")
-    assert_equal(1, s.size)
-    assert_equal(["hoge", "us-ascii"], s[0])
+    MailParser::RFC2047.split_decode("=?us-ascii?q?hoge?=") do |s, cs, raw |
+      assert_equal 'hoge', s
+      assert_equal 'us-ascii', cs
+      assert_equal '=?us-ascii?q?hoge?=', raw
+    end
   end
 
   def test_split_decode_q_ascii_upcase()
-    s = MailParser::RFC2047.split_decode("=?US-ASCII?Q?hoge?=")
-    assert_equal(1, s.size)
-    assert_equal(["hoge", "us-ascii"], s[0])
+    MailParser::RFC2047.split_decode("=?US-ASCII?Q?hoge?=") do |s, cs, raw|
+      assert_equal 'hoge', s
+      assert_equal 'us-ascii', cs
+      assert_equal '=?US-ASCII?Q?hoge?=', raw
+    end
   end
 
   def test_decode_q_ascii()
