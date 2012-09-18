@@ -379,6 +379,11 @@ module MailParser
       @rawheader.to_s
     end
 
+    # @return [String] raw body
+    def rawbody
+      @rawbody.to_s
+    end
+
     private
 
     def read_header()

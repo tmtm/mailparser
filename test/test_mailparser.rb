@@ -859,6 +859,17 @@ EOS
     assert_equal "From: from@example.com\r\nContent-Type: text/plain\r\n", m.rawheader
   end
 
+  def test_rawbody
+    msg = StringIO.new(<<EOS)
+From: from@example.com\r
+Content-Type: text/plain\r
+\r
+hogehoge\r
+EOS
+    m = MailParser::Message.new msg
+    assert_equal "hogehoge\r\n", m.rawbody
+  end
+
   def test_raw_single_part
     msg = StringIO.new(<<EOS)
 From: from@example.com
