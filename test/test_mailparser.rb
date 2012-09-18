@@ -604,7 +604,7 @@ EOS
     assert_equal("body2", m.part[1].body)
   end
 
-  def test_extract_message_type()
+  def test_message_type()
     msg = StringIO.new(<<EOS)
 From: from1@example.com
 Content-Type: multipart/mixed; boundary="xxxx"
@@ -623,7 +623,7 @@ Content-Type: text/plain
 body2
 --xxxx--
 EOS
-    m = MailParser::Message.new(msg, :extract_message_type=>true)
+    m = MailParser::Message.new(msg)
     assert_equal("<from1@example.com>", m.from.to_s)
     assert_equal(2, m.part.size)
     assert_equal("text", m.part[0].type)
@@ -631,9 +631,10 @@ EOS
     assert_equal("message", m.part[1].type)
     assert_equal("<from2@example.com>", m.part[1].message.from.to_s)
     assert_equal("body2", m.part[1].message.body)
+    assert_equal("From: from2@example.com\nContent-Type: text/plain\n\nbody2", m.part[1].body)
   end
 
-  def test_extract_message_type_header_only
+  def test_message_type_header_only
     msg = StringIO.new(<<EOS)
 From: from1@example.com
 Content-Type: multipart/mixed; boundary="xxxx"
@@ -650,7 +651,7 @@ From: from2@example.com
 Content-Type: text/plain
 --xxxx--
 EOS
-    m = MailParser::Message.new(msg, :extract_message_type=>true)
+    m = MailParser::Message.new(msg)
     assert_equal("<from1@example.com>", m.from.to_s)
     assert_equal(2, m.part.size)
     assert_equal("text", m.part[0].type)
@@ -710,7 +711,7 @@ hoge
 hoge
 EOS
     m = MailParser::Message.new(msg)
-    assert_equal("", m.body)
+    assert_equal("hoge\nhoge\n", m.body)
     assert_equal([], m.part)
   end
 

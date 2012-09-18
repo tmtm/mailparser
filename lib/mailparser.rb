@@ -176,7 +176,6 @@ module MailParser
   class Message
     # @param [String, File, MmapScanner, #read] src source object
     # @param [Hash] opt options
-    # @option opt [Boolean] :extract_message_type (false) extract message for type message/*
     # @option opt [Boolean] :decode_mime_header (false) decode MIME header
     # @option opt [Boolean] :decode_mime_filename (false) decode MIME encoded filename
     # @option opt [Boolean] :output_charset (nil) output encoding
@@ -235,7 +234,6 @@ module MailParser
 
     # @return [String] message body decoded and not converted charset
     def body_preconv
-      return '' if type == 'multipart' or type == 'message'
       body = @rawbody.to_s
       ret = case content_transfer_encoding
             when "quoted-printable" then RFC2045.qp_decode(body)
@@ -252,9 +250,7 @@ module MailParser
     # @return [MailParser::Message] body type is message/*
     # @return [nil] when type is not message/*
     def message
-      unless @opt[:extract_message_type] and type == "message"
-        return nil
-      end
+      return nil unless type == "message"
       if ['7bit', '8bit'].include? content_transfer_encoding
         @rawbody.pos = 0
         return Message.new(@rawbody, @opt)
