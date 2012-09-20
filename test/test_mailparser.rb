@@ -257,11 +257,19 @@ EOS
   def test_subject_multi_line()
     msg = StringIO.new(<<EOS)
 Subject: This is a pen.
-  Is this a pen?
+ Is this a pen?
 
 EOS
     m = MailParser::Message.new(msg)
     assert_equal("This is a pen. Is this a pen?", m.subject)
+  end
+
+  def test_subject_keep_multi_space
+    msg = StringIO.new(<<EOS)
+Subject:   This   is   a   pen.  
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal("This   is   a   pen.  ", m.subject)
   end
 
   def test_subject_multi_header()
@@ -290,6 +298,22 @@ Subject: =?us-ascii?q?This_is_a_pen.?=
 EOS
     m = MailParser::Message.new(msg, :decode_mime_header=>true)
     assert_equal("This is a pen.", m.subject)
+  end
+
+  def test_subject_mime_decode_keep_multi_space
+    msg = StringIO.new(<<EOS)
+Subject:   This   is   a   pen.  
+EOS
+    m = MailParser::Message.new(msg, :decode_mime_header=>true)
+    assert_equal("This   is   a   pen.  ", m.subject)
+  end
+
+  def test_subject_mime_decode_keep_multi_space2
+    msg = StringIO.new(<<EOS)
+Subject: abcdefg   =?us-ascii?q?hoge?=   =?us-ascii?q?fuga?=  
+EOS
+    m = MailParser::Message.new(msg, :decode_mime_header=>true)
+    assert_equal("abcdefg   hogefuga  ", m.subject)
   end
 
   def test_subject_mime_decode_charset()

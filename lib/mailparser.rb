@@ -78,7 +78,7 @@ module MailParser
           @parsed = Loose.parse(@name, @raw, @opt)
         end
       else
-        r = @raw.chomp.gsub(/\s+/, " ")
+        r = @raw.chomp.gsub(/\r?\n/, '').gsub(/\t/, ' ')
         if @opt[:decode_mime_header] then
           @parsed = RFC2047.decode(r, @opt)
         else

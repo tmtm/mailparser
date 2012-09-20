@@ -21,9 +21,10 @@ module MailParser::RFC2047
     end
     charset_converter ||= MailParser::ConvCharset.method(:conv_charset)
     last_charset = nil
-    ret = ""
-    ret.force_encoding(charset) if String.method_defined? :force_encoding and charset
-    split_decode(str) do |s, cs, raw|
+    words = []
+    mime_word = false
+    str.split(/(\s+)/).each do |s|
+      s, cs, raw = decode_word(s)
       if charset
         begin
           s = charset_converter.call(cs || charset, charset, s)
@@ -32,32 +33,32 @@ module MailParser::RFC2047
           cs = nil
         end
       end
-      ret << " " if last_charset.nil? or cs.nil?
-      ret << s
-      last_charset = cs
+      if cs
+        words.pop if mime_word and words.last =~ /\A\s*\z/
+        mime_word = true
+      elsif s !~ /\A\s*\z/
+        mime_word = false
+      end
+      words.push s
     end
-    return ret.strip
+    return words.join
   end
 
-  def split_decode(str)
-    while str =~ /\=\?([^\(\)\<\>\@\,\;\:\"\/\[\]\?\.\=]+)\?([QB])\?([^\? ]+)\?\=/i do
-      raw = $&
-      pre, charset, encoding, enc_text, after = $`, $1.downcase, $2.downcase, $3, $'
-      s = pre.strip
-      yield s, nil, raw unless s.empty?
-      s = encoding == "q" ? q_decode(enc_text) : b_decode(enc_text)
+  def decode_word(str)
+    charset = nil
+    if str =~ /\=\?([^\(\)\<\>\@\,\;\:\"\/\[\]\?\.\=]+)\?([QB])\?([^\? ]+)\?\=/i
+      charset, encoding, enc_text = $1.downcase, $2.downcase, $3
+      raw = str
+      str = encoding == "q" ? q_decode(enc_text) : b_decode(enc_text)
       if String.method_defined? :force_encoding
         begin
-          s.force_encoding(charset)
+          str.force_encoding(charset)
         rescue
-          s.force_encoding('ascii-8bit')
+          str.force_encoding('ascii-8bit')
         end
       end
-      yield s, charset, raw
-      str = after
     end
-    s = str.strip
-    yield s, nil, raw unless s.empty?
+    [str, charset, raw]
   end
 
   def q_decode(str)

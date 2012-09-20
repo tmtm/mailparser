@@ -38,20 +38,18 @@ class TC_RFC2047 < Test::Unit::TestCase
     assert_equal("とみた", MailParser::RFC2047.b_decode("44Go 44 G/4 4Gf"))
   end
 
-  def test_split_decode_q_ascii()
-    MailParser::RFC2047.split_decode("=?us-ascii?q?hoge?=") do |s, cs, raw |
-      assert_equal 'hoge', s
-      assert_equal 'us-ascii', cs
-      assert_equal '=?us-ascii?q?hoge?=', raw
-    end
+  def test_decode_word()
+    s, cs, raw = MailParser::RFC2047.decode_word("=?us-ascii?q?hoge?=")
+    assert_equal 'hoge', s
+    assert_equal 'us-ascii', cs
+    assert_equal '=?us-ascii?q?hoge?=', raw
   end
 
-  def test_split_decode_q_ascii_upcase()
-    MailParser::RFC2047.split_decode("=?US-ASCII?Q?hoge?=") do |s, cs, raw|
-      assert_equal 'hoge', s
-      assert_equal 'us-ascii', cs
-      assert_equal '=?US-ASCII?Q?hoge?=', raw
-    end
+  def test_decode_word_upcase()
+    s, cs, raw = MailParser::RFC2047.decode_word("=?US-ASCII?Q?hoge?=")
+    assert_equal 'hoge', s
+    assert_equal 'us-ascii', cs
+    assert_equal '=?US-ASCII?Q?hoge?=', raw
   end
 
   def test_decode_q_ascii()
