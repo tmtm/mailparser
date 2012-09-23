@@ -119,6 +119,8 @@ class TC_RFC2047 < Test::Unit::TestCase
     s = MailParser::RFC2047.decode("=?sjis?b?h0A=?=", "UTF-8")
     if String.method_defined? :force_encoding
       assert_equal("\xe2\x91\xa0".force_encoding('utf-8'), s)
+    else
+      assert_equal("\xe2\x91\xa0", s)
     end
   end
 
@@ -126,7 +128,14 @@ class TC_RFC2047 < Test::Unit::TestCase
     s = MailParser::RFC2047.decode("=?iso-2022-jp?b?GyRCLSEbKEI=?=", "UTF-8")
     if String.method_defined? :force_encoding
       assert_equal("\xe2\x91\xa0".force_encoding('utf-8'), s)
+    else
+      assert_equal("\xe2\x91\xa0", s)
     end
+  end
+
+  def test_decode_different_charset
+    s = MailParser::RFC2047.decode("=?iso-2022-jp?b?GyRCJCIbKEI=?= =?utf-8?b?44GE?=")
+    assert_equal("\e$B$\"\e(B\xE3\x81\x84", s)
   end
 
   def test_decode_charset_converter()

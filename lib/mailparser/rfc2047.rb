@@ -41,7 +41,12 @@ module MailParser::RFC2047
       end
       words.push s
     end
-    return words.join
+    begin
+      ret = words.join
+    rescue
+      ret = words.map{|s| s.force_encoding('binary')}.join
+    end
+    ret
   end
 
   def decode_word(str)
