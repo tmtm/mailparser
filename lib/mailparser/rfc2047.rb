@@ -23,7 +23,7 @@ module MailParser::RFC2047
     last_charset = nil
     words = []
     mime_word = false
-    str.split(/(\s+)/).each do |s|
+    str.gsub(/\r?\n/, '').split(/(\s+)/).each do |s|
       s, cs, raw = decode_word(s)
       if charset
         begin

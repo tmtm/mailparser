@@ -144,4 +144,9 @@ class TC_RFC2047 < Test::Unit::TestCase
     assert_equal("hXge", s)
   end
 
+  def test_decode_with_crlf
+    s = MailParser::RFC2047.decode("abc\r\n def\r\n")
+    assert_equal "abc def", s
+  end
+
 end
