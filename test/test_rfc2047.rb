@@ -149,4 +149,9 @@ class TC_RFC2047 < Test::Unit::TestCase
     assert_equal "abc def", s
   end
 
+  def test_decode_with_invalid_encoded
+    s = MailParser::RFC2047.decode("abc def=?us-ascii?q?ghi?=jkl mno")
+    assert_equal "abc defghijkl mno", s
+  end
+
 end

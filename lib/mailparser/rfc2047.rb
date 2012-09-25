@@ -24,7 +24,7 @@ module MailParser::RFC2047
     words = []
     mime_word = false
     str.gsub(/\r?\n/, '').split(/(\s+)/).each do |s|
-      s, cs, raw = decode_word(s)
+      s, cs, raw, pre, post = decode_word(s)
       if charset
         begin
           s = charset_converter.call(cs || charset, charset, s)
@@ -39,7 +39,9 @@ module MailParser::RFC2047
       elsif s !~ /\A\s*\z/
         mime_word = false
       end
+      words.push pre if pre
       words.push s
+      words.push post if post
     end
     begin
       ret = words.join
@@ -52,6 +54,7 @@ module MailParser::RFC2047
   def decode_word(str)
     charset = nil
     if str =~ /\=\?([^\(\)\<\>\@\,\;\:\"\/\[\]\?\.\=]+)\?([QB])\?([^\? ]+)\?\=/i
+      pre, post = $`, $'
       charset, encoding, enc_text = $1.downcase, $2.downcase, $3
       raw = str
       str = encoding == "q" ? q_decode(enc_text) : b_decode(enc_text)
@@ -63,7 +66,7 @@ module MailParser::RFC2047
         end
       end
     end
-    [str, charset, raw]
+    [str, charset, raw, pre, post]
   end
 
   def q_decode(str)
