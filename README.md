@@ -6,7 +6,7 @@ MailParser is a parser for mail message.
 Installation
 ------------
 
-    % gem install --pre mailparser
+    % gem install mailparser
 
 Usage
 -----
