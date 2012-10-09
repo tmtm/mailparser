@@ -85,10 +85,12 @@ module MailParser
           @parsed = r
         end
       end
-      class <<@parsed
-        attr_accessor :raw
+      if @parsed
+        class <<@parsed
+          attr_accessor :raw
+        end
+        @parsed.raw = @raw
       end
-      @parsed.raw = @raw
 
       # Content-Type, Content-Disposition parameter for RFC2231
       if ["content-type", "content-disposition"].include? @name
