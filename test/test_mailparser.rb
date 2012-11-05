@@ -783,6 +783,22 @@ EOS
     assert_equal("fuga\n", m.part[1].body)
   end
 
+  def test_extract_without_boundary_parameter()
+    msg = StringIO.new(<<EOS)
+From: from@example.com
+Content-Type: multipart/mixed
+
+--xxx
+Content-Type: text/plain
+
+fuga
+--xxx--
+EOS
+    m = MailParser::Message.new(msg)
+    assert_equal [], m.part
+    assert_equal "--xxx\nContent-Type: text/plain\n\nfuga\n--xxx--\n", m.body
+  end
+
   def test_parse_no_header_delimiter()
     msg = StringIO.new <<EOS
 Subject: hoge

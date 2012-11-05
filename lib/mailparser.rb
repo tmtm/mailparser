@@ -407,6 +407,7 @@ module MailParser
     def read_part()
       return if type != "multipart" or @src.eos?
       b = @header["content-type"][0].params["boundary"]
+      return unless b
       re = /(?:\A|\r?\n)--#{Regexp.escape b}(?:|(--))(?:\r?\n|\z)/
       @src.scan_until(re) or return  # skip preamble
       until @src.eos?
