@@ -20,53 +20,32 @@ module MailParser::RFC2047
       charset = opt
     end
     charset_converter ||= MailParser::ConvCharset.method(:conv_charset)
-    last_charset = nil
     words = []
     mime_word = false
-    str.gsub(/\r?\n/, '').split(/(\s+)/).each do |s|
-      s, cs, raw, pre, post = decode_word(s)
-      if charset
+    ss = StringScanner.new(str.gsub(/\r?\n/, ''))
+    until ss.eos?
+      if s = ss.scan(/\=\?[^\(\)\<\>\@\,\;\:\"\/\[\]\?\.\=]+\?[QB]\?[^\? ]+\?\=/i)
         begin
-          s = charset_converter.call(cs || charset, charset, s)
+          s = Encoded.new s, charset, charset_converter
+          words.pop if words.length >= 2 and words[-1].is_a? Space and words[-2].is_a? Encoded
         rescue
-          s = raw
-          cs = nil
+          # ignore
         end
+        words.push s
+      elsif s = ss.scan(/\s+/)
+        words.push Space.new(s)
+      elsif s = ss.scan(/[^\s=]+/)
+        words.push s
+      else
+        words.push ss.scan(/./)
       end
-      if cs
-        words.pop if mime_word and words.last =~ /\A\s*\z/
-        mime_word = true
-      elsif s !~ /\A\s*\z/
-        mime_word = false
-      end
-      words.push pre if pre
-      words.push s
-      words.push post if post
     end
     begin
       ret = words.join
     rescue
-      ret = words.map{|s| s.force_encoding('binary')}.join
+      ret = words.map{|s| s.to_s.force_encoding('binary')}.join
     end
-    ret
-  end
-
-  def decode_word(str)
-    charset = nil
-    if str =~ /\=\?([^\(\)\<\>\@\,\;\:\"\/\[\]\?\.\=]+)\?([QB])\?([^\? ]+)\?\=/i
-      pre, post = $`, $'
-      charset, encoding, enc_text = $1.downcase, $2.downcase, $3
-      raw = str
-      str = encoding == "q" ? q_decode(enc_text) : b_decode(enc_text)
-      if String.method_defined? :force_encoding
-        begin
-          str.force_encoding(charset)
-        rescue
-          str.force_encoding('ascii-8bit')
-        end
-      end
-    end
-    [str, charset, raw, pre, post]
+    charset ? charset_converter.call(charset, charset, ret) : ret
   end
 
   def q_decode(str)
@@ -77,4 +56,18 @@ module MailParser::RFC2047
     return str.gsub(/[^A-Z0-9\+\/=]/i,"").unpack("m")[0]
   end
 
+  class Space < String
+  end
+
+  class Encoded
+    def initialize(str, charset, converter)
+      _, cs, encoding, enc_text, = str.split(/\?/)
+      str = encoding.downcase == 'q' ? MailParser::RFC2047.q_decode(enc_text) : MailParser::RFC2047.b_decode(enc_text)
+      @decoded = converter.call(cs, charset||cs, str)
+    end
+
+    def to_s
+      @decoded
+    end
+  end
 end

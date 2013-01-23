@@ -38,20 +38,6 @@ class TC_RFC2047 < Test::Unit::TestCase
     assert_equal("とみた", MailParser::RFC2047.b_decode("44Go 44 G/4 4Gf"))
   end
 
-  def test_decode_word()
-    s, cs, raw = MailParser::RFC2047.decode_word("=?us-ascii?q?hoge?=")
-    assert_equal 'hoge', s
-    assert_equal 'us-ascii', cs
-    assert_equal '=?us-ascii?q?hoge?=', raw
-  end
-
-  def test_decode_word_upcase()
-    s, cs, raw = MailParser::RFC2047.decode_word("=?US-ASCII?Q?hoge?=")
-    assert_equal 'hoge', s
-    assert_equal 'us-ascii', cs
-    assert_equal '=?US-ASCII?Q?hoge?=', raw
-  end
-
   def test_decode_q_ascii()
     s = MailParser::RFC2047.decode("=?us-ascii?q?hoge?=")
     assert_equal("hoge", s)
@@ -152,6 +138,11 @@ class TC_RFC2047 < Test::Unit::TestCase
   def test_decode_with_invalid_encoded
     s = MailParser::RFC2047.decode("abc def=?us-ascii?q?ghi?=jkl mno")
     assert_equal "abc defghijkl mno", s
+  end
+
+  def test_decode_invalid_from_docomo
+    s = MailParser::RFC2047.decode("=?us-ascii?q?a?=(=?us-ascii?q?b?=)")
+    assert_equal "a(b)", s
   end
 
 end
