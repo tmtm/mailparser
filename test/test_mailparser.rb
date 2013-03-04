@@ -344,6 +344,15 @@ EOS
     assert_equal("abcdefg", m.subject)
   end
 
+  def test_subject_raw_utf8_with_output_charset
+    msg = StringIO.new(<<EOS)
+Subject: あいうえお
+
+EOS
+    m = MailParser::Message.new(msg, :output_charset=>"utf-8")
+    assert_equal("あいうえお", m.subject)
+  end
+
   def test_content_type()
     msg = StringIO.new(<<EOS)
 Content-Type: text/plain; charset=us-ascii

@@ -52,6 +52,15 @@ class TC_Loose < Test::Unit::TestCase
     assert_equal("GHI JKL", p[1])
   end
 
+  if String.method_defined? :force_encoding
+    def test_parse_phrase_list_output_charset_with_raw_utf8
+      p = parse_phrase_list("あいう, えお", :charset_converter=>MailParser::ConvCharset.method(:conv_charset), :output_charset=>"utf-8")
+      assert_equal(2, p.size)
+      assert_equal("あいう".force_encoding("utf-8"), p[0])
+      assert_equal("えお".force_encoding("utf-8"), p[1])
+    end
+  end
+
   def test_parse_received()
     tzbak = ENV["TZ"]
     begin
@@ -150,6 +159,28 @@ class TC_Loose < Test::Unit::TestCase
     end
   end
 
+  if String.method_defined? :force_encoding
+    def test_parse_received_output_charset_with_raw_utf8
+      tzbak = ENV["TZ"]
+      begin
+        ENV["TZ"] = "GMT"
+        r = parse_received("from ほげ by ふが for ぴよ; Wed, 10 Jan 2007 12:09:55 +0900", :charset_converter=>MailParser::ConvCharset.method(:conv_charset), :output_charset=>"utf-8")
+        assert_equal(2007, r.date_time.year)
+        assert_equal(1, r.date_time.month)
+        assert_equal(10, r.date_time.day)
+        assert_equal(3, r.date_time.hour)
+        assert_equal(9, r.date_time.min)
+        assert_equal(55, r.date_time.sec)
+        assert_equal("+0000", r.date_time.zone)
+        assert_equal("ほげ".force_encoding("utf-8"), r.name_val["from"])
+        assert_equal("ふが".force_encoding("utf-8"), r.name_val["by"])
+        assert_equal("ぴよ".force_encoding("utf-8"), r.name_val["for"])
+      ensure
+        ENV["TZ"] = tzbak
+      end
+    end
+  end
+
   def test_parse_content_type()
     ct = parse_content_type("text/plain; charset=iso-2022-jp")
     assert_equal("text", ct.type)
@@ -190,6 +221,15 @@ class TC_Loose < Test::Unit::TestCase
     assert_equal("", ct.subtype)
   end
 
+  if String.method_defined? :force_encoding
+    def test_parse_content_type_output_charset_with_raw_utf8
+      ct = parse_content_type("text/plain; name=ほげ", :charset_converter=>MailParser::ConvCharset.method(:conv_charset), :output_charset=>"utf-8")
+      assert_equal("text", ct.type)
+      assert_equal("plain", ct.subtype)
+      assert_equal({"name"=>"ほげ".force_encoding("utf-8")}, ct.params)
+    end
+  end
+
   def test_parse_content_transfer_encoding
     cte = parse_content_transfer_encoding("7BIT")
     assert_equal "7bit", cte.mechanism
@@ -200,6 +240,13 @@ class TC_Loose < Test::Unit::TestCase
     assert_equal "", cte.mechanism
   end
 
+  if String.method_defined? :force_encoding
+    def test_parse_content_transfer_encoding_output_charset_with_raw_utf8
+      cte = parse_content_transfer_encoding("あいう", :charset_converter=>MailParser::ConvCharset.method(:conv_charset), :output_charset=>"utf-8")
+      assert_equal "あいう".force_encoding("utf-8"), cte.mechanism
+    end
+  end
+
   def test_parse_mime_version
     assert_equal "1.0", parse_mime_version("1.0")
     assert_equal "1.0", parse_mime_version("1 . 0")
@@ -208,6 +255,12 @@ class TC_Loose < Test::Unit::TestCase
 
   def test_parse_mime_version_empty
     assert_equal "", parse_mime_version("")
+  end
+
+  if String.method_defined? :force_encoding
+    def test_parse_mime_version_output_charset_with_raw_utf8
+      assert_equal "ほげ".force_encoding("utf-8"), parse_mime_version("ほげ", :charset_converter=>MailParser::ConvCharset.method(:conv_charset), :output_charset=>"utf-8")
+    end
   end
 
   def test_parse_content_disposition()
@@ -225,6 +278,14 @@ class TC_Loose < Test::Unit::TestCase
   def test_parse_content_disposition_empty
     c = parse_content_disposition("")
     assert_equal "", c.type
+  end
+
+  if String.method_defined? :force_encoding
+    def test_parse_content_disposition_output_charset_with_raw_utf8
+      c = parse_content_disposition("attachment; filename=ほげ", :charset_converter=>MailParser::ConvCharset.method(:conv_charset), :output_charset=>"utf-8")
+      assert_equal("attachment", c.type)
+      assert_equal({"filename"=>"ほげ".force_encoding("utf-8")}, c.params)
+    end
   end
 
   def test_parse_other_header
@@ -282,8 +343,21 @@ class TC_Loose < Test::Unit::TestCase
     ml = mailbox_list("hoge =?us-ascii?q?hoge?= <hoge.hoge@example.com>", {:decode_mime_header=>true, :output_charset=>"us-ascii", :charset_converter=>proc{|_,_,s| s.upcase}})
     assert_equal(1, ml.size)
     assert_equal("HOGE HOGE", ml[0].phrase)
-    assert_equal("hoge.hoge", ml[0].addr_spec.local_part)
-    assert_equal("example.com", ml[0].addr_spec.domain)
+    assert_equal("HOGE.HOGE", ml[0].addr_spec.local_part)
+    assert_equal("EXAMPLE.COM", ml[0].addr_spec.domain)
+  end
+
+  if String.method_defined? :force_encoding
+    def test_mailbox_list_output_charset_with_raw_utf8
+      ml = mailbox_list("ほげ <ほげ@ぴよ>, ふが@ぴよ", :charset_converter=>MailParser::ConvCharset.method(:conv_charset), :output_charset=>"utf-8")
+      assert_equal(2, ml.size)
+      assert_equal("ほげ".force_encoding("utf-8"), ml[0].phrase)
+      assert_equal("ほげ".force_encoding("utf-8"), ml[0].addr_spec.local_part)
+      assert_equal("ぴよ".force_encoding("utf-8"), ml[0].addr_spec.domain)
+      assert_equal("", ml[1].phrase)
+      assert_equal("ふが".force_encoding("utf-8"), ml[1].addr_spec.local_part)
+      assert_equal("ぴよ".force_encoding("utf-8"), ml[1].addr_spec.domain)
+    end
   end
 
   def test_msg_id_list_old_in_reply_to()
@@ -315,6 +389,13 @@ class TC_Loose < Test::Unit::TestCase
   def test_msg_id_empty()
     m = msg_id_list ""
     assert_equal m, []
+  end
+
+  if String.method_defined? :force_encoding
+    def test_msg_id_output_charset_with_raw_utf8
+      m = msg_id_list "<ほげ>", :charset_converter=>MailParser::ConvCharset.method(:conv_charset), :output_charset=>"utf-8"
+      assert_equal "ほげ".force_encoding("utf-8"), m[0].msg_id
+    end
   end
 
 end

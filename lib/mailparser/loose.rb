@@ -91,7 +91,7 @@ module MailParser
     # @param [Hash] opt options
     # @return [MailParser::RFC2822::MsgId]
     def parse_msg_id(str, opt={})
-      msg_id_list(str)[0]
+      msg_id_list(str, opt)[0]
     end
 
     # parse In-Reply-To, References field
@@ -99,7 +99,7 @@ module MailParser
     # @param [Hash] opt options
     # @return [MailParser::RFC2822::MsgIdList]
     def parse_msg_id_list(str, opt={})
-      msg_id_list(str)
+      msg_id_list(str, opt)
     end
 
     # parse Keywords field
@@ -112,7 +112,7 @@ module MailParser
       if opt[:decode_mime_header] then
         s.map!{|i| RFC2047.decode(i, opt)}
       end
-      s
+      s.map{|_| _conv(_, opt)}
     end
 
     # parse Return-Path field
@@ -145,6 +145,9 @@ module MailParser
           i += 1
         end
       end
+      name_val.keys.each do |k|
+        name_val[k] = _conv(name_val[k], opt)
+      end
       RFC2822::Received.new(name_val, date)
     end
 
@@ -158,13 +161,13 @@ module MailParser
       params = {}
       token.each do |param|
         pn, pv = param.join.split(/=/, 2)
-        params[pn.to_s] = pv.to_s.gsub(/\A"|"\z/,"")
+        params[pn.to_s] = _conv(pv.to_s.gsub(/\A"|"\z/,""), opt)
       end
       type = "text" if type.nil? or type.empty?
       if subtype.nil? or subtype.empty?
         subtype = type == "text" ? "plain" : ""
       end
-      RFC2045::ContentType.new(type, subtype, params)
+      RFC2045::ContentType.new(_conv(type, opt), _conv(subtype, opt), params)
     end
 
     # parse Content-Transfer-Encoding field
@@ -172,7 +175,7 @@ module MailParser
     # @param [Hash] opt options
     # @return [MailParser::RFC2045::ContentTransferEncoding]
     def parse_content_transfer_encoding(str, opt={})
-      RFC2045::ContentTransferEncoding.new(Tokenizer.token(str).first.to_s)
+      RFC2045::ContentTransferEncoding.new(_conv(Tokenizer.token(str).first.to_s, opt))
     end
 
     # parse Mime-Version field
@@ -180,7 +183,7 @@ module MailParser
     # @param [Hash] opt options
     # @return [String]
     def parse_mime_version(str, opt={})
-      Tokenizer.token(str).join
+      _conv(Tokenizer.token(str).join, opt)
     end
 
     # parse Content-Disposition field
@@ -193,9 +196,9 @@ module MailParser
       params = {}
       token.each do |param|
         pn, pv = param.join.split(/=/, 2)
-        params[pn.to_s] = pv.to_s.gsub(/\A"|"\z/,"")
+        params[pn.to_s] = _conv(pv.to_s.gsub(/\A"|"\z/,""), opt)
       end
-      RFC2183::ContentDisposition.new(type, params)
+      RFC2183::ContentDisposition.new(_conv(type, opt), params)
     end
 
     # split arry by delim
@@ -229,11 +232,11 @@ module MailParser
           if opt[:decode_mime_header] then
             display_name = RFC2047.decode(display_name, opt)
           end
-          mailaddr = m[a1+1..a2-1].join
+          mailaddr = _conv(m[a1+1..a2-1].join, opt)
           local_part, domain = mailaddr.split(/@/, 2)
-          ret << RFC2822::Mailbox.new(RFC2822::AddrSpec.new(local_part, domain), display_name)
+          ret << RFC2822::Mailbox.new(RFC2822::AddrSpec.new(local_part, domain), _conv(display_name, opt))
         else
-          local_part, domain = m.join.split(/@/, 2)
+          local_part, domain = _conv(m.join, opt).split(/@/, 2)
           ret << RFC2822::Mailbox.new(RFC2822::AddrSpec.new(local_part, domain))
         end
       end
@@ -243,7 +246,7 @@ module MailParser
     # parse MsgId type field
     # @param [String] str
     # @return [Array<MailParser::RFC2822::MsgId>]
-    def msg_id_list(str)
+    def msg_id_list(str, opt={})
       ret = []
       flag = false
       msgid = nil
@@ -257,14 +260,14 @@ module MailParser
         when ">"
           if flag
             flag = false
-            ret << RFC2822::MsgId.new(msgid)
+            ret << RFC2822::MsgId.new(_conv(msgid, opt))
           end
         else
           msgid << m if flag
         end
       end
       if ret.empty?
-        ret = str.split.map{|s| RFC2822::MsgId.new(s)}
+        ret = str.split.map{|s| RFC2822::MsgId.new(_conv(s, opt))}
       end
       return ret
     end
@@ -291,9 +294,9 @@ module MailParser
               @ss.pos = pos
               token << s
             end
-          elsif s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}]))*\s*\"/o) ||
-              @ss.scan(/\[(\s*(\\[#{TEXT_RE}]|[#{DTEXT_RE}]))*\s*\]/o) ||
-              @ss.scan(/[#{ATEXT_RE}]+/o)
+          elsif s = @ss.scan(/\"(\s*(\\[#{TEXT_RE}]|[#{QTEXT_RE}\x80-\xff]))*\s*\"/o) ||
+              @ss.scan(/\[(\s*(\\[#{TEXT_RE}]|[#{DTEXT_RE}\x80-\xff]))*\s*\]/o) ||
+              @ss.scan(/[#{ATEXT_RE}\x80-\xff]+/o)
             token << s
           else
             token << @ss.scan(/./)
@@ -335,6 +338,12 @@ module MailParser
       def self.token_received(str)
         Tokenizer.new(str).token_received
       end
+    end
+
+    def _conv(str, opt)
+      cv = opt[:charset_converter]
+      cs = opt[:output_charset]
+      cv && cs ? cv.call(cs, cs, str) : str
     end
 
   end

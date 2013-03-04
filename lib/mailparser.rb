@@ -81,6 +81,8 @@ module MailParser
         r = @raw.chomp.gsub(/\r?\n/, '').gsub(/\t/, ' ')
         if @opt[:decode_mime_header] then
           @parsed = RFC2047.decode(r, @opt)
+        elsif @opt[:output_charset]
+          @parsed = @opt[:charset_converter].call(@opt[:output_charset], @opt[:output_charset], r)
         else
           @parsed = r
         end
