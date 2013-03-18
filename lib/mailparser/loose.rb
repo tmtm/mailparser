@@ -67,7 +67,8 @@ module MailParser
       rescue
         t = Time.now
       end
-      return RFC2822::DateTime.new(t.year, t.month, t.day, t.hour, t.min, t.sec, t.zone)
+      year = t.year > 9999 ? 9999 : t.year
+      return RFC2822::DateTime.new(year, t.month, t.day, t.hour, t.min, t.sec, t.zone)
     end
 
     # parse From, To,Cc field

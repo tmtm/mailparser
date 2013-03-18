@@ -31,6 +31,23 @@ class TC_Loose < Test::Unit::TestCase
     end
   end
 
+  def test_parse_date_y10000()
+    tzbak = ENV["TZ"]
+    begin
+      ENV["TZ"] = "GMT"
+      d = parse_date("Wed, 10 Jan 10000 12:53:55 +0900")
+      assert_equal(9999, d.year)
+      assert_equal(1, d.month)
+      assert_equal(10, d.day)
+      assert_equal(3, d.hour)
+      assert_equal(53, d.min)
+      assert_equal(55, d.sec)
+      assert_equal("+0000", d.zone)
+    ensure
+      ENV["TZ"] = tzbak
+    end
+  end
+
   def test_parse_phrase_list()
     p = parse_phrase_list("abc def, ghi jkl")
     assert_equal(2, p.size)
