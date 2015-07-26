@@ -30,13 +30,10 @@ module MailParser::RFC2822
     "return-path"       => :RETURN_PATH,
     "received"          => :RECEIVED,
   }
-  
+
   ZONE = {
     "UT"  => "+0000",
     "GMT" => "+0000",
-    "EDT" => "-0400",
-    "EST" => "-0500",
-    "CDT" => "-0500",
     "EDT" => "-0400",
     "EST" => "-0500",
     "CDT" => "-0500",
