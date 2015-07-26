@@ -8,6 +8,6 @@ Gem::Specification.new do |spec|
   spec.summary = 'Mail Parser'
   spec.description = 'MailParser is a parser for mail message'
   spec.test_files = Dir.glob(['test.rb', 'test/**/test_*.rb'])
-  spec.version = '0.5.4'
-  spec.add_dependency 'mmapscanner'
+  spec.version = '0.5.5'
+  spec.add_runtime_dependency 'mmapscanner', '~> 0.3'
 end
