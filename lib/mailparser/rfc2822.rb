@@ -179,7 +179,7 @@ module MailParser::RFC2822
       if zone_or_offset.is_a? Integer
         offset = zone_or_offset
         @zone_sec = offset
-        @zone = format("%03d%02d", offset/3600, offset%3600).sub(/^0/, '+')
+        @zone = format("%03d%02d", offset/3600, offset%3600/60).sub(/^0/, '+')
         return
       end
       zone = zone_or_offset
