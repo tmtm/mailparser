@@ -358,6 +358,7 @@ def parse(header_type, value)
   @comma_list = []
   @scanner = Scanner.new(header_type, value)
   ret = yyparse(self, :parse_sub)
+  return if ret.nil?
   class << ret
     attr_accessor :comments
   end

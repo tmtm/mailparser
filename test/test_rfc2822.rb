@@ -258,6 +258,14 @@ class TC_RFC2822Parser < Test::Unit::TestCase
     assert_raises(MailParser::ParseError){@p.parse(:DATE_TIME, "29 Jan 2007 08:19:08 +0980")}
   end
 
+  def test_return_path
+    rp = @p.parse(:RETURN_PATH, "<hoge@example.com>")
+    assert_equal('hoge', rp.local_part)
+    assert_equal('example.com', rp.domain)
+    rp = @p.parse(:RETURN_PATH, "<>")
+    assert_equal(nil, rp)
+  end
+
 end
 
 class TC_AddrSpec < Test::Unit::TestCase
