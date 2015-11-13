@@ -9,7 +9,7 @@ module MailParser::RFC2231
   def parse_param(params, opt={:strict=>true})
     opt = {:strict=>opt} unless opt.is_a? Hash
     newparams = {}
-    h = Hash.new{|h,k| h[k] = []}
+    h = Hash.new{|_h,k| _h[k] = []}
     char_lang = {}
     params.each do |key, value|
       case key

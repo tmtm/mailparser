@@ -21,7 +21,6 @@ module MailParser::RFC2047
     end
     charset_converter ||= MailParser::ConvCharset.method(:conv_charset)
     words = []
-    mime_word = false
     ss = StringScanner.new(str.gsub(/\r?\n/, ''))
     until ss.eos?
       if s = ss.scan(/\=\?[^\(\)\<\>\@\,\;\:\"\/\[\]\?\.\=]+\?[QB]\?[^\? ]+\?\=/i)
@@ -43,7 +42,7 @@ module MailParser::RFC2047
     begin
       ret = words.join
     rescue
-      ret = words.map{|s| s.to_s.force_encoding('binary')}.join
+      ret = words.map{|w| w.to_s.force_encoding('binary')}.join
     end
     charset ? charset_converter.call(charset, charset, ret) : ret
   end
