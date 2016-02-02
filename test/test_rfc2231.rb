@@ -131,6 +131,14 @@ class TC_RFC2231 < Test::Unit::TestCase
     assert_equal "abc", h["hoge"]
   end
 
+  def test_parse_param_with_empty_value
+    params = {
+      "hoge*" => "",
+    }
+    h = MailParser::RFC2231.parse_param(params, strict: false)
+    assert_equal "", h["hoge"]
+  end
+
   def test_rfc_example()
     params = {
       "URL*0" => "ftp://",

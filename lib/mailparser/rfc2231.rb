@@ -19,7 +19,7 @@ module MailParser::RFC2231
         char_lang[name] = [char, lang]
         if v.nil? then
           raise MailParser::ParseError, "#{key}=#{value}" if opt[:strict]
-          v = lang || char
+          v = lang || char || ''
         end
         v = v.gsub(/%([0-9A-F][0-9A-F])/i){$1.hex.chr}
         if ord then
